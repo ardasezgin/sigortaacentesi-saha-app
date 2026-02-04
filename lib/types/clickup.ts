@@ -2,6 +2,13 @@
  * ClickUp API tip tanımlamaları
  */
 
+export interface ClickUpTag {
+  name: string;
+  tag_fg?: string;
+  tag_bg?: string;
+  creator?: number;
+}
+
 export interface ClickUpTask {
   id: string;
   name: string;
@@ -16,7 +23,7 @@ export interface ClickUpTask {
     color: string;
   };
   due_date?: string;
-  tags?: string[];
+  tags?: (string | ClickUpTag)[];
   custom_fields?: ClickUpCustomField[];
   url: string;
 }

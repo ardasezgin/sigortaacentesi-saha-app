@@ -17,9 +17,19 @@ const API_BASE_URL = 'https://api.clickup.com/api/v2';
  * ClickUp yapılandırmasını al
  */
 function getConfig(): ClickUpConfig {
-  const apiToken = Constants.expoConfig?.extra?.CLICKUP_API_TOKEN || process.env.CLICKUP_API_TOKEN;
-  const workspaceId = Constants.expoConfig?.extra?.CLICKUP_WORKSPACE_ID || process.env.CLICKUP_WORKSPACE_ID;
-  const listId = Constants.expoConfig?.extra?.CLICKUP_LIST_ID || process.env.CLICKUP_LIST_ID;
+  // Geliştirme için hardcoded değerler
+  // Üretim ortamında environment variable kullanılmalı
+  const apiToken = Constants.expoConfig?.extra?.CLICKUP_API_TOKEN || 
+                   process.env.CLICKUP_API_TOKEN || 
+                   'pk_101455294_LF8RIU4OD9UNUSPP3P1B8R0S2X4HMPG4';
+  
+  const workspaceId = Constants.expoConfig?.extra?.CLICKUP_WORKSPACE_ID || 
+                      process.env.CLICKUP_WORKSPACE_ID || 
+                      '90181713490';
+  
+  const listId = Constants.expoConfig?.extra?.CLICKUP_LIST_ID || 
+                 process.env.CLICKUP_LIST_ID || 
+                 '901814074449';
 
   if (!apiToken || !workspaceId || !listId) {
     throw new Error('ClickUp configuration is missing');

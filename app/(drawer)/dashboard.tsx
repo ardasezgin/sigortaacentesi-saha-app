@@ -326,17 +326,21 @@ export default function DashboardScreen() {
                     </View>
                     {task.tags && task.tags.length > 0 && (
                       <View className="flex-row gap-1 mt-2 flex-wrap">
-                        {task.tags.map((tag, idx) => (
-                          <View
-                            key={idx}
-                            className="px-2 py-1 rounded"
-                            style={{ backgroundColor: colors.muted + '20' }}
-                          >
-                            <Text className="text-xs text-muted">
-                              {tag}
-                            </Text>
-                          </View>
-                        ))}
+                        {task.tags.map((tag, idx) => {
+                          // Tag bir obje ise (name property'si varsa) name'i al, değilse string olarak kullan
+                          const tagName = typeof tag === 'object' && tag !== null && 'name' in tag ? tag.name : String(tag);
+                          return (
+                            <View
+                              key={idx}
+                              className="px-2 py-1 rounded"
+                              style={{ backgroundColor: colors.muted + '20' }}
+                            >
+                              <Text className="text-xs text-muted">
+                                {tagName}
+                              </Text>
+                            </View>
+                          );
+                        })}
                       </View>
                     )}
                   </TouchableOpacity>
