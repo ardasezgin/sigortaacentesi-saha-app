@@ -99,3 +99,9 @@
 ### Test
 - [x] ClickUp API servis testleri
 - [x] Entegrasyon testleri
+
+## Bug Fixes
+
+- [x] Mobil uygulamada ClickUp environment variable erişim hatası
+- [x] app.config.ts'de extra field ile env variable'ları expose et
+- [x] ClickUp servisinde Constants.expoConfig.extra erişimini düzelt

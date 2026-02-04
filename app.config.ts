@@ -47,6 +47,11 @@ const config: ExpoConfig = {
   scheme: env.scheme,
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
+  extra: {
+    CLICKUP_API_TOKEN: process.env.CLICKUP_API_TOKEN,
+    CLICKUP_WORKSPACE_ID: process.env.CLICKUP_WORKSPACE_ID,
+    CLICKUP_LIST_ID: process.env.CLICKUP_LIST_ID,
+  },
   ios: {
     supportsTablet: true,
     bundleIdentifier: env.iosBundleId,
