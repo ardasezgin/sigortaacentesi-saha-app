@@ -16,6 +16,8 @@ import { useColors } from '@/hooks/use-colors';
 import type { DashboardMetrics } from '@/lib/types/visit';
 import { getDashboardMetrics } from '@/lib/services/visit-storage';
 import { loadSampleAgencies, loadSampleVisits } from '@/lib/services/sample-data';
+import { getClickUpTasks, testClickUpConnection } from '@/lib/services/clickup';
+import type { ClickUpTask } from '@/lib/types/clickup';
 
 /**
  * Dashboard Ekranı - Satış Yöneticisi Performans Özeti
@@ -27,6 +29,8 @@ export default function DashboardScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isLoadingSample, setIsLoadingSample] = useState(false);
+  const [clickupTasks, setClickupTasks] = useState<ClickUpTask[]>([]);
+  const [clickupConnected, setClickupConnected] = useState<boolean | null>(null);
 
   useEffect(() => {
     loadMetrics();
@@ -36,6 +40,20 @@ export default function DashboardScreen() {
     try {
       const data = await getDashboardMetrics();
       setMetrics(data);
+      
+      // ClickUp bağlantısını test et ve görevleri yükle
+      const isConnected = await testClickUpConnection();
+      setClickupConnected(isConnected);
+      
+      if (isConnected) {
+        const tasks = await getClickUpTasks();
+        // Sadece açık görevleri göster
+        const openTasks = tasks.filter(task => 
+          task.status.status.toLowerCase() !== 'complete' &&
+          task.status.status.toLowerCase() !== 'closed'
+        );
+        setClickupTasks(openTasks.slice(0, 5)); // Son 5 açık görev
+      }
     } catch (error) {
       console.error('Dashboard metrikleri yüklenirken hata:', error);
     } finally {
@@ -252,6 +270,91 @@ export default function DashboardScreen() {
                 : `${metrics.openRequests} talep bekliyor`}
             </Text>
           </View>
+
+          {/* ClickUp Görevleri */}
+          {clickupConnected && clickupTasks.length > 0 && (
+            <View className="bg-surface rounded-2xl p-4 border border-border shadow-sm">
+              <View className="flex-row justify-between items-center mb-3">
+                <Text className="text-lg font-bold text-foreground">
+                  ClickUp Görevleri
+                </Text>
+                <View
+                  className="px-2 py-1 rounded"
+                  style={{ backgroundColor: colors.primary + '20' }}
+                >
+                  <Text
+                    className="text-xs font-semibold"
+                    style={{ color: colors.primary }}
+                  >
+                    {clickupTasks.length} açık
+                  </Text>
+                </View>
+              </View>
+              <View className="gap-2">
+                {clickupTasks.map((task) => (
+                  <TouchableOpacity
+                    key={task.id}
+                    onPress={() => {
+                      // ClickUp task URL'ini aç
+                      if (Platform.OS !== 'web') {
+                        import('expo-web-browser').then(WebBrowser => {
+                          WebBrowser.openBrowserAsync(task.url);
+                        });
+                      } else {
+                        window.open(task.url, '_blank');
+                      }
+                    }}
+                    className="bg-background rounded-lg p-3 border border-border"
+                  >
+                    <View className="flex-row justify-between items-start">
+                      <Text className="text-sm font-semibold text-foreground flex-1 mr-2">
+                        {task.name}
+                      </Text>
+                      {task.priority && (
+                        <View
+                          className="px-2 py-1 rounded"
+                          style={{ backgroundColor: task.priority.color + '20' }}
+                        >
+                          <Text
+                            className="text-xs font-semibold"
+                            style={{ color: task.priority.color }}
+                          >
+                            {task.priority.priority}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    {task.tags && task.tags.length > 0 && (
+                      <View className="flex-row gap-1 mt-2 flex-wrap">
+                        {task.tags.map((tag, idx) => (
+                          <View
+                            key={idx}
+                            className="px-2 py-1 rounded"
+                            style={{ backgroundColor: colors.muted + '20' }}
+                          >
+                            <Text className="text-xs text-muted">
+                              {tag}
+                            </Text>
+                          </View>
+                        ))}
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+          )}
+
+          {clickupConnected === false && (
+            <View className="bg-warning/10 rounded-2xl p-4 border border-warning/30">
+              <Text className="text-sm font-semibold text-foreground mb-1">
+                ⚠️ ClickUp Bağlantısı Yok
+              </Text>
+              <Text className="text-xs text-muted">
+                ClickUp entegrasyonu şu anda çalışmıyor. Lütfen ayarları kontrol edin.
+              </Text>
+            </View>
+          )}
 
           {/* Son Ziyaretler */}
           {metrics.recentVisits.length > 0 && (

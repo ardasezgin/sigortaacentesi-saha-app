@@ -62,3 +62,40 @@
 - [x] Drawer navigation için icon mappings
 - [x] Yeni veri tipleri ve storage fonksiyonları
 - [x] Unit testler (yeni özellikler için)
+
+## ClickUp Entegrasyonu
+
+### API Servisi
+- [x] ClickUp API client oluştur
+- [x] API token yönetimi (environment variable)
+- [x] Workspace ve List ID yapılandırması
+- [x] Task oluşturma fonksiyonu
+- [x] Task güncelleme fonksiyonu
+- [x] Task listeleme fonksiyonu
+- [x] Hata yönetimi ve retry mekanizması
+
+### Talep Entegrasyonu
+- [x] Talep oluşturulduğunda ClickUp'ta task oluştur
+- [ ] Talep durumu güncellendiğinde ClickUp task'ı güncelle
+- [x] Öncelik seviyelerini ClickUp priority'ye map et
+- [x] Talep kategorilerini ClickUp tag'lerine dönüştür
+
+### Ziyaret Entegrasyonu
+- [x] Ziyaret kaydedildiğinde ClickUp'ta task oluştur (opsiyonel)
+- [x] Ziyaret notlarını task açıklamasına ekle
+- [x] Ziyaret türünü tag olarak ekle
+
+### Dashboard Entegrasyonu
+- [x] ClickUp'taki açık görevleri dashboard'da göster
+- [x] Senkronizasyon durumu göstergesi
+- [ ] Manuel senkronizasyon butonu
+
+### Ayarlar Ekranı
+- [ ] ClickUp bağlantı durumu göstergesi
+- [ ] API token girişi ve doğrulama
+- [ ] Workspace ve List seçimi
+- [ ] Otomatik senkronizasyon açma/kapama
+
+### Test
+- [x] ClickUp API servis testleri
+- [x] Entegrasyon testleri

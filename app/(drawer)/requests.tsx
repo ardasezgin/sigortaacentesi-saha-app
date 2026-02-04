@@ -17,6 +17,7 @@ import type { Request, RequestType, RequestStatus, Priority } from '@/lib/types/
 import type { Agency } from '@/lib/types/agency';
 import { getAllAgencies } from '@/lib/services/storage';
 import { addRequest, getAllRequests, updateRequest } from '@/lib/services/visit-storage';
+import { createClickUpTask, mapPriorityToClickUp, mapStatusToClickUp } from '@/lib/services/clickup';
 
 /**
  * Talep/İstek/Şikayet Ekranı
@@ -130,6 +131,23 @@ export default function RequestsScreen() {
       if (!saved) {
         Alert.alert('Hata', 'Kayıt sırasında bir hata oluştu');
         return;
+      }
+
+      // ClickUp'ta task oluştur
+      try {
+        const clickupTask = await createClickUpTask({
+          name: `[${requestType}] ${subject.trim()}`,
+          description: `**Acente:** ${selectedAgency.acenteAdi} (${selectedAgency.levhaNo})\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** Saha Personeli`,
+          priority: mapPriorityToClickUp(priority),
+          tags: [requestType, selectedAgency.sehir || 'Bilinmeyen'],
+        });
+        
+        if (clickupTask) {
+          console.log('ClickUp task created:', clickupTask.url);
+        }
+      } catch (clickupError) {
+        console.error('ClickUp task creation failed:', clickupError);
+        // ClickUp hatası uygulamayı durdurmasın
       }
 
       if (Platform.OS !== 'web') {

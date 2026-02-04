@@ -17,6 +17,7 @@ import type { Visit, VisitType } from '@/lib/types/visit';
 import type { Agency } from '@/lib/types/agency';
 import { getAllAgencies } from '@/lib/services/storage';
 import { addVisit, getRecentVisits } from '@/lib/services/visit-storage';
+import { createClickUpTask } from '@/lib/services/clickup';
 
 /**
  * Ziyaret/Arama Girişi Ekranı
@@ -122,6 +123,25 @@ export default function VisitScreen() {
         Alert.alert('Hata', 'Kayıt sırasında bir hata oluştu');
         return;
       }
+
+      // ClickUp'ta task oluştur (opsiyonel - sadece önemli ziyaretler için)
+      // Eğer her ziyareti ClickUp'a kaydetmek isterseniz bu kısmı aktif edin
+      /*
+      try {
+        const clickupTask = await createClickUpTask({
+          name: `[Ziyaret] ${selectedAgency.acenteAdi}`,
+          description: `**Ziyaret Türü:** ${visitType}\n**Süre:** ${duration} dakika\n**Acente:** ${selectedAgency.acenteAdi} (${selectedAgency.levhaNo})\n\n**Notlar:**\n${notes.trim() || 'Not yok'}\n\n**Oluşturan:** Saha Personeli`,
+          priority: 3, // Normal priority
+          tags: [visitType, selectedAgency.sehir || 'Bilinmeyen'],
+        });
+        
+        if (clickupTask) {
+          console.log('ClickUp task created for visit:', clickupTask.url);
+        }
+      } catch (clickupError) {
+        console.error('ClickUp task creation failed:', clickupError);
+      }
+      */
 
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
