@@ -1,0 +1,35 @@
+{
+  "query": "SELECT levhaNo, acenteUnvani, il FROM agencies LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT levhaNo, acenteUnvani, il FROM agencies LIMIT 5;",
+  "rows": [
+    {
+      "levhaNo": "G0866-5E2J",
+      "acenteUnvani": "ADAD SİGORTA ARACILIK HİZMETLERİ",
+      "il": "İZMİR"
+    },
+    {
+      "levhaNo": "T220330-1BFM",
+      "acenteUnvani": "ADM SİGORTA ACENTELİK HİZMETLERİ TİCARET",
+      "il": "İSTANBUL"
+    },
+    {
+      "levhaNo": "T10630-N27S",
+      "acenteUnvani": "ALBAR SİGORTA ARACILIK HİZMETLERİ",
+      "il": "DİYARBAKIR"
+    },
+    {
+      "levhaNo": "T1681-9TY3",
+      "acenteUnvani": "BANDIRMA AYYILDIZ SİGORTA ARACILIK HİZMETLERİ",
+      "il": "BALIKESİR"
+    },
+    {
+      "levhaNo": "T240329-EZ2B",
+      "acenteUnvani": "BAYRAM ÇAYIR SİGORTA ARACILIK HİZMETLERİ",
+      "il": "ANTALYA"
+    }
+  ],
+  "messages": [],
+  "stdout": "levhaNo\tacenteUnvani\til\nG0866-5E2J\tADAD SİGORTA ARACILIK HİZMETLERİ\tİZMİR\nT220330-1BFM\tADM SİGORTA ACENTELİK HİZMETLERİ TİCARET\tİSTANBUL\nT10630-N27S\tALBAR SİGORTA ARACILIK HİZMETLERİ\tDİYARBAKIR\nT1681-9TY3\tBANDIRMA AYYILDIZ SİGORTA ARACILIK HİZMETLERİ\tBALIKESİR\nT240329-EZ2B\tBAYRAM ÇAYIR SİGORTA ARACILIK HİZMETLERİ\tANTALYA\n",
+  "stderr": "",
+  "execution_time_ms": 1495
+}

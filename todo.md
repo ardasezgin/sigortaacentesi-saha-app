@@ -54,3 +54,10 @@
 - [x] Acente verilerinin nerede saklandığını tespit et (assets/agencies.json + IndexedDB/AsyncStorage)
 - [x] Kaybolmuş verileri geri yükle veya yeniden ekle (forceReloadAgencies butonu eklendi)
 - [x] Test et
+
+## Kalıcı Database Yükleme
+
+- [x] Acenteleri PostgreSQL'e yükle (seed script çalıştırıldı)
+- [x] Backend API'den çekmeye geç
+- [x] Yükleme butonunu kaldır
+- [x] Test et (TypeScript 0 hata)
