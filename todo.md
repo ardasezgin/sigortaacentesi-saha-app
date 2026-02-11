@@ -30,4 +30,8 @@
 - [x] ClickUp OAuth provider'ı yapılandır
 - [x] Login ekranına "ClickUp ile Giriş Yap" butonu ekle
 - [x] OAuth callback flow'unu test et
-- [ ] ClickUp OAuth app oluştur ve credentials ekle
+- [x] ClickUp OAuth app oluştur ve credentials ekle
+
+## Bugfix
+
+- [x] ClickUp OAuth login çalışmıyor - sorunu tespit et ve düzelt (credentials eklendi)
