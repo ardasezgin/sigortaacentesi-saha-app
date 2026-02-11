@@ -42,3 +42,9 @@
 - [x] Merkezi ClickUp Personal API Token ekle
 - [x] ClickUp servisini merkezi token ile güncelle
 - [x] Test et (41 test başarılı, ClickUp API bağlantısı çalışıyor)
+
+## Geçici Login Bypass (Ekran Görüntüsü İçin)
+
+- [x] Login ekranını geçici olarak bypass et
+- [x] Dashboard'a direkt erişim sağla
+- [x] Test et
