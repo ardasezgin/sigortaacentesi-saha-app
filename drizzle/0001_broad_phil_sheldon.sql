@@ -1,0 +1,20 @@
+CREATE TABLE `agencies` (
+	`id` int AUTO_INCREMENT NOT NULL,
+	`levhaNo` varchar(50) NOT NULL,
+	`acenteTuru` varchar(20),
+	`acenteUnvani` text NOT NULL,
+	`adres` text,
+	`il` varchar(100),
+	`ilce` varchar(100),
+	`telefon` varchar(50),
+	`ePosta` varchar(320),
+	`teknikPersonel` text,
+	`levhaKayTar` varchar(50),
+	`levhaYenKayTar` varchar(50),
+	`isActive` int NOT NULL DEFAULT 1,
+	`notlar` text,
+	`lastUpdated` timestamp DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP,
+	`createdAt` timestamp NOT NULL DEFAULT (now()),
+	CONSTRAINT `agencies_id` PRIMARY KEY(`id`),
+	CONSTRAINT `agencies_levhaNo_unique` UNIQUE(`levhaNo`)
+);
