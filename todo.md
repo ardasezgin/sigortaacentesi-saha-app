@@ -74,3 +74,9 @@
 - [x] Database'de 19,364 kayıt var ama uygulama 3,124 gösteriyor - düzelt (19,000 kayıt yüklendi)
 - [x] Ziyaret/Arama sayfasında otomatik doldurma çalışmıyor - düzelt
 - [x] Talep/İstek/Şikayet sayfasında otomatik doldurma çalışmıyor - düzelt
+
+## API Limit Sorunu
+
+- [x] Backend API sadece 1,269 kayıt döndürüyor (19,000 olmalı)
+- [x] Limit'i kaldır veya pagination ekle (50,000 limit eklendi)
+- [x] Test et

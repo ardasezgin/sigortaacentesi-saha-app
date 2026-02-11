@@ -109,7 +109,7 @@ export async function getAllAgencies(): Promise<Agency[]> {
   }
 
   try {
-    const result = await db.select().from(agencies);
+    const result = await db.select().from(agencies).limit(50000);
     return result;
   } catch (error) {
     console.error("[Database] Failed to get agencies:", error);
