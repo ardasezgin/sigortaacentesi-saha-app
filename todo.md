@@ -24,3 +24,10 @@
 - [x] Login ekranı tasarımı ve UI
 - [x] Authentication flow entegrasyonu
 - [x] Login ekranı testleri
+
+## ClickUp OAuth Entegrasyonu
+
+- [x] ClickUp OAuth provider'ı yapılandır
+- [x] Login ekranına "ClickUp ile Giriş Yap" butonu ekle
+- [x] OAuth callback flow'unu test et
+- [ ] ClickUp OAuth app oluştur ve credentials ekle
