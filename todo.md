@@ -61,3 +61,10 @@
 - [x] Backend API'den çekmeye geç
 - [x] Yükleme butonunu kaldır
 - [x] Test et (TypeScript 0 hata)
+
+## Otomatik Doldurma Özelliği
+
+- [x] Levha no ile acente bilgilerini otomatik doldur
+- [x] Acente adının ilk 5 harfi ile arama yap
+- [x] PostgreSQL'den çalışacak şekilde entegre et
+- [x] Test et (44 test başarılı)

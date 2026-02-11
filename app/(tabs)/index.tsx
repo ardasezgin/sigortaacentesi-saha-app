@@ -15,7 +15,10 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import type { Agency, AgencyLog } from '@/lib/types/agency';
 import {
-  getAgencyByLevhaNo,
+  findAgencyByLevhaNo,
+  findAgencyByName,
+} from '@/lib/services/agency-service';
+import {
   saveAgency,
   addLog,
   getRecentLogs,
@@ -70,19 +73,25 @@ export default function HomeScreen() {
   const searchAgency = async (searchLevhaNo: string) => {
     setIsSearching(true);
     try {
-      const agency = await getAgencyByLevhaNo(searchLevhaNo);
+      // Önce levha no ile ara
+      let agency = await findAgencyByLevhaNo(searchLevhaNo);
+      
+      // Bulunamadıysa ve 5+ karakter ise acente adı ile ara
+      if (!agency && searchLevhaNo.length >= 5) {
+        agency = await findAgencyByName(searchLevhaNo);
+      }
       
       if (agency) {
         // Formu otomatik doldur
         setAcenteAdi(agency.acenteUnvani);
         setYetkiliAdiSoyadi(agency.teknikPersonel || '');
         setTelefon(agency.telefon || '');
-        setEposta(agency.eposta || '');
+        setEposta(agency.ePosta || agency.eposta || '');
         setAdres(agency.adres || '');
         setSehir(agency.il || '');
         setIlce(agency.ilce || '');
         setVergiNo(agency.notlar || "");
-        setDurum(agency.durum || "Aktif");
+        setDurum(agency.isActive === 0 ? 'Pasif' : 'Aktif');
         setIsAutoFilled(true);
         setOriginalData(agency);
         
