@@ -1,0 +1,50 @@
+{
+  "query": "SELECT levhaNo, acenteUnvani FROM agencies LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT levhaNo, acenteUnvani FROM agencies LIMIT 10;",
+  "rows": [
+    {
+      "levhaNo": "T0866-6S6K",
+      "acenteUnvani": "KIZILKAPLAN SİGORTA ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "T201111-4ZUM",
+      "acenteUnvani": "KIZILTAN SİGORTA ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "T231123-MD9I",
+      "acenteUnvani": "KIZILTAŞ GROUP SİGORTA ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "T141211-YA2H",
+      "acenteUnvani": "KİBA SİGORTA ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "G151021-ZBAZ",
+      "acenteUnvani": "KİBARLAR SİGORTA ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "T08521-N9AE",
+      "acenteUnvani": "KİBAROĞLU SİGORTA ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "T08526-SK8J",
+      "acenteUnvani": "KİBELE SİGORTA ACENTELİĞİ ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "T180716-MJCE",
+      "acenteUnvani": "KİM SİGORTA ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "T241213-4393",
+      "acenteUnvani": "KİMLİK SİGORTA ARACILIK HİZMETLERİ"
+    },
+    {
+      "levhaNo": "T181214-39RC",
+      "acenteUnvani": "KİNEBA SİGORTA ARACILIK HİZMETLERİ"
+    }
+  ],
+  "messages": [],
+  "stdout": "levhaNo\tacenteUnvani\nT0866-6S6K\tKIZILKAPLAN SİGORTA ARACILIK HİZMETLERİ\nT201111-4ZUM\tKIZILTAN SİGORTA ARACILIK HİZMETLERİ\nT231123-MD9I\tKIZILTAŞ GROUP SİGORTA ARACILIK HİZMETLERİ\nT141211-YA2H\tKİBA SİGORTA ARACILIK HİZMETLERİ\nG151021-ZBAZ\tKİBARLAR SİGORTA ARACILIK HİZMETLERİ\nT08521-N9AE\tKİBAROĞLU SİGORTA ARACILIK HİZMETLERİ\nT08526-SK8J\tKİBELE SİGORTA ACENTELİĞİ ARACILIK HİZMETLERİ\nT180716-MJCE\tKİM SİGORTA ARACILIK HİZMETLERİ\nT241213-4393\tKİMLİK SİGORTA ARACILIK HİZMETLERİ\nT181214-39RC\tKİNEBA SİGORTA ARACILIK HİZMETLERİ\n",
+  "stderr": "",
+  "execution_time_ms": 1499
+}

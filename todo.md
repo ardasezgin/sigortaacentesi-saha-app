@@ -80,3 +80,10 @@
 - [x] Backend API sadece 1,269 kayıt döndürüyor (19,000 olmalı)
 - [x] Limit'i kaldır veya pagination ekle (50,000 limit eklendi)
 - [x] Test et
+
+## Frontend Limit Sorunu
+
+- [x] Frontend sadece 2,792 kayıt gösteriyor (19,000 olmalı)
+- [x] Acenteler listesi kodunu kontrol et
+- [x] Frontend limit/filter sorununu düzelt
+- [x] Excel dosyasını doğru schema ile database'e yükle (19,364 kayıt başarılı)

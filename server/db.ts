@@ -109,7 +109,8 @@ export async function getAllAgencies(): Promise<Agency[]> {
   }
 
   try {
-    const result = await db.select().from(agencies).limit(50000);
+    const result = await db.select().from(agencies);
+    console.log('[getAllAgencies] Fetched', result.length, 'agencies');
     return result;
   } catch (error) {
     console.error("[Database] Failed to get agencies:", error);
