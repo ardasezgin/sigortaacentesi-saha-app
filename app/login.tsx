@@ -2,6 +2,7 @@ import { ScreenContainer } from "@/components/screen-container";
 import { useAuth } from "@/hooks/use-auth";
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
+import { trpc } from "@/lib/trpc";
 import {
   View,
   Text,
@@ -17,11 +18,12 @@ import { useColors } from "@/hooks/use-colors";
 
 export default function LoginScreen() {
   const colors = useColors();
-  const { isAuthenticated, loading } = useAuth({ autoFetch: true });
+  const { isAuthenticated, loading, refresh } = useAuth({ autoFetch: true });
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState("");
+  
+  const loginMutation = trpc.auth.login.useMutation();
 
   // Redirect to home if already authenticated
   useEffect(() => {
@@ -40,36 +42,46 @@ export default function LoginScreen() {
     }
 
     try {
-      setIsLoggingIn(true);
       setError("");
 
       if (Platform.OS !== "web") {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
 
-      // TODO: Implement actual login API call
-      // For now, simulate login
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Mock successful login
-      if (email === "demo@sigorta.com" && password === "demo123") {
+      // Call backend login endpoint (hardcoded: test@demo.com / 123123123)
+      const result = await loginMutation.mutateAsync({ email, password });
+      
+      if (result.success) {
+        // Store session token and user info for native platforms
+        if (Platform.OS !== "web") {
+          const Auth = await import("@/lib/_core/auth");
+          await Auth.setSessionToken(result.sessionToken);
+          await Auth.setUserInfo({
+            id: result.user.id,
+            openId: result.user.openId,
+            name: result.user.name,
+            email: result.user.email,
+            loginMethod: result.user.loginMethod,
+            lastSignedIn: new Date(result.user.lastSignedIn),
+          });
+        }
+        // Web platform: cookie is automatically set by backend
+        
         if (Platform.OS !== "web") {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
+        
+        // Refresh auth state
+        await refresh();
+        
         router.replace("/(drawer)");
-      } else {
-        setError("Email veya şifre hatalı");
-        if (Platform.OS !== "web") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-        }
       }
     } catch (err) {
-      setError("Giriş yapılırken bir hata oluştu");
+      const errorMessage = err instanceof Error ? err.message : "Giriş yapılırken bir hata oluştu";
+      setError(errorMessage);
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } finally {
-      setIsLoggingIn(false);
     }
   };
 
@@ -118,7 +130,7 @@ export default function LoginScreen() {
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoComplete="email"
-                editable={!isLoggingIn}
+                editable={!loginMutation.isPending}
               />
             </View>
 
@@ -139,7 +151,7 @@ export default function LoginScreen() {
                 secureTextEntry
                 autoCapitalize="none"
                 autoComplete="password"
-                editable={!isLoggingIn}
+                editable={!loginMutation.isPending}
                 returnKeyType="done"
                 onSubmitEditing={handleLogin}
               />
@@ -155,14 +167,14 @@ export default function LoginScreen() {
             {/* Login Button */}
             <Pressable
               onPress={handleLogin}
-              disabled={isLoggingIn}
+              disabled={loginMutation.isPending}
               style={({ pressed }) => ({
                 opacity: pressed ? 0.9 : 1,
                 transform: [{ scale: pressed ? 0.98 : 1 }],
               })}
             >
               <View className="bg-primary rounded-xl py-4 items-center mt-2 shadow-sm">
-              {isLoggingIn ? (
+              {loginMutation.isPending ? (
                 <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <Text className="text-white text-base font-semibold">
@@ -178,10 +190,10 @@ export default function LoginScreen() {
                 Demo Hesap Bilgileri:
               </Text>
               <Text className="text-xs text-foreground text-center font-mono">
-                Email: demo@sigorta.com
+                Email: test@demo.com
               </Text>
               <Text className="text-xs text-foreground text-center font-mono">
-                Şifre: demo123
+                Şifre: 123123123
               </Text>
             </View>
           </View>

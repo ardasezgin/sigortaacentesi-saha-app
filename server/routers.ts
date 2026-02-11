@@ -18,6 +18,37 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+    // Hardcoded login for presentation (test@demo.com / 123123123)
+    login: publicProcedure
+      .input(z.object({ email: z.string(), password: z.string() }))
+      .mutation(async ({ input, ctx }) => {
+        // Hardcoded credentials check
+        if (input.email === "test@demo.com" && input.password === "123123123") {
+          // Create mock user
+          const mockUser = {
+            id: 1,
+            openId: "demo-user",
+            name: "Demo Kullanıcı",
+            email: "test@demo.com",
+            loginMethod: "hardcoded",
+            role: "user" as const,
+            lastSignedIn: new Date().toISOString(),
+          };
+
+          // Set session cookie
+          const sessionToken = "demo-session-" + Date.now();
+          const cookieOptions = getSessionCookieOptions(ctx.req);
+          ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+
+          return {
+            success: true,
+            user: mockUser,
+            sessionToken,
+          };
+        }
+
+        throw new Error("Email veya şifre hatalı");
+      }),
   }),
 
   // Agency management routes (public - no auth required for shared data)

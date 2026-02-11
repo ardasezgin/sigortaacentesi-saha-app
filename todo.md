@@ -93,3 +93,10 @@
 - [x] Menüden veri yükle butonunu kaldır
 - [x] ClickUp OAuth login'i aktif et (BYPASS_AUTH = false)
 - [x] Test et (login ekranı görünüyor, 19,364 acente kaydı korundu)
+
+## Sunum için Hardcoded Login
+
+- [x] Login sayfasına test@demo.com / 123123123 hardcoded login ekle
+- [x] Backend'e basit login endpoint ekle (hardcoded user döndürecek)
+- [x] Session oluşturma ve auth guard entegrasyonu
+- [x] Test et (49 test başarılı)

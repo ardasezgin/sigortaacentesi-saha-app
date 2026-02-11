@@ -241,6 +241,25 @@ class SDKServer {
 
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = token || cookies.get(COOKIE_NAME);
+    
+    // Hardcoded demo session for presentation (test@demo.com)
+    if (sessionCookie && sessionCookie.startsWith("demo-session-")) {
+      // Return hardcoded demo user
+      const demoUser = await db.getUserByOpenId("demo-user");
+      if (!demoUser) {
+        // Create demo user if not exists
+        await db.upsertUser({
+          openId: "demo-user",
+          name: "Demo Kullanıcı",
+          email: "test@demo.com",
+          loginMethod: "hardcoded",
+          lastSignedIn: new Date(),
+        });
+        return (await db.getUserByOpenId("demo-user"))!;
+      }
+      return demoUser;
+    }
+    
     const session = await this.verifySession(sessionCookie);
 
     if (!session) {
