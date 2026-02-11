@@ -48,3 +48,9 @@
 - [x] Login ekranını geçici olarak bypass et
 - [x] Dashboard'a direkt erişim sağla
 - [x] Test et
+
+## Acente Verileri Sorunu
+
+- [x] Acente verilerinin nerede saklandığını tespit et (assets/agencies.json + IndexedDB/AsyncStorage)
+- [x] Kaybolmuş verileri geri yükle veya yeniden ekle (forceReloadAgencies butonu eklendi)
+- [x] Test et

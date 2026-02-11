@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import type { DashboardMetrics } from '@/lib/types/visit';
@@ -58,9 +59,33 @@ export default function DashboardScreen() {
       const result = await initializeAgencies();
       if (result.success) {
         console.log('Acente verileri yüklendi:', result.count);
+        // Metrics'i yeniden yükle
+        await loadMetrics();
       }
     } catch (error) {
       console.error('Otomatik Excel yükleme hatası:', error);
+    }
+  };
+
+  const forceReloadAgencies = async () => {
+    try {
+      setIsLoading(true);
+      // Initialization flag'ı sıfırla
+      await AsyncStorage.removeItem('agencies_initialized');
+      await AsyncStorage.removeItem('agencies');
+      
+      // Verileri yeniden yükle
+      const result = await initializeAgencies();
+      
+      if (result.success) {
+        Alert.alert('Başarılı', `${result.count} acente kaydı yüklendi`);
+        await loadMetrics();
+      }
+    } catch (error) {
+      console.error('Force reload hatası:', error);
+      Alert.alert('Hata', 'Acente verileri yüklenemedi');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -242,7 +267,32 @@ export default function DashboardScreen() {
             </Text>
           </View>
 
-          {/* Veri yükleme butonları menüye taşındı */}
+          {/* Acente Verileri Yükleme Butonu */}
+          {metrics.totalAgencies === 0 && (
+            <View className="bg-primary/10 rounded-2xl p-4 border border-primary">
+              <Text className="text-lg font-bold text-foreground mb-2">
+                📊 Acente Verileri Yükle
+              </Text>
+              <Text className="text-sm text-muted mb-4">
+                19,364 acente kaydı yüklenecek
+              </Text>
+              <TouchableOpacity
+                onPress={forceReloadAgencies}
+                disabled={isLoading}
+                style={{
+                  paddingVertical: 12,
+                  paddingHorizontal: 24,
+                  borderRadius: 12,
+                  backgroundColor: colors.primary,
+                  opacity: isLoading ? 0.5 : 1,
+                }}
+              >
+                <Text className="text-white font-semibold text-center">
+                  {isLoading ? 'Yüklenıyor...' : 'Acenteleri Yükle'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           {/* Backend Migration Butonu */}
           {(backendAgencyCount === null || backendAgencyCount === 0) && metrics.totalAgencies > 0 && (
