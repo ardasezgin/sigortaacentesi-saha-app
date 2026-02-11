@@ -15,7 +15,7 @@ import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import type { Request, RequestType, RequestStatus, Priority } from '@/lib/types/visit';
 import type { Agency } from '@/lib/types/agency';
-import { findAgencyByLevhaNo, findAgencyByName } from '@/lib/services/init-agencies';
+import { findAgencyByLevhaNo, findAgencyByName } from '@/lib/services/agency-service';
 import { addRequest, getAllRequests, updateRequest } from '@/lib/services/visit-storage';
 import { createClickUpTask, mapPriorityToClickUp, mapStatusToClickUp } from '@/lib/services/clickup';
 
@@ -46,6 +46,76 @@ export default function RequestsScreen() {
   useEffect(() => {
     loadData();
   }, []);
+
+  // Levha no değiştiğinde otomatik arama
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (levhaNo.trim().length >= 3) {
+        await searchByLevhaNo(levhaNo.trim());
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(searchTimeout);
+  }, [levhaNo]);
+
+  // Acente adı değiştiğinde otomatik arama
+  useEffect(() => {
+    const searchTimeout = setTimeout(async () => {
+      if (acenteAdi.trim().length >= 5) {
+        await searchByName(acenteAdi.trim());
+      }
+    }, 300); // 300ms debounce
+
+    return () => clearTimeout(searchTimeout);
+  }, [acenteAdi]);
+
+  const searchByLevhaNo = async (searchLevhaNo: string) => {
+    setIsSearchingLevha(true);
+    try {
+      const agency = await findAgencyByLevhaNo(searchLevhaNo);
+      
+      if (agency) {
+        setAcenteAdi(agency.acenteUnvani);
+        setSelectedAgency(agency);
+        setIsAutoFilled(true);
+        
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } else {
+        setIsAutoFilled(false);
+        setSelectedAgency(null);
+      }
+    } catch (error) {
+      console.error('Levha no arama hatası:', error);
+    } finally {
+      setIsSearchingLevha(false);
+    }
+  };
+
+  const searchByName = async (searchName: string) => {
+    setIsSearchingName(true);
+    try {
+      const agency = await findAgencyByName(searchName);
+      
+      if (agency) {
+        setLevhaNo(agency.levhaNo);
+        setSelectedAgency(agency);
+        setIsAutoFilled(true);
+        
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } else {
+        setIsAutoFilled(false);
+        setSelectedAgency(null);
+      }
+    } catch (error) {
+      console.error('Acente adı arama hatası:', error);
+    } finally {
+      setIsSearchingName(false);
+    }
+  };
 
   const loadData = async () => {
     try {

@@ -68,3 +68,9 @@
 - [x] Acente adının ilk 5 harfi ile arama yap
 - [x] PostgreSQL'den çalışacak şekilde entegre et
 - [x] Test et (44 test başarılı)
+
+## Kritik Hatalar
+
+- [x] Database'de 19,364 kayıt var ama uygulama 3,124 gösteriyor - düzelt (19,000 kayıt yüklendi)
+- [x] Ziyaret/Arama sayfasında otomatik doldurma çalışmıyor - düzelt
+- [x] Talep/İstek/Şikayet sayfasında otomatik doldurma çalışmıyor - düzelt

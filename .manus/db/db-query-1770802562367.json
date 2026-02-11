@@ -1,0 +1,13 @@
+{
+  "query": "SELECT COUNT(*) as total FROM agencies;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT COUNT(*) as total FROM agencies;",
+  "rows": [
+    {
+      "total": "657"
+    }
+  ],
+  "messages": [],
+  "stdout": "total\n657\n",
+  "stderr": "",
+  "execution_time_ms": 1506
+}
