@@ -16,5 +16,11 @@
 
 ## Sonraki Adımlar
 
-- [ ] GitHub'a push işlemi
+- [x] GitHub'a push işlemi
 - [ ] Kullanıcı testleri
+
+## Yeni Özellikler
+
+- [x] Login ekranı tasarımı ve UI
+- [x] Authentication flow entegrasyonu
+- [x] Login ekranı testleri

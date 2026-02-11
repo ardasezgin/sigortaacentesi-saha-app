@@ -1,11 +1,13 @@
 import { Drawer } from 'expo-router/drawer';
 import { useColors } from '@/hooks/use-colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
+import { AuthGuard } from '@/components/auth-guard';
 
 export default function DrawerLayout() {
   const colors = useColors();
 
   return (
+    <AuthGuard>
     <Drawer
       initialRouteName="dashboard"
       screenOptions={{
@@ -79,5 +81,6 @@ export default function DrawerLayout() {
         }}
       />
     </Drawer>
+    </AuthGuard>
   );
 }
