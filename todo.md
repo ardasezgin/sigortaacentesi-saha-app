@@ -87,3 +87,9 @@
 - [x] Acenteler listesi kodunu kontrol et
 - [x] Frontend limit/filter sorununu düzelt
 - [x] Excel dosyasını doğru schema ile database'e yükle (19,364 kayıt başarılı)
+
+## Veri Yükle Butonu Kaldırma ve ClickUp Login
+
+- [x] Menüden veri yükle butonunu kaldır
+- [x] ClickUp OAuth login'i aktif et (BYPASS_AUTH = false)
+- [x] Test et (login ekranı görünüyor, 19,364 acente kaydı korundu)

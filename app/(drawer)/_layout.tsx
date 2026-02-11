@@ -70,16 +70,7 @@ export default function DrawerLayout() {
           ),
         }}
       />
-      <Drawer.Screen
-        name="data-upload"
-        options={{
-          title: 'Veri Yükle',
-          drawerLabel: 'Veri Yükle',
-          drawerIcon: ({ color, size }) => (
-            <IconSymbol name="arrow.up.doc.fill" color={color} size={size} />
-          ),
-        }}
-      />
+
     </Drawer>
     </AuthGuard>
   );

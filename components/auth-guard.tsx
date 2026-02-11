@@ -15,8 +15,8 @@ interface AuthGuardProps {
  * TEMPORARY: Auth bypass enabled for screenshot testing
  */
 export function AuthGuard({ children }: AuthGuardProps) {
-  // TEMPORARY: Bypass auth for testing
-  const BYPASS_AUTH = true;
+  // ClickUp OAuth login is now active
+  const BYPASS_AUTH = false;
   
   if (BYPASS_AUTH) {
     return <>{children}</>;
