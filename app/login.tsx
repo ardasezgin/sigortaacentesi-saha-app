@@ -14,7 +14,6 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
-import { startClickUpOAuth } from "@/lib/clickup-oauth";
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -170,45 +169,6 @@ export default function LoginScreen() {
                   Giriş Yap
                 </Text>
               )}
-              </View>
-            </Pressable>
-
-            {/* Divider */}
-            <View className="flex-row items-center gap-4 my-6">
-              <View className="flex-1 h-px bg-border" />
-              <Text className="text-sm text-muted">veya</Text>
-              <View className="flex-1 h-px bg-border" />
-            </View>
-
-            {/* ClickUp OAuth Button */}
-            <Pressable
-              onPress={async () => {
-                try {
-                  if (Platform.OS !== "web") {
-                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                  }
-                  await startClickUpOAuth();
-                } catch (err) {
-                  console.error('ClickUp OAuth error:', err);
-                  setError('ClickUp ile giriş yapılamadı');
-                  if (Platform.OS !== "web") {
-                    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-                  }
-                }
-              }}
-              disabled={isLoggingIn}
-              style={({ pressed }) => ({
-                opacity: pressed ? 0.9 : 1,
-                transform: [{ scale: pressed ? 0.98 : 1 }],
-              })}
-            >
-              <View className="bg-surface border-2 border-primary rounded-xl py-4 items-center flex-row justify-center gap-3">
-                <View className="w-6 h-6 rounded bg-primary items-center justify-center">
-                  <Text className="text-white text-xs font-bold">CU</Text>
-                </View>
-                <Text className="text-foreground text-base font-semibold">
-                  ClickUp ile Giriş Yap
-                </Text>
               </View>
             </Pressable>
 

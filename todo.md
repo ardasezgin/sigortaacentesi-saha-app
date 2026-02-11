@@ -35,3 +35,10 @@
 ## Bugfix
 
 - [x] ClickUp OAuth login çalışmıyor - sorunu tespit et ve düzelt (credentials eklendi)
+
+## Merkezi ClickUp Token Sistemi
+
+- [x] OAuth butonunu kaldır
+- [x] Merkezi ClickUp Personal API Token ekle
+- [x] ClickUp servisini merkezi token ile güncelle
+- [x] Test et (41 test başarılı, ClickUp API bağlantısı çalışıyor)
