@@ -66,3 +66,95 @@ export const agencies = mysqlTable("agencies", {
 
 export type Agency = typeof agencies.$inferSelect;
 export type InsertAgency = typeof agencies.$inferInsert;
+
+/**
+ * Visits table - stores visit/call records
+ * Each visit is linked to an agency via levhaNo
+ */
+export const visits = mysqlTable("visits", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Communication type */
+  iletisimTuru: varchar("iletisimTuru", { length: 50 }).notNull(),
+  /** Partner type */
+  isOrtagi: varchar("isOrtagi", { length: 100 }).notNull(),
+  /** Agency levha number (foreign key to agencies) */
+  levhaNo: varchar("levhaNo", { length: 50 }).notNull(),
+  /** Agency name (denormalized for quick access) */
+  acenteAdi: text("acenteAdi").notNull(),
+  /** Person contacted */
+  kimleGorusuldu: varchar("kimleGorusuldu", { length: 255 }).notNull(),
+  /** Visit/call date */
+  tarih: varchar("tarih", { length: 50 }).notNull(),
+  /** Agenda/topic */
+  gundem: varchar("gundem", { length: 100 }).notNull(),
+  /** Detailed description */
+  detayAciklama: text("detayAciklama").notNull(),
+  /** Reminder note */
+  hatirlatma: text("hatirlatma"),
+  /** Reminder date */
+  hatirlatmaTarihi: varchar("hatirlatmaTarihi", { length: 50 }),
+  /** Uploaded files (JSON array) */
+  dosyalar: text("dosyalar"),
+  /** Created by user (email or openId) */
+  createdBy: varchar("createdBy", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+});
+
+export type Visit = typeof visits.$inferSelect;
+export type InsertVisit = typeof visits.$inferInsert;
+
+/**
+ * Communications table - stores communication records
+ */
+export const communications = mysqlTable("communications", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Agency levha number */
+  levhaNo: varchar("levhaNo", { length: 50 }).notNull(),
+  /** Agency name (denormalized) */
+  acenteAdi: text("acenteAdi"),
+  /** Communication type */
+  type: varchar("type", { length: 50 }).notNull(),
+  /** Subject */
+  subject: varchar("subject", { length: 255 }).notNull(),
+  /** Notes/details */
+  notes: text("notes").notNull(),
+  /** Created by user */
+  createdBy: varchar("createdBy", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+});
+
+export type Communication = typeof communications.$inferSelect;
+export type InsertCommunication = typeof communications.$inferInsert;
+
+/**
+ * Requests table - stores request/complaint records
+ */
+export const requests = mysqlTable("requests", {
+  id: int("id").autoincrement().primaryKey(),
+  /** Agency levha number */
+  levhaNo: varchar("levhaNo", { length: 50 }).notNull(),
+  /** Agency name (denormalized) */
+  acenteAdi: text("acenteAdi"),
+  /** Request type: Talep, İstek, Şikayet */
+  requestType: varchar("requestType", { length: 50 }).notNull(),
+  /** Priority: Düşük, Orta, Yüksek */
+  priority: varchar("priority", { length: 50 }).notNull(),
+  /** Status: Açık, Devam Ediyor, Çözüldü */
+  status: varchar("status", { length: 50 }).notNull(),
+  /** Subject/title */
+  subject: varchar("subject", { length: 255 }).notNull(),
+  /** Detailed description */
+  description: text("description").notNull(),
+  /** Response/solution */
+  response: text("response"),
+  /** Created by user */
+  createdBy: varchar("createdBy", { length: 255 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow(),
+  /** Resolved date */
+  resolvedAt: timestamp("resolvedAt"),
+});
+
+export type Request = typeof requests.$inferSelect;
+export type InsertRequest = typeof requests.$inferInsert;

@@ -100,3 +100,18 @@
 - [x] Backend'e basit login endpoint ekle (hardcoded user döndürecek)
 - [x] Session oluşturma ve auth guard entegrasyonu
 - [x] Test et (49 test başarılı)
+
+## Verileri PostgreSQL'e Taşıma ve Dashboard Güncelleme
+
+- [x] Database schema'ya visits tablosu ekle
+- [x] Database schema'ya communications tablosu ekle
+- [x] Database schema'ya requests tablosu ekle
+- [x] Backend API: visit CRUD endpoint'leri
+- [x] Backend API: communication CRUD endpoint'leri
+- [x] Backend API: request CRUD endpoint'leri
+- [x] Backend API: dashboard metrics endpoint'i (aktif/pasif sayıları)
+- [x] Frontend: visit-storage'ı backend API'ye bağla
+- [x] Frontend: dashboard'ı backend API'ye bağla
+- [x] Acente aktif/pasif güncelleme dashboard'da anlık yansısın
+- [x] Migration çalıştır
+- [x] Test et (50 test başarılı)

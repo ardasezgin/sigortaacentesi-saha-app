@@ -1,56 +1,135 @@
 /**
  * Ziyaret, iletişim ve talep verileri için storage servisi
+ * Backend PostgreSQL database kullanıyor (AsyncStorage yerine)
  */
 
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createTRPCClient, httpBatchLink } from '@trpc/client';
+import superjson from 'superjson';
+import type { AppRouter } from '@/server/routers';
+import { getApiBaseUrl } from '@/constants/oauth';
+import * as Auth from '@/lib/_core/auth';
 import type { Visit, Communication, Request, DashboardMetrics } from '../types/visit';
-import { getAllAgencies } from './storage';
 
-const VISITS_KEY = '@sigortaacentesi:visits';
-const COMMUNICATIONS_KEY = '@sigortaacentesi:communications';
-const REQUESTS_KEY = '@sigortaacentesi:requests';
+/**
+ * Vanilla tRPC client for non-React contexts
+ */
+const vanillaTrpc = createTRPCClient<AppRouter>({
+  links: [
+    httpBatchLink({
+      url: `${getApiBaseUrl()}/api/trpc`,
+      transformer: superjson,
+      async headers() {
+        const token = await Auth.getSessionToken();
+        return token ? { Authorization: `Bearer ${token}` } : {};
+      },
+      fetch(url, options) {
+        return fetch(url, {
+          ...options,
+          credentials: 'include',
+        });
+      },
+    }),
+  ],
+});
 
 // ============ ZİYARETLER ============
 
 export async function getAllVisits(): Promise<Visit[]> {
   try {
-    const data = await AsyncStorage.getItem(VISITS_KEY);
-    return data ? JSON.parse(data) : [];
+    const visits = await vanillaTrpc.visits.getAll.query();
+    // Convert database IDs to string format for compatibility
+    return visits.map(v => ({
+      ...v,
+      id: String(v.id),
+      dosyalar: v.dosyalar ? JSON.parse(v.dosyalar) : undefined,
+    })) as any;
   } catch (error) {
-    console.error('Ziyaretler yüklenirken hata:', error);
+    console.error('[VisitStorage] getAllVisits error:', error);
     return [];
   }
 }
 
 export async function addVisit(visit: Visit): Promise<boolean> {
   try {
-    const visits = await getAllVisits();
-    visits.unshift(visit); // En yeni kayıt başa
-    await AsyncStorage.setItem(VISITS_KEY, JSON.stringify(visits));
+    await vanillaTrpc.visits.add.mutate({
+      iletisimTuru: visit.iletisimTuru,
+      isOrtagi: visit.isOrtagi,
+      levhaNo: visit.levhaNo,
+      acenteAdi: visit.acenteAdi,
+      kimleGorusuldu: visit.kimleGorusuldu,
+      tarih: visit.tarih,
+      gundem: visit.gundem,
+      detayAciklama: visit.detayAciklama,
+      hatirlatma: visit.hatirlatma,
+      hatirlatmaTarihi: visit.hatirlatmaTarihi,
+      dosyalar: visit.dosyalar ? JSON.stringify(visit.dosyalar) : undefined,
+      createdBy: visit.createdBy,
+    });
     return true;
   } catch (error) {
-    console.error('Ziyaret eklenirken hata:', error);
+    console.error('[VisitStorage] addVisit error:', error);
     return false;
   }
 }
 
 export async function getVisitsByAgency(levhaNo: string): Promise<Visit[]> {
   try {
-    const visits = await getAllVisits();
-    return visits.filter(v => v.levhaNo === levhaNo);
+    const visits = await vanillaTrpc.visits.getByAgency.query({ levhaNo });
+    return visits.map(v => ({
+      ...v,
+      id: String(v.id),
+      dosyalar: v.dosyalar ? JSON.parse(v.dosyalar) : undefined,
+    })) as any;
   } catch (error) {
-    console.error('Acente ziyaretleri yüklenirken hata:', error);
+    console.error('[VisitStorage] getVisitsByAgency error:', error);
     return [];
   }
 }
 
 export async function getRecentVisits(count: number = 10): Promise<Visit[]> {
   try {
-    const visits = await getAllVisits();
-    return visits.slice(0, count);
+    const visits = await vanillaTrpc.visits.getRecent.query({ limit: count });
+    return visits.map(v => ({
+      ...v,
+      id: String(v.id),
+      dosyalar: v.dosyalar ? JSON.parse(v.dosyalar) : undefined,
+    })) as any;
   } catch (error) {
-    console.error('Son ziyaretler yüklenirken hata:', error);
+    console.error('[VisitStorage] getRecentVisits error:', error);
     return [];
+  }
+}
+
+export async function updateVisit(id: string, updates: Partial<Visit>): Promise<boolean> {
+  try {
+    await vanillaTrpc.visits.update.mutate({
+      id: parseInt(id),
+      data: {
+        iletisimTuru: updates.iletisimTuru,
+        isOrtagi: updates.isOrtagi,
+        kimleGorusuldu: updates.kimleGorusuldu,
+        tarih: updates.tarih,
+        gundem: updates.gundem,
+        detayAciklama: updates.detayAciklama,
+        hatirlatma: updates.hatirlatma,
+        hatirlatmaTarihi: updates.hatirlatmaTarihi,
+        dosyalar: updates.dosyalar ? JSON.stringify(updates.dosyalar) : undefined,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error('[VisitStorage] updateVisit error:', error);
+    return false;
+  }
+}
+
+export async function deleteVisit(id: string): Promise<boolean> {
+  try {
+    await vanillaTrpc.visits.delete.mutate({ id: parseInt(id) });
+    return true;
+  } catch (error) {
+    console.error('[VisitStorage] deleteVisit error:', error);
+    return false;
   }
 }
 
@@ -58,33 +137,31 @@ export async function getRecentVisits(count: number = 10): Promise<Visit[]> {
 
 export async function getAllCommunications(): Promise<Communication[]> {
   try {
-    const data = await AsyncStorage.getItem(COMMUNICATIONS_KEY);
-    return data ? JSON.parse(data) : [];
+    const communications = await vanillaTrpc.communications.getAll.query();
+    return communications.map(c => ({
+      ...c,
+      id: String(c.id),
+    })) as any;
   } catch (error) {
-    console.error('İletişimler yüklenirken hata:', error);
+    console.error('[VisitStorage] getAllCommunications error:', error);
     return [];
   }
 }
 
 export async function addCommunication(communication: Communication): Promise<boolean> {
   try {
-    const communications = await getAllCommunications();
-    communications.unshift(communication);
-    await AsyncStorage.setItem(COMMUNICATIONS_KEY, JSON.stringify(communications));
+    await vanillaTrpc.communications.add.mutate({
+      levhaNo: communication.levhaNo,
+      acenteAdi: communication.acenteAdi,
+      type: communication.type,
+      subject: communication.subject,
+      notes: communication.notes,
+      createdBy: communication.createdBy,
+    });
     return true;
   } catch (error) {
-    console.error('İletişim eklenirken hata:', error);
+    console.error('[VisitStorage] addCommunication error:', error);
     return false;
-  }
-}
-
-export async function getCommunicationsByAgency(levhaNo: string): Promise<Communication[]> {
-  try {
-    const communications = await getAllCommunications();
-    return communications.filter(c => c.levhaNo === levhaNo);
-  } catch (error) {
-    console.error('Acente iletişimleri yüklenirken hata:', error);
-    return [];
   }
 }
 
@@ -92,60 +169,67 @@ export async function getCommunicationsByAgency(levhaNo: string): Promise<Commun
 
 export async function getAllRequests(): Promise<Request[]> {
   try {
-    const data = await AsyncStorage.getItem(REQUESTS_KEY);
-    return data ? JSON.parse(data) : [];
+    const requests = await vanillaTrpc.requests.getAll.query();
+    return requests.map(r => ({
+      ...r,
+      id: String(r.id),
+      resolvedAt: r.resolvedAt ? r.resolvedAt.toISOString() : undefined,
+    })) as any;
   } catch (error) {
-    console.error('Talepler yüklenirken hata:', error);
+    console.error('[VisitStorage] getAllRequests error:', error);
+    return [];
+  }
+}
+
+export async function getRecentRequests(count: number = 10): Promise<Request[]> {
+  try {
+    const requests = await vanillaTrpc.requests.getRecent.query({ limit: count });
+    return requests.map(r => ({
+      ...r,
+      id: String(r.id),
+      resolvedAt: r.resolvedAt ? r.resolvedAt.toISOString() : undefined,
+    })) as any;
+  } catch (error) {
+    console.error('[VisitStorage] getRecentRequests error:', error);
     return [];
   }
 }
 
 export async function addRequest(request: Request): Promise<boolean> {
   try {
-    const requests = await getAllRequests();
-    requests.unshift(request);
-    await AsyncStorage.setItem(REQUESTS_KEY, JSON.stringify(requests));
+    await vanillaTrpc.requests.add.mutate({
+      levhaNo: request.levhaNo,
+      acenteAdi: request.acenteAdi,
+      requestType: request.requestType,
+      priority: request.priority,
+      status: request.status,
+      subject: request.subject,
+      description: request.description,
+      response: request.response,
+      createdBy: request.createdBy,
+    });
     return true;
   } catch (error) {
-    console.error('Talep eklenirken hata:', error);
+    console.error('[VisitStorage] addRequest error:', error);
     return false;
   }
 }
 
-export async function updateRequest(updatedRequest: Request): Promise<boolean> {
+export async function updateRequest(id: string, updates: Partial<Request>): Promise<boolean> {
   try {
-    const requests = await getAllRequests();
-    const index = requests.findIndex(r => r.id === updatedRequest.id);
-    
-    if (index >= 0) {
-      requests[index] = updatedRequest;
-      await AsyncStorage.setItem(REQUESTS_KEY, JSON.stringify(requests));
-      return true;
-    }
+    await vanillaTrpc.requests.update.mutate({
+      id: parseInt(id),
+      data: {
+        status: updates.status,
+        priority: updates.priority,
+        response: updates.response,
+        resolvedAt: updates.resolvedAt ? new Date(updates.resolvedAt) : undefined,
+      },
+    });
+    return true;
+  } catch (error) {
+    console.error('[VisitStorage] updateRequest error:', error);
     return false;
-  } catch (error) {
-    console.error('Talep güncellenirken hata:', error);
-    return false;
-  }
-}
-
-export async function getRequestsByAgency(levhaNo: string): Promise<Request[]> {
-  try {
-    const requests = await getAllRequests();
-    return requests.filter(r => r.levhaNo === levhaNo);
-  } catch (error) {
-    console.error('Acente talepleri yüklenirken hata:', error);
-    return [];
-  }
-}
-
-export async function getOpenRequests(): Promise<Request[]> {
-  try {
-    const requests = await getAllRequests();
-    return requests.filter(r => r.status !== 'Çözüldü');
-  } catch (error) {
-    console.error('Açık talepler yüklenirken hata:', error);
-    return [];
   }
 }
 
@@ -153,47 +237,22 @@ export async function getOpenRequests(): Promise<Request[]> {
 
 export async function getDashboardMetrics(): Promise<DashboardMetrics> {
   try {
-    const agencies = await getAllAgencies();
-    const visits = await getAllVisits();
-    const requests = await getAllRequests();
-
-    const now = new Date();
-    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-
-    const totalAgencies = agencies.length;
-    const activeAgencies = agencies.filter(a => a.isActive !== 0).length;
-    const passiveAgencies = agencies.filter(a => a.isActive === 0).length;
-
-    const totalVisitsThisWeek = visits.filter(
-      v => new Date(v.tarih) >= weekAgo
-    ).length;
-
-    const totalVisitsThisMonth = visits.filter(
-      v => new Date(v.tarih) >= monthAgo
-    ).length;
-
-    // Not: Yeni kayıt sayısı için AgencyLog'dan bakılabilir, şimdilik 0
-    const newAgenciesThisMonth = 0;
-
-    const openRequests = requests.filter(r => r.status !== 'Çözüldü').length;
-
-    const recentVisits = visits.slice(0, 5);
-    const recentRequests = requests.slice(0, 5);
-
+    const metrics = await vanillaTrpc.dashboard.getMetrics.query();
     return {
-      totalAgencies,
-      activeAgencies,
-      passiveAgencies,
-      totalVisitsThisWeek,
-      totalVisitsThisMonth,
-      newAgenciesThisMonth,
-      openRequests,
-      recentVisits,
-      recentRequests,
+      ...metrics,
+      recentVisits: metrics.recentVisits.map(v => ({
+        ...v,
+        id: String(v.id),
+        dosyalar: v.dosyalar ? JSON.parse(v.dosyalar) : undefined,
+      })) as any,
+      recentRequests: metrics.recentRequests.map(r => ({
+        ...r,
+        id: String(r.id),
+        resolvedAt: r.resolvedAt ? r.resolvedAt.toISOString() : undefined,
+      })) as any,
     };
   } catch (error) {
-    console.error('Dashboard metrikleri yüklenirken hata:', error);
+    console.error('[VisitStorage] getDashboardMetrics error:', error);
     return {
       totalAgencies: 0,
       activeAgencies: 0,

@@ -13,8 +13,7 @@ import * as Haptics from 'expo-haptics';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import type { DashboardMetrics } from '@/lib/types/visit';
-import { getDashboardMetrics as getLocalDashboardMetrics } from '@/lib/services/visit-storage';
-import { getAllAgencies } from '@/lib/services/agency-service';
+import { getDashboardMetrics } from '@/lib/services/visit-storage';
 import { getClickUpTasks, testClickUpConnection } from '@/lib/services/clickup';
 import type { ClickUpTask } from '@/lib/types/clickup';
 
@@ -39,43 +38,11 @@ export default function DashboardScreen() {
 
   const loadMetrics = async () => {
     try {
-      // Backend'den acente verilerini çek
-      const agencies = await getAllAgencies();
-      const backendCount = agencies.length;
-      
-      // Eğer backend'de veri varsa backend'den metrik hesapla
-      if (backendCount > 0) {
-        const activeCount = agencies.filter(a => a.isActive !== 0).length;
-        const passiveCount = agencies.filter(a => a.isActive === 0).length;
-        
-        // Local storage'dan ziyaret ve talep verilerini al (bunlar henüz backend'de değil)
-        const localMetrics = await getLocalDashboardMetrics();
-        
-        setMetrics({
-          totalAgencies: backendCount,
-          activeAgencies: activeCount,
-          passiveAgencies: passiveCount,
-          totalVisitsThisWeek: localMetrics.totalVisitsThisWeek,
-          totalVisitsThisMonth: localMetrics.totalVisitsThisMonth,
-          newAgenciesThisMonth: localMetrics.newAgenciesThisMonth,
-          openRequests: localMetrics.openRequests,
-          recentVisits: localMetrics.recentVisits,
-          recentRequests: localMetrics.recentRequests,
-        });
-      } else {
-        // Backend'de veri yoksa local metrics kullan
-        const localMetrics = await getLocalDashboardMetrics();
-        setMetrics(localMetrics);
-      }
+      // Backend'den tüm metrikleri çek (acente, ziyaret, talep)
+      const backendMetrics = await getDashboardMetrics();
+      setMetrics(backendMetrics);
     } catch (error) {
       console.error('Metrics yüklenirken hata:', error);
-      // Hata durumunda local metrics'i dene
-      try {
-        const localMetrics = await getLocalDashboardMetrics();
-        setMetrics(localMetrics);
-      } catch (localError) {
-        console.error('Local metrics yüklenemedi:', localError);
-      }
     } finally {
       setIsLoading(false);
     }

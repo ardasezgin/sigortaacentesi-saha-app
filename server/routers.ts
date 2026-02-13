@@ -130,6 +130,175 @@ export const appRouter = router({
       return await importAgenciesFromExcel();
     }),
   }),
+
+  // Visit management routes
+  visits: router({
+    // Get all visits
+    getAll: publicProcedure.query(async () => {
+      return await db.getAllVisits();
+    }),
+
+    // Get visits by agency
+    getByAgency: publicProcedure
+      .input(z.object({ levhaNo: z.string() }))
+      .query(async ({ input }) => {
+        return await db.getVisitsByAgency(input.levhaNo);
+      }),
+
+    // Get recent visits
+    getRecent: publicProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ input }) => {
+        return await db.getRecentVisits(input.limit);
+      }),
+
+    // Add a new visit
+    add: publicProcedure
+      .input(
+        z.object({
+          iletisimTuru: z.string(),
+          isOrtagi: z.string(),
+          levhaNo: z.string(),
+          acenteAdi: z.string(),
+          kimleGorusuldu: z.string(),
+          tarih: z.string(),
+          gundem: z.string(),
+          detayAciklama: z.string(),
+          hatirlatma: z.string().optional(),
+          hatirlatmaTarihi: z.string().optional(),
+          dosyalar: z.string().optional(),
+          createdBy: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const id = await db.addVisit(input);
+        return { success: true, id };
+      }),
+
+    // Update a visit
+    update: publicProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          data: z.object({
+            iletisimTuru: z.string().optional(),
+            isOrtagi: z.string().optional(),
+            kimleGorusuldu: z.string().optional(),
+            tarih: z.string().optional(),
+            gundem: z.string().optional(),
+            detayAciklama: z.string().optional(),
+            hatirlatma: z.string().optional(),
+            hatirlatmaTarihi: z.string().optional(),
+            dosyalar: z.string().optional(),
+          }),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await db.updateVisit(input.id, input.data);
+        return { success: true };
+      }),
+
+    // Delete a visit
+    delete: publicProcedure
+      .input(z.object({ id: z.number() }))
+      .mutation(async ({ input }) => {
+        await db.deleteVisit(input.id);
+        return { success: true };
+      }),
+  }),
+
+  // Communication management routes
+  communications: router({
+    // Get all communications
+    getAll: publicProcedure.query(async () => {
+      return await db.getAllCommunications();
+    }),
+
+    // Add a new communication
+    add: publicProcedure
+      .input(
+        z.object({
+          levhaNo: z.string(),
+          acenteAdi: z.string().optional(),
+          type: z.string(),
+          subject: z.string(),
+          notes: z.string(),
+          createdBy: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const id = await db.addCommunication(input);
+        return { success: true, id };
+      }),
+  }),
+
+  // Request management routes
+  requests: router({
+    // Get all requests
+    getAll: publicProcedure.query(async () => {
+      return await db.getAllRequests();
+    }),
+
+    // Get recent requests
+    getRecent: publicProcedure
+      .input(z.object({ limit: z.number().optional() }))
+      .query(async ({ input }) => {
+        return await db.getRecentRequests(input.limit);
+      }),
+
+    // Add a new request
+    add: publicProcedure
+      .input(
+        z.object({
+          levhaNo: z.string(),
+          acenteAdi: z.string().optional(),
+          requestType: z.string(),
+          priority: z.string(),
+          status: z.string(),
+          subject: z.string(),
+          description: z.string(),
+          response: z.string().optional(),
+          createdBy: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const id = await db.addRequest(input);
+        return { success: true, id };
+      }),
+
+    // Update a request
+    update: publicProcedure
+      .input(
+        z.object({
+          id: z.number(),
+          data: z.object({
+            status: z.string().optional(),
+            priority: z.string().optional(),
+            response: z.string().optional(),
+            resolvedAt: z.date().optional(),
+          }),
+        })
+      )
+      .mutation(async ({ input }) => {
+        await db.updateRequest(input.id, input.data);
+        return { success: true };
+      }),
+  }),
+
+  // Dashboard metrics
+  dashboard: router({
+    // Get dashboard metrics
+    getMetrics: publicProcedure.query(async () => {
+      const metrics = await db.getDashboardMetrics();
+      const recentVisits = await db.getRecentVisits(5);
+      const recentRequests = await db.getRecentRequests(5);
+      return {
+        ...metrics,
+        recentVisits,
+        recentRequests,
+      };
+    }),
+  }),
 });
 
 export type AppRouter = typeof appRouter;

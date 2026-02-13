@@ -294,3 +294,335 @@ export async function getAgencyCount(): Promise<number> {
     return 0;
   }
 }
+
+// ============================================
+// VISIT DATABASE FUNCTIONS
+// ============================================
+
+import { visits, Visit, InsertVisit, communications, Communication, InsertCommunication, requests, Request, InsertRequest } from "../drizzle/schema";
+import { desc, and, gte, lte, count, sql } from "drizzle-orm";
+
+/**
+ * Get all visits
+ */
+export async function getAllVisits(): Promise<Visit[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get visits: database not available");
+    return [];
+  }
+
+  try {
+    const result = await db.select().from(visits).orderBy(desc(visits.createdAt));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get visits:", error);
+    return [];
+  }
+}
+
+/**
+ * Get visits by agency levha number
+ */
+export async function getVisitsByAgency(levhaNo: string): Promise<Visit[]> {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(visits)
+      .where(eq(visits.levhaNo, levhaNo))
+      .orderBy(desc(visits.createdAt));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get visits by agency:", error);
+    return [];
+  }
+}
+
+/**
+ * Get recent visits (limited)
+ */
+export async function getRecentVisits(limit: number = 10): Promise<Visit[]> {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(visits)
+      .orderBy(desc(visits.createdAt))
+      .limit(limit);
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get recent visits:", error);
+    return [];
+  }
+}
+
+/**
+ * Add a new visit
+ */
+export async function addVisit(data: InsertVisit): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    const result = await db.insert(visits).values(data);
+    return result[0].insertId;
+  } catch (error) {
+    console.error("[Database] Failed to add visit:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update a visit
+ */
+export async function updateVisit(id: number, data: Partial<InsertVisit>): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    await db.update(visits).set(data).where(eq(visits.id, id));
+  } catch (error) {
+    console.error("[Database] Failed to update visit:", error);
+    throw error;
+  }
+}
+
+/**
+ * Delete a visit
+ */
+export async function deleteVisit(id: number): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    await db.delete(visits).where(eq(visits.id, id));
+  } catch (error) {
+    console.error("[Database] Failed to delete visit:", error);
+    throw error;
+  }
+}
+
+// ============================================
+// COMMUNICATION DATABASE FUNCTIONS
+// ============================================
+
+/**
+ * Get all communications
+ */
+export async function getAllCommunications(): Promise<Communication[]> {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const result = await db.select().from(communications).orderBy(desc(communications.createdAt));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get communications:", error);
+    return [];
+  }
+}
+
+/**
+ * Add a new communication
+ */
+export async function addCommunication(data: InsertCommunication): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    const result = await db.insert(communications).values(data);
+    return result[0].insertId;
+  } catch (error) {
+    console.error("[Database] Failed to add communication:", error);
+    throw error;
+  }
+}
+
+// ============================================
+// REQUEST DATABASE FUNCTIONS
+// ============================================
+
+/**
+ * Get all requests
+ */
+export async function getAllRequests(): Promise<Request[]> {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const result = await db.select().from(requests).orderBy(desc(requests.createdAt));
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get requests:", error);
+    return [];
+  }
+}
+
+/**
+ * Get recent requests (limited)
+ */
+export async function getRecentRequests(limit: number = 10): Promise<Request[]> {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(requests)
+      .orderBy(desc(requests.createdAt))
+      .limit(limit);
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get recent requests:", error);
+    return [];
+  }
+}
+
+/**
+ * Add a new request
+ */
+export async function addRequest(data: InsertRequest): Promise<number> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    const result = await db.insert(requests).values(data);
+    return result[0].insertId;
+  } catch (error) {
+    console.error("[Database] Failed to add request:", error);
+    throw error;
+  }
+}
+
+/**
+ * Update a request
+ */
+export async function updateRequest(id: number, data: Partial<InsertRequest>): Promise<void> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    await db.update(requests).set(data).where(eq(requests.id, id));
+  } catch (error) {
+    console.error("[Database] Failed to update request:", error);
+    throw error;
+  }
+}
+
+// ============================================
+// DASHBOARD METRICS FUNCTIONS
+// ============================================
+
+/**
+ * Get dashboard metrics (active/passive agencies, visits, requests)
+ */
+export async function getDashboardMetrics() {
+  const db = await getDb();
+  if (!db) {
+    return {
+      totalAgencies: 0,
+      activeAgencies: 0,
+      passiveAgencies: 0,
+      totalVisitsThisWeek: 0,
+      totalVisitsThisMonth: 0,
+      newAgenciesThisMonth: 0,
+      openRequests: 0,
+    };
+  }
+
+  try {
+    // Get agency counts
+    const totalAgenciesResult = await db.select({ count: count() }).from(agencies);
+    const totalAgencies = totalAgenciesResult[0]?.count || 0;
+
+    const activeAgenciesResult = await db
+      .select({ count: count() })
+      .from(agencies)
+      .where(eq(agencies.isActive, 1));
+    const activeAgencies = activeAgenciesResult[0]?.count || 0;
+
+    const passiveAgencies = totalAgencies - activeAgencies;
+
+    // Get visit counts (this week and this month)
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const visitsThisWeekResult = await db
+      .select({ count: count() })
+      .from(visits)
+      .where(gte(visits.createdAt, startOfWeek));
+    const totalVisitsThisWeek = visitsThisWeekResult[0]?.count || 0;
+
+    const visitsThisMonthResult = await db
+      .select({ count: count() })
+      .from(visits)
+      .where(gte(visits.createdAt, startOfMonth));
+    const totalVisitsThisMonth = visitsThisMonthResult[0]?.count || 0;
+
+    // Get new agencies this month
+    const newAgenciesResult = await db
+      .select({ count: count() })
+      .from(agencies)
+      .where(gte(agencies.createdAt, startOfMonth));
+    const newAgenciesThisMonth = newAgenciesResult[0]?.count || 0;
+
+    // Get open requests count
+    const openRequestsResult = await db
+      .select({ count: count() })
+      .from(requests)
+      .where(eq(requests.status, "Açık"));
+    const openRequests = openRequestsResult[0]?.count || 0;
+
+    return {
+      totalAgencies,
+      activeAgencies,
+      passiveAgencies,
+      totalVisitsThisWeek,
+      totalVisitsThisMonth,
+      newAgenciesThisMonth,
+      openRequests,
+    };
+  } catch (error) {
+    console.error("[Database] Failed to get dashboard metrics:", error);
+    return {
+      totalAgencies: 0,
+      activeAgencies: 0,
+      passiveAgencies: 0,
+      totalVisitsThisWeek: 0,
+      totalVisitsThisMonth: 0,
+      newAgenciesThisMonth: 0,
+      openRequests: 0,
+    };
+  }
+}
