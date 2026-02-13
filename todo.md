@@ -115,3 +115,9 @@
 - [x] Acente aktif/pasif güncelleme dashboard'da anlık yansısın
 - [x] Migration çalıştır
 - [x] Test et (50 test başarılı)
+
+## Dashboard Aktif/Pasif Sayısı Güncelleme Sorunu
+
+- [x] Dashboard'ın acente güncelleme sonrası yenilenmesini kontrol et
+- [x] Acente pasife çekildiğinde dashboard sayılarının güncellenmesini sağla (useFocusEffect eklendi)
+- [x] Test et (50 test başarılı)

@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   ScrollView,
   Text,
@@ -32,6 +33,13 @@ export default function DashboardScreen() {
   useEffect(() => {
     loadMetrics();
   }, []);
+
+  // Dashboard'a her geçişte metrikleri yenile
+  useFocusEffect(
+    useCallback(() => {
+      loadMetrics();
+    }, [])
+  );
 
   // Acente verileri artık PostgreSQL'de kalıcı olarak saklanıyor
   // Local storage yükleme kodları kaldırıldı
