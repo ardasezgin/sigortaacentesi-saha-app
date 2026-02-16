@@ -121,3 +121,15 @@
 - [x] Dashboard'ın acente güncelleme sonrası yenilenmesini kontrol et
 - [x] Acente pasife çekildiğinde dashboard sayılarının güncellenmesini sağla (useFocusEffect eklendi)
 - [x] Test et (50 test başarılı)
+
+## iOS TestFlight Deployment
+
+- [ ] Mevcut projenin checkpoint'ini al (güvenlik için)
+- [ ] EAS CLI kur ve yapılandır
+- [ ] eas.json konfigürasyon dosyası oluştur
+- [ ] Apple Developer hesabı bilgilerini al
+- [ ] EAS ile Apple Developer hesabını bağla
+- [ ] iOS production build oluştur
+- [ ] Build'i TestFlight'a yükle
+- [ ] TestFlight'ta test et
+- [ ] Kullanıcılar için TestFlight davetiye talimatları hazırla
