@@ -1,4 +1,4 @@
-# Sigorta Acentesi Saha Uygulaması
+# Aksiyon - Saha Uygulaması
 
 Sigorta acentesi saha çalışanları için mobil uygulama. Acente ziyaretlerini kaydetme, takip etme ve ClickUp ile entegre raporlama özellikleri sunar.
 

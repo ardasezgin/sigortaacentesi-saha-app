@@ -1,4 +1,4 @@
-# Sigorta Acentesi Saha Uygulaması - TODO
+# Aksiyon - Saha Uygulaması - TODO
 
 ## Tamamlanan Özellikler
 
@@ -124,12 +124,21 @@
 
 ## iOS TestFlight Deployment
 
-- [ ] Mevcut projenin checkpoint'ini al (güvenlik için)
-- [ ] EAS CLI kur ve yapılandır
-- [ ] eas.json konfigürasyon dosyası oluştur
-- [ ] Apple Developer hesabı bilgilerini al
+- [x] Mevcut projenin checkpoint'ini al (güvenlik için) - checkpoint: 95d11754
+- [x] EAS CLI kur ve yapılandır (v18.0.1)
+- [x] eas.json konfigürasyon dosyası oluştur
+- [x] Apple Developer hesabı bilgilerini al (sezginarda@yahoo.com)
 - [ ] EAS ile Apple Developer hesabını bağla
 - [ ] iOS production build oluştur
 - [ ] Build'i TestFlight'a yükle
 - [ ] TestFlight'ta test et
 - [ ] Kullanıcılar için TestFlight davetiye talimatları hazırla
+
+## Uygulama Adını "Aksiyon" Olarak Değiştir
+
+- [x] app.config.ts'de appName'i "Aksiyon" yap
+- [x] README.md'de uygulama adını güncelle
+- [x] app/login.tsx'de başlığı güncelle
+- [x] todo.md'de başlığı güncelle
+- [x] Testleri çalıştır (49 test başarılı)
+- [ ] Checkpoint kaydet

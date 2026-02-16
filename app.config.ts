@@ -28,7 +28,7 @@ const schemeFromBundleId = `manus${timestamp}`;
 
 const env = {
   // App branding - update these values directly (do not use env vars)
-  appName: "Sigortaacentesi Saha",
+  appName: "Aksiyon",
   appSlug: "sigortaacentesi-saha-app",
   // S3 URL of the app logo - set this to the URL returned by generate_image when creating custom logo
   // Leave empty to use the default icon from assets/images/icon.png
@@ -48,6 +48,9 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   extra: {
+    eas: {
+      projectId: "5ba9aef5-e478-41fd-aa49-fb8eda257082"
+    },
     CLICKUP_API_TOKEN: process.env.CLICKUP_API_TOKEN,
     CLICKUP_WORKSPACE_ID: process.env.CLICKUP_WORKSPACE_ID,
     CLICKUP_LIST_ID: process.env.CLICKUP_LIST_ID,

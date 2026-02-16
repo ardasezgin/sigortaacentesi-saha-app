@@ -106,7 +106,7 @@ export default function LoginScreen() {
               <Text className="text-4xl font-bold text-white">S</Text>
             </View>
             <Text className="text-3xl font-bold text-foreground mb-2">
-              Sigorta Acentesi
+              Aksiyon
             </Text>
             <Text className="text-base text-muted">Saha Uygulaması</Text>
           </View>
