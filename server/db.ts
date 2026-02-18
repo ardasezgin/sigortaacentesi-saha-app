@@ -626,3 +626,52 @@ export async function getDashboardMetrics() {
     };
   }
 }
+
+// ============================================
+// USER DATABASE FUNCTIONS (for ClickUp integration)
+// ============================================
+
+/**
+ * Find user by email
+ */
+export async function findUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot find user: database not available");
+    return null;
+  }
+
+  try {
+    const result = await db
+      .select()
+      .from(users)
+      .where(eq(users.email, email))
+      .limit(1);
+
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("[Database] Failed to find user by email:", error);
+    return null;
+  }
+}
+
+/**
+ * Update user's ClickUp user ID
+ */
+export async function updateUserClickUpId(userId: number, clickupUserId: string) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update user: database not available");
+    return;
+  }
+
+  try {
+    await db
+      .update(users)
+      .set({ clickupUserId })
+      .where(eq(users.id, userId));
+  } catch (error) {
+    console.error("[Database] Failed to update user ClickUp ID:", error);
+    throw error;
+  }
+}

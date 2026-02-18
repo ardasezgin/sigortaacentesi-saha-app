@@ -4,6 +4,7 @@ import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
+import { getClickUpClient } from "./services/clickup";
 import { importAgenciesFromExcel } from "./excel-import";
 
 export const appRouter = router({
@@ -282,6 +283,105 @@ export const appRouter = router({
       .mutation(async ({ input }) => {
         await db.updateRequest(input.id, input.data);
         return { success: true };
+      }),
+  }),
+
+  // ClickUp integration
+  clickup: router({
+    // Sync ClickUp users with database
+    syncUsers: publicProcedure.mutation(async () => {
+      const client = getClickUpClient();
+      if (!client) {
+        throw new Error("ClickUp API token not configured");
+      }
+
+      const users = await client.getAllUsers();
+      
+      // Match users by email and update clickupUserId
+      let synced = 0;
+      let failed = 0;
+      const errors: string[] = [];
+
+      for (const clickupUser of users) {
+        if (!clickupUser.email) {
+          continue;
+        }
+
+        try {
+          // Find user in database by email
+          const dbUser = await db.findUserByEmail(clickupUser.email);
+          if (dbUser) {
+            await db.updateUserClickUpId(dbUser.id, clickupUser.id.toString());
+            synced++;
+          }
+        } catch (error) {
+          failed++;
+          errors.push(`Failed to sync ${clickupUser.email}: ${error}`);
+        }
+      }
+
+      return {
+        success: true,
+        synced,
+        failed,
+        total: users.length,
+        errors,
+      };
+    }),
+
+    // Get all ClickUp users
+    getUsers: publicProcedure.query(async () => {
+      const client = getClickUpClient();
+      if (!client) {
+        throw new Error("ClickUp API token not configured");
+      }
+
+      const users = await client.getAllUsers();
+      return users;
+    }),
+
+    // Create a task in ClickUp
+    createTask: publicProcedure
+      .input(
+        z.object({
+          listId: z.string(),
+          name: z.string(),
+          description: z.string().optional(),
+          assigneeEmail: z.string().optional(),
+          priority: z.union([z.literal(1), z.literal(2), z.literal(3), z.literal(4)]).optional(),
+          dueDate: z.number().optional(),
+          tags: z.array(z.string()).optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const client = getClickUpClient();
+        if (!client) {
+          throw new Error("ClickUp API token not configured");
+        }
+
+        // If assigneeEmail is provided, find the ClickUp user ID
+        let assignees: number[] | undefined;
+        if (input.assigneeEmail) {
+          const dbUser = await db.findUserByEmail(input.assigneeEmail);
+          if (dbUser?.clickupUserId) {
+            assignees = [parseInt(dbUser.clickupUserId)];
+          }
+        }
+
+        const task = await client.createTask({
+          listId: input.listId,
+          name: input.name,
+          description: input.description,
+          assignees,
+          priority: input.priority,
+          dueDate: input.dueDate,
+          tags: input.tags,
+        });
+
+        return {
+          success: true,
+          task,
+        };
       }),
   }),
 

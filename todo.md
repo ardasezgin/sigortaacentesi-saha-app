@@ -141,4 +141,23 @@
 - [x] app/login.tsx'de başlığı güncelle
 - [x] todo.md'de başlığı güncelle
 - [x] Testleri çalıştır (49 test başarılı)
-- [ ] Checkpoint kaydet
+- [x] Checkpoint kaydet (c0f24549)
+
+## ClickUp Personal Token Entegrasyonu (Seçenek 2)
+
+- [x] ClickUp API Token environment variable ekle
+- [x] ClickUp API client oluştur (server/services/clickup.ts)
+- [x] ClickUp kullanıcılarını çek ve database'e sync et (clickup.syncUsers endpoint)
+- [x] Email ile otomatik user eşleştirme (database clickupUserId field)
+- [x] Form gönderiminde ClickUp task oluşturma (visit ve request formları)
+- [x] Task'ları otomatik doğru kullanıcıya assign et (assigneeEmail parametresi)
+- [x] Entegrasyonu end-to-end test et (57 test başarılı, 7 skipped)
+- [ ] TestFlight'a yeni build yükle
+
+## Backend URL Fix (Tamamlandı)
+
+- [x] Production backend URL yapılandır
+- [x] EAS Secret ekle (EXPO_PUBLIC_API_BASE_URL)
+- [x] iOS app'i doğru backend URL ile rebuild et
+- [x] TestFlight'a yükle
+- [x] Login fonksiyonelliğini test et

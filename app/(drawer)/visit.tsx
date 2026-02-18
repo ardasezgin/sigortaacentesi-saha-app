@@ -209,12 +209,13 @@ export default function VisitScreen() {
         await saveAgency(updatedAgency);
       }
 
-      // ClickUp'a gönder (opsiyonel)
+      // ClickUp'a gönder (opsiyonel, otomatik assignee ataması ile)
       try {
         await createClickUpTask({
           name: `[Ziyaret] ${acenteAdi} - ${gundem}`,
           description: `**İletişim Türü:** ${iletisimTuru}\n**İş Ortağı:** ${isOrtagi}\n**Levha No:** ${levhaNo}\n**Kimle Görüşüldü:** ${kimleGorusuldu}\n**Tarih:** ${tarih}\n**Gündem:** ${gundem}\n\n**Detay:**\n${detayAciklama}`,
           tags: ['Ziyaret', iletisimTuru, isOrtagi, gundem],
+          assigneeEmail: 'test@demo.com', // Giriş yapan kullanıcının emaili (şu an hardcoded)
         });
       } catch (clickupError) {
         console.warn('ClickUp gönderimi başarısız:', clickupError);

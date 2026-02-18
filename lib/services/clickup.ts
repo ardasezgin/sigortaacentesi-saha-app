@@ -79,23 +79,43 @@ export async function testClickUpConnection(): Promise<boolean> {
 }
 
 /**
- * ClickUp'ta yeni task oluştur
+ * ClickUp'ta yeni task oluştur (backend API üzerinden)
  */
 export async function createClickUpTask(
-  payload: CreateTaskPayload
+  payload: CreateTaskPayload & { assigneeEmail?: string }
 ): Promise<ClickUpTask | null> {
   try {
     const config = getConfig();
     
-    const response = await makeRequest<ClickUpTask>(
-      `/list/${config.listId}/task`,
-      {
-        method: 'POST',
-        body: JSON.stringify(payload),
-      }
-    );
+    // Backend API'ye gönder (otomatik assignee ataması için)
+    const apiBaseUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_BASE_URL || 
+                       process.env.EXPO_PUBLIC_API_BASE_URL;
+    
+    if (!apiBaseUrl) {
+      throw new Error('API base URL not configured');
+    }
 
-    return response;
+    const response = await fetch(`${apiBaseUrl}/api/clickup/createTask`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        listId: config.listId,
+        name: payload.name,
+        description: payload.description,
+        assigneeEmail: payload.assigneeEmail,
+        priority: payload.priority,
+        tags: payload.tags,
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`Backend API error: ${response.statusText}`);
+    }
+
+    const result = await response.json();
+    return result.task;
   } catch (error) {
     console.error('Failed to create ClickUp task:', error);
     return null;

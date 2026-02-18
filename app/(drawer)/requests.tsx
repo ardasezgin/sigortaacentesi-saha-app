@@ -179,7 +179,7 @@ export default function RequestsScreen() {
       
       console.log('[requests] Request başarıyla kaydedildi');
 
-      // ClickUp'ta task oluştur
+      // ClickUp'ta task oluştur (otomatik assignee ataması ile)
       let clickupSuccess = false;
       try {
         const clickupTask = await createClickUpTask({
@@ -187,6 +187,7 @@ export default function RequestsScreen() {
           description: `**Acente:** ${selectedAgency.acenteUnvani} (${selectedAgency.levhaNo})\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** Saha Personeli`,
           priority: mapPriorityToClickUp(priority),
           tags: ['Talep', requestType, selectedAgency.il || 'Bilinmeyen'],
+          assigneeEmail: 'test@demo.com', // Giriş yapan kullanıcının emaili (şu an hardcoded)
         });
         
         if (clickupTask) {

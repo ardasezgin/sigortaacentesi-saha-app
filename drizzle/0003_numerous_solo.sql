@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `clickupUserId` varchar(64);
