@@ -161,3 +161,14 @@
 - [x] iOS app'i doğru backend URL ile rebuild et
 - [x] TestFlight'a yükle
 - [x] Login fonksiyonelliğini test et
+
+
+## ClickUp User Sync Otomasyonu
+
+- [x] İlk uygulama açılışında otomatik user sync çalışsın (dashboard.tsx'e eklendi)
+- [x] Sync sonucu console'a loglanıyor
+- [x] Sync durumu AsyncStorage'da saklanıp tekrar tekrar çalışmıyor
+
+## GitHub Push
+
+- [x] Tüm değişiklikler GitHub'a push edildi (8d9785f)

@@ -17,6 +17,8 @@ import type { DashboardMetrics } from '@/lib/types/visit';
 import { getDashboardMetrics } from '@/lib/services/visit-storage';
 import { getClickUpTasks, testClickUpConnection } from '@/lib/services/clickup';
 import type { ClickUpTask } from '@/lib/types/clickup';
+import { isSyncCompleted, markSyncCompleted, getSyncMessage } from '@/lib/services/clickup-sync';
+import { trpc } from '@/lib/trpc';
 
 /**
  * Dashboard Ekranı - Satış Yöneticisi Performans Özeti
@@ -32,6 +34,7 @@ export default function DashboardScreen() {
 
   useEffect(() => {
     loadMetrics();
+    syncClickUpUsersOnFirstLaunch();
   }, []);
 
   // Dashboard'a her geçişte metrikleri yenile
@@ -40,6 +43,29 @@ export default function DashboardScreen() {
       loadMetrics();
     }, [])
   );
+
+  // ClickUp kullanıcılarını ilk açılışta sync et
+  const syncMutation = trpc.clickup.syncUsers.useMutation();
+
+  const syncClickUpUsersOnFirstLaunch = async () => {
+    try {
+      const alreadySynced = await isSyncCompleted();
+      if (alreadySynced) {
+        console.log('[Dashboard] ClickUp users already synced');
+        return;
+      }
+
+      console.log('[Dashboard] Syncing ClickUp users...');
+      const result = await syncMutation.mutateAsync();
+      
+      if (result.success) {
+        await markSyncCompleted();
+        console.log('[Dashboard] Sync completed:', getSyncMessage(result));
+      }
+    } catch (error) {
+      console.error('[Dashboard] Sync failed:', error);
+    }
+  };
 
   // Acente verileri artık PostgreSQL'de kalıcı olarak saklanıyor
   // Local storage yükleme kodları kaldırıldı
