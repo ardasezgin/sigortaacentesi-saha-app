@@ -1,0 +1,100 @@
+{
+  "query": "SELECT id, name, email, passwordHash IS NOT NULL as has_password FROM users ORDER BY email;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT id, name, email, passwordHash IS NOT NULL as has_password FROM users ORDER BY email;",
+  "rows": [
+    {
+      "id": "60001",
+      "name": "Ahmet Genç",
+      "email": "ahmet.genc@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30280",
+      "name": "Aybeniz APO",
+      "email": "aybeniz.apo@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30027",
+      "name": "Bo",
+      "email": "bogac.yurt@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30153",
+      "name": "Büşra Bulut",
+      "email": "busra.bulut@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30025",
+      "name": "Ezgi Özdemir",
+      "email": "ezgi.ozdemir@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30151",
+      "name": "FİLİZ BİRDAL",
+      "email": "filiz.birdal@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30250",
+      "name": "gokhan.genc@sigortaacentesi.com",
+      "email": "gokhan.genc@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30149",
+      "name": "HAKAN YAVUZTÜRK",
+      "email": "hakan.yavuzturk@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30024",
+      "name": "Kubra Oren",
+      "email": "kubra.oren@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30150",
+      "name": "Melisa sürmelioğlu",
+      "email": "melisa.surmelioglu@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30171",
+      "name": "meryemnur pehlivan",
+      "email": "meryempehlivan@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30026",
+      "name": "okkan.nurikadioglu@sigortaacentesi.com",
+      "email": "okkan.nurikadioglu@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30152",
+      "name": "Sena Tellioğlu",
+      "email": "senatellioglu@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30099",
+      "name": "Tamar Bilgisu",
+      "email": "tamar.bilgisu@sigortaacentesi.com",
+      "has_password": "1"
+    },
+    {
+      "id": "30249",
+      "name": "Tuğçe ALAGAŞ",
+      "email": "tugce.alagas@sigortaacentesi.com",
+      "has_password": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\thas_password\n60001\tAhmet Genç\tahmet.genc@sigortaacentesi.com\t1\n30280\tAybeniz APO\taybeniz.apo@sigortaacentesi.com\t1\n30027\tBo\tbogac.yurt@sigortaacentesi.com\t1\n30153\tBüşra Bulut\tbusra.bulut@sigortaacentesi.com\t1\n30025\tEzgi Özdemir\tezgi.ozdemir@sigortaacentesi.com\t1\n30151\tFİLİZ BİRDAL\tfiliz.birdal@sigortaacentesi.com\t1\n30250\tgokhan.genc@sigortaacentesi.com\tgokhan.genc@sigortaacentesi.com\t1\n30149\tHAKAN YAVUZTÜRK\thakan.yavuzturk@sigortaacentesi.com\t1\n30024\tKubra Oren\tkubra.oren@sigortaacentesi.com\t1\n30150\tMelisa sürmelioğlu\tmelisa.surmelioglu@sigortaacentesi.com\t1\n30171\tmeryemnur pehlivan\tmeryempehlivan@sigortaacentesi.com\t1\n30026\tokkan.nurikadioglu@sigortaacentesi.com\tokkan.nurikadioglu@sigortaacentesi.com\t1\n30152\tSena Tellioğlu\tsenatellioglu@sigortaacentesi.com\t1\n30099\tTamar Bilgisu\ttamar.bilgisu@sigortaacentesi.com\t1\n30249\tTuğçe ALAGAŞ\ttugce.alagas@sigortaacentesi.com\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1588
+}

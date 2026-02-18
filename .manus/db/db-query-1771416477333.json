@@ -1,0 +1,35 @@
+{
+  "query": "SELECT email, passwordHash IS NOT NULL as has_password, LENGTH(passwordHash) as hash_length FROM users WHERE email LIKE '%sigortaacentesi.com' LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT email, passwordHash IS NOT NULL as has_password, LENGTH(passwordHash) as hash_length FROM users WHERE email LIKE '%sigortaacentesi.com' LIMIT 5;",
+  "rows": [
+    {
+      "email": "kubra.oren@sigortaacentesi.com",
+      "has_password": "1",
+      "hash_length": "60"
+    },
+    {
+      "email": "ezgi.ozdemir@sigortaacentesi.com",
+      "has_password": "1",
+      "hash_length": "60"
+    },
+    {
+      "email": "okkan.nurikadioglu@sigortaacentesi.com",
+      "has_password": "1",
+      "hash_length": "60"
+    },
+    {
+      "email": "bogac.yurt@sigortaacentesi.com",
+      "has_password": "1",
+      "hash_length": "60"
+    },
+    {
+      "email": "tamar.bilgisu@sigortaacentesi.com",
+      "has_password": "1",
+      "hash_length": "60"
+    }
+  ],
+  "messages": [],
+  "stdout": "email\thas_password\thash_length\nkubra.oren@sigortaacentesi.com\t1\t60\nezgi.ozdemir@sigortaacentesi.com\t1\t60\nokkan.nurikadioglu@sigortaacentesi.com\t1\t60\nbogac.yurt@sigortaacentesi.com\t1\t60\ntamar.bilgisu@sigortaacentesi.com\t1\t60\n",
+  "stderr": "",
+  "execution_time_ms": 1501
+}

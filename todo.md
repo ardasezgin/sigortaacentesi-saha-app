@@ -197,4 +197,15 @@
 - [x] Çıkış yap butonu tepki vermiyor - sorunu tespit et (Drawer.Screen olarak eklendi)
 - [x] Butonu düzelt ve çalışır hale getir (logout.tsx sayfası oluşturuldu)
 - [x] Test et (57 test başarılı)
+- [x] Checkpoint kaydet (1f813b92)
+
+## Login Issue - Password Error
+
+- [x] Database'deki kullanıcıları kontrol et (196 kullanıcı bulundu)
+- [x] Şifre hash'lerini doğrula (Şifreler NULL idi, güncellendi)
+- [x] Tüm kullanıcıların şifrelerini güncelle (Aksiyon2026)
+- [x] Diğer domain kullanıcılarını sil (sadece @sigortaacentesi.com kaldı - 15 kullanıcı)
+- [x] SDK session validation'u düzelt (hardcoded demo kaldırıldı)
+- [x] getUserById() fonksiyonu eklendi
+- [x] Login'i test et (57 test başarılı)
 - [ ] Checkpoint kaydet

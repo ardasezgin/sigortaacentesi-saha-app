@@ -242,22 +242,21 @@ class SDKServer {
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = token || cookies.get(COOKIE_NAME);
     
-    // Hardcoded demo session for presentation (test@demo.com)
-    if (sessionCookie && sessionCookie.startsWith("demo-session-")) {
-      // Return hardcoded demo user
-      const demoUser = await db.getUserByOpenId("demo-user");
-      if (!demoUser) {
-        // Create demo user if not exists
-        await db.upsertUser({
-          openId: "demo-user",
-          name: "Demo Kullanıcı",
-          email: "test@demo.com",
-          loginMethod: "hardcoded",
-          lastSignedIn: new Date(),
-        });
-        return (await db.getUserByOpenId("demo-user"))!;
+    // Handle real user session tokens (format: session-{userId}-{timestamp})
+    if (sessionCookie && sessionCookie.startsWith("session-")) {
+      const parts = sessionCookie.split("-");
+      if (parts.length >= 3) {
+        const userId = parseInt(parts[1]);
+        if (!isNaN(userId)) {
+          // Find user by ID
+          const user = await db.getUserById(userId);
+          if (user) {
+            return user;
+          }
+        }
       }
-      return demoUser;
+      // Invalid session format
+      throw ForbiddenError("Invalid session cookie");
     }
     
     const session = await this.verifySession(sessionCookie);

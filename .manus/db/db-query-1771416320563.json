@@ -1,0 +1,150 @@
+{
+  "query": "SELECT id, name, email, passwordHash, clickupUserId FROM users LIMIT 20;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT id, name, email, passwordHash, clickupUserId FROM users LIMIT 20;",
+  "rows": [
+    {
+      "id": "1",
+      "name": "Demo Kullanıcı",
+      "email": "test@demo.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30001",
+      "name": "Test User",
+      "email": "test-1771404939624@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30002",
+      "name": "Test User",
+      "email": "test-1771404973666-4wb9g8@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30003",
+      "name": "Test User",
+      "email": "test-1771404975608-baoc5c@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30004",
+      "name": "Test User",
+      "email": "test-1771404976348-v1yer9@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30005",
+      "name": "Test User",
+      "email": "test-1771404977090-4a5p6@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30006",
+      "name": "Test User",
+      "email": "test-1771404999977-wbz3pi@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30007",
+      "name": "Test User",
+      "email": "test-1771405001947-i2f7ub@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30008",
+      "name": "Test User",
+      "email": "test-1771405002929-z6vnsl@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30009",
+      "name": "Test User",
+      "email": "test-1771405004214-2lu9sy@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30010",
+      "name": "Test User",
+      "email": "test-1771405032844-qjj0b9@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30011",
+      "name": "Test User",
+      "email": "test-1771405034748-kv3q7v@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30012",
+      "name": "Test User",
+      "email": "test-1771405035707-i4zanq@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30013",
+      "name": "Test User",
+      "email": "test-1771405036995-xiae2b@example.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30014",
+      "name": "Yunus Emre TIRNOVALI",
+      "email": "emre@houseofapps.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "Turkey"
+    },
+    {
+      "id": "30021",
+      "name": "Bora Burgucugil",
+      "email": "bora@softpower.com.tr",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30022",
+      "name": "Arda Sezgin",
+      "email": "ardasezgin@rsotomotivgrubu.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30023",
+      "name": "Yunus Çelik",
+      "email": "yunuscelik@rsotomotivgrubu.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30024",
+      "name": "Kubra Oren",
+      "email": "kubra.oren@sigortaacentesi.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    },
+    {
+      "id": "30025",
+      "name": "Ezgi Özdemir",
+      "email": "ezgi.ozdemir@sigortaacentesi.com",
+      "passwordHash": "NULL",
+      "clickupUserId": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tpasswordHash\tclickupUserId\n1\tDemo Kullanıcı\ttest@demo.com\tNULL\tNULL\n30001\tTest User\ttest-1771404939624@example.com\tNULL\tNULL\n30002\tTest User\ttest-1771404973666-4wb9g8@example.com\tNULL\tNULL\n30003\tTest User\ttest-1771404975608-baoc5c@example.com\tNULL\tNULL\n30004\tTest User\ttest-1771404976348-v1yer9@example.com\tNULL\tNULL\n30005\tTest User\ttest-1771404977090-4a5p6@example.com\tNULL\tNULL\n30006\tTest User\ttest-1771404999977-wbz3pi@example.com\tNULL\tNULL\n30007\tTest User\ttest-1771405001947-i2f7ub@example.com\tNULL\tNULL\n30008\tTest User\ttest-1771405002929-z6vnsl@example.com\tNULL\tNULL\n30009\tTest User\ttest-1771405004214-2lu9sy@example.com\tNULL\tNULL\n30010\tTest User\ttest-1771405032844-qjj0b9@example.com\tNULL\tNULL\n30011\tTest User\ttest-1771405034748-kv3q7v@example.com\tNULL\tNULL\n30012\tTest User\ttest-1771405035707-i4zanq@example.com\tNULL\tNULL\n30013\tTest User\ttest-1771405036995-xiae2b@example.com\tNULL\tNULL\n30014\tYunus Emre TIRNOVALI\temre@houseofapps.com\tNULL\tTurkey\n30021\tBora Burgucugil\tbora@softpower.com.tr\tNULL\tNULL\n30022\tArda Sezgin\tardasezgin@rsotomotivgrubu.com\tNULL\tNULL\n30023\tYunus Çelik\tyunuscelik@rsotomotivgrubu.com\tNULL\tNULL\n30024\tKubra Oren\tkubra.oren@sigortaacentesi.com\tNULL\tNULL\n30025\tEzgi Özdemir\tezgi.ozdemir@sigortaacentesi.com\tNULL\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1532
+}
