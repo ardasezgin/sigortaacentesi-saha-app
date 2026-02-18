@@ -184,7 +184,8 @@
 
 ## Çıkış Yap Butonu Bug
 
-- [x] Çıkış yap butonu çalışmıyor - debug et (düzeltildi)
-- [x] tRPC mutation yerine direkt Auth.removeSessionToken() kullanıldı
-- [x] Auth.clearUserInfo() eklendi
+- [x] Çıkış yap butonu düzeltildi
+- [x] Backend logout endpoint'i çağrılıyor (cookie temizleme)
+- [x] Local session temizleniyor (Auth.removeSessionToken + clearUserInfo)
+- [x] tRPC cache temizleniyor (utils.auth.me.reset)
 - [x] Test et (57 test başarılı)

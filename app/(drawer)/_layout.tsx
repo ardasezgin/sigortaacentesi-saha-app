@@ -7,39 +7,39 @@ import { useRouter } from 'expo-router';
 import { Alert, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import * as Auth from '@/lib/_core/auth';
+import { trpc } from '@/lib/trpc';
 
 function CustomDrawerContent(props: any) {
   const colors = useColors();
   const router = useRouter();
+  const utils = trpc.useUtils();
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    console.log('[Logout] Button pressed!');
+    
     if (Platform.OS !== 'web') {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
-
-    Alert.alert(
-      'Çıkış Yap',
-      'Çıkış yapmak istediğinizden emin misiniz?',
-      [
-        {
-          text: 'İptal',
-          style: 'cancel',
-        },
-        {
-          text: 'Çıkış Yap',
-          style: 'destructive',
-          onPress: async () => {
-            console.log('[Logout] User confirmed logout');
-            // Session'u temizle
-            await Auth.removeSessionToken();
-            await Auth.clearUserInfo();
-            console.log('[Logout] Session cleared');
-            // Login sayfasına yönlendir
-            router.replace('/login');
-          },
-        },
-      ]
-    );
+    
+    try {
+      // Backend logout (cookie temizleme)
+      await utils.client.auth.logout.mutate();
+      console.log('[Logout] Backend logout successful');
+    } catch (error) {
+      console.error('[Logout] Backend logout failed:', error);
+    }
+    
+    // Local session'u temizle
+    await Auth.removeSessionToken();
+    await Auth.clearUserInfo();
+    console.log('[Logout] Local session cleared');
+    
+    // tRPC cache'i temizle
+    utils.auth.me.reset();
+    console.log('[Logout] Cache cleared, navigating to login...');
+    
+    // Login sayfasına yönlendir
+    router.replace('/login');
   };
 
   return (
