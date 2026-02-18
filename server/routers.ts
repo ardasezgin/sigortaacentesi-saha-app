@@ -6,6 +6,7 @@ import { publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { getClickUpClient } from "./services/clickup";
 import { importAgenciesFromExcel } from "./excel-import";
+import bcrypt from "bcryptjs";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -19,36 +20,88 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
-    // Hardcoded login for presentation (test@demo.com / 123123123)
+    // Register new user
+    register: publicProcedure
+      .input(z.object({ 
+        name: z.string().min(2, "İsim en az 2 karakter olmalı"),
+        email: z.string().email("Geçerli bir email adresi girin"),
+        password: z.string().min(6, "Şifre en az 6 karakter olmalı"),
+      }))
+      .mutation(async ({ input, ctx }) => {
+        // Check if user already exists
+        const existingUser = await db.findUserByEmail(input.email);
+        if (existingUser) {
+          throw new Error("Bu email adresi zaten kullanılıyor");
+        }
+
+        // Hash password
+        const passwordHash = await bcrypt.hash(input.password, 10);
+
+        // Create user
+        const user = await db.createUser({
+          openId: `email-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          name: input.name,
+          email: input.email,
+          passwordHash,
+          loginMethod: "email",
+        });
+
+        // Set session cookie
+        const sessionToken = `session-${user.id}-${Date.now()}`;
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+
+        return {
+          success: true,
+          user: {
+            id: user.id,
+            openId: user.openId,
+            name: user.name,
+            email: user.email,
+            loginMethod: user.loginMethod,
+            role: user.role,
+            lastSignedIn: user.lastSignedIn.toISOString(),
+          },
+          sessionToken,
+        };
+      }),
+    // Login with email/password
     login: publicProcedure
       .input(z.object({ email: z.string(), password: z.string() }))
       .mutation(async ({ input, ctx }) => {
-        // Hardcoded credentials check
-        if (input.email === "test@demo.com" && input.password === "123123123") {
-          // Create mock user
-          const mockUser = {
-            id: 1,
-            openId: "demo-user",
-            name: "Demo Kullanıcı",
-            email: "test@demo.com",
-            loginMethod: "hardcoded",
-            role: "user" as const,
-            lastSignedIn: new Date().toISOString(),
-          };
-
-          // Set session cookie
-          const sessionToken = "demo-session-" + Date.now();
-          const cookieOptions = getSessionCookieOptions(ctx.req);
-          ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
-
-          return {
-            success: true,
-            user: mockUser,
-            sessionToken,
-          };
+        // Find user by email
+        const user = await db.findUserByEmail(input.email);
+        if (!user || !user.passwordHash) {
+          throw new Error("Email veya şifre hatalı");
         }
 
-        throw new Error("Email veya şifre hatalı");
+        // Verify password
+        const isValid = await bcrypt.compare(input.password, user.passwordHash);
+        if (!isValid) {
+          throw new Error("Email veya şifre hatalı");
+        }
+
+        // Update last signed in
+        await db.updateUserLastSignedIn(user.id);
+
+        // Set session cookie
+        const sessionToken = `session-${user.id}-${Date.now()}`;
+        const cookieOptions = getSessionCookieOptions(ctx.req);
+        ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
+
+        return {
+          success: true,
+          user: {
+            id: user.id,
+            openId: user.openId,
+            name: user.name,
+            email: user.email,
+            loginMethod: user.loginMethod,
+            role: user.role,
+            lastSignedIn: new Date().toISOString(),
+          },
+          sessionToken,
+        };
       }),
   }),
 

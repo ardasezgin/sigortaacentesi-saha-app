@@ -189,3 +189,15 @@
 - [x] Local session temizleniyor (Auth.removeSessionToken + clearUserInfo)
 - [x] tRPC cache temizleniyor (utils.auth.me.reset)
 - [x] Test et (57 test başarılı)
+
+
+## Gerçek Kullanıcı Sistemi
+
+- [x] Demo hesap bilgileri kutusunu login ekranından kaldır
+- [x] Kullanıcı kaydı (sign up) ekranı oluştur (app/register.tsx)
+- [x] Backend'e gerçek kullanıcı kaydı endpoint'i ekle (auth.register)
+- [x] Backend'e gerçek kullanıcı girişi endpoint'i ekle (auth.login - email/şifre doğrulama)
+- [x] Şifre hash'leme (bcrypt) ekle
+- [x] Database schema güncellendi (passwordHash field)
+- [x] Her kullanıcının emaili ile ClickUp kullanıcısı eşleşsin (email unique)
+- [ ] Test et

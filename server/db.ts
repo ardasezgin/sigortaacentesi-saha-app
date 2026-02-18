@@ -675,3 +675,50 @@ export async function updateUserClickUpId(userId: number, clickupUserId: string)
     throw error;
   }
 }
+
+/**
+ * Create a new user with email/password authentication
+ */
+export async function createUser(userData: {
+  openId: string;
+  name: string;
+  email: string;
+  passwordHash: string;
+  loginMethod: string;
+}) {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("[Database] Cannot create user: database not available");
+  }
+
+  const result = await db.insert(users).values(userData);
+  
+  // Fetch the created user
+  const createdUser = await db
+    .select()
+    .from(users)
+    .where(eq(users.email, userData.email))
+    .limit(1);
+  
+  if (!createdUser[0]) {
+    throw new Error("Failed to create user");
+  }
+  
+  return createdUser[0];
+}
+
+/**
+ * Update user's last signed in timestamp
+ */
+export async function updateUserLastSignedIn(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update last signed in: database not available");
+    return;
+  }
+
+  await db
+    .update(users)
+    .set({ lastSignedIn: new Date() })
+    .where(eq(users.id, userId));
+}
