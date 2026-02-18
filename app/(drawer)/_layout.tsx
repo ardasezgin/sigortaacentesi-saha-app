@@ -2,6 +2,107 @@ import { Drawer } from 'expo-router/drawer';
 import { useColors } from '@/hooks/use-colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AuthGuard } from '@/components/auth-guard';
+import {
+  DrawerContentScrollView,
+  DrawerItemList,
+  DrawerContentComponentProps,
+} from '@react-navigation/drawer';
+import { View, Text, Pressable, Alert, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { router } from 'expo-router';
+import * as Auth from '@/lib/_core/auth';
+import { trpc } from '@/lib/trpc';
+
+function CustomDrawerContent(props: DrawerContentComponentProps) {
+  const colors = useColors();
+  const logoutMutation = trpc.auth.logout.useMutation();
+
+  const handleLogout = async () => {
+    Alert.alert(
+      'Çıkış Yap',
+      'Çıkış yapmak istediğinize emin misiniz?',
+      [
+        {
+          text: 'İptal',
+          style: 'cancel',
+        },
+        {
+          text: 'Çıkış Yap',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              // Haptic feedback
+              if (Platform.OS !== 'web') {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              }
+
+              // Backend logout (cookie temizleme)
+              await logoutMutation.mutateAsync();
+
+              // Local session temizleme
+              await Auth.removeSessionToken();
+              await Auth.clearUserInfo();
+
+              // Login sayfasına yönlendir
+              router.replace('/login');
+            } catch (error) {
+              console.error('Logout error:', error);
+              // Hata olsa bile login'e yönlendir
+              await Auth.removeSessionToken();
+              await Auth.clearUserInfo();
+              router.replace('/login');
+            }
+          },
+        },
+      ],
+      { cancelable: true }
+    );
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: colors.background }}>
+      <DrawerContentScrollView {...props}>
+        <DrawerItemList {...props} />
+      </DrawerContentScrollView>
+
+      {/* Logout Button */}
+      <View
+        style={{
+          borderTopWidth: 1,
+          borderTopColor: colors.border,
+          padding: 16,
+        }}
+      >
+        <Pressable
+          onPress={handleLogout}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            padding: 12,
+            borderRadius: 8,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <IconSymbol
+            name="arrow.right.square.fill"
+            color={colors.error}
+            size={24}
+          />
+          <Text
+            style={{
+              marginLeft: 12,
+              fontSize: 16,
+              color: colors.error,
+              fontWeight: '500',
+            }}
+          >
+            Çıkış Yap
+          </Text>
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 export default function DrawerLayout() {
   const colors = useColors();
@@ -10,6 +111,7 @@ export default function DrawerLayout() {
     <AuthGuard>
     <Drawer
       initialRouteName="dashboard"
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: true,
         headerStyle: {
@@ -68,6 +170,15 @@ export default function DrawerLayout() {
           drawerIcon: ({ color, size }) => (
             <IconSymbol name="exclamationmark.bubble.fill" color={color} size={size} />
           ),
+        }}
+      />
+      
+      {/* Data Upload - menüde gizli */}
+      <Drawer.Screen
+        name="data-upload"
+        options={{
+          drawerItemStyle: { display: 'none' },
+          title: 'Veri Yükleme',
         }}
       />
 

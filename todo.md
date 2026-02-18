@@ -182,4 +182,12 @@
 - [x] Database schema güncellendi (passwordHash field)
 - [x] findUserByEmail ve updateUserLastSignedIn fonksiyonları eklendi
 - [x] CSV kullanıcıları ile test et (57 test başarılı, TypeScript 0 hata)
+- [x] Checkpoint kaydet (3f3de4ff)
+
+
+## Drawer Menu Updates
+
+- [x] Drawer menüsüne "Çıkış Yap" butonu ekle (en alta)
+- [x] Data Upload sayfasını drawer menüsünden gizle
+- [x] Test et
 - [ ] Checkpoint kaydet
