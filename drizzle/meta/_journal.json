@@ -29,13 +29,6 @@
       "when": 1771401095775,
       "tag": "0003_numerous_solo",
       "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "5",
-      "when": 1771404641493,
-      "tag": "0004_mixed_anita_blake",
-      "breakpoints": true
     }
   ]
 }

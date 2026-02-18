@@ -18,7 +18,6 @@ function createAuthContext(): { ctx: TrpcContext; clearedCookies: CookieCall[] }
     openId: "sample-user",
     email: "sample@example.com",
     name: "Sample User",
-    passwordHash: null,
     loginMethod: "manus",
     role: "user",
     clickupUserId: null,
