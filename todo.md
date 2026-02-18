@@ -201,3 +201,12 @@
 - [x] Database schema güncellendi (passwordHash field)
 - [x] Her kullanıcının emaili ile ClickUp kullanıcısı eşleşsin (email unique)
 - [x] Test et (8 test başarılı - auth-register.test.ts)
+
+
+## Bulk User Import
+
+- [x] CSV dosyasını parse et (scripts/import-users.ts)
+- [x] @sigortaacentesi.com kullanıcıları default şifre ile database'e kaydedildi
+- [x] ClickUp user ID'leri CSV'den alınıp database'e kaydedildi
+- [x] 14 kullanıcı zaten mevcut (daha önce import edilmiş)
+- [x] Default şifre: Aksiyon2026
