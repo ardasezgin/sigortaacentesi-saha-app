@@ -236,8 +236,8 @@
 - [x] Test et (57 test başarılı)
 - [x] ClickUp başarı/hata mesajları eklendi
 - [x] Alert yerine inline mesaj gösterimi eklendi (web uyumlu)
-- [ ] Kullanıcı ile test et
-- [ ] Checkpoint kaydet
+- [x] Kullanıcı ile test et (ClickUp'a başarıyla gönderdi)
+- [x] Checkpoint kaydet (e79ffa82)
 
 ## Request/Complaint Form Fix
 
@@ -247,4 +247,11 @@
 - [x] useAuth ile giriş yapan kullanıcı bilgisi al
 - [x] Test et (57 test başarılı)
 - [ ] Kullanıcı ile test et
-- [ ] Checkpoint kaydet
+- [x] Checkpoint kaydet (e79ffa82)
+
+## GitHub Push & TestFlight Deployment
+
+- [ ] GitHub repository kontrol et
+- [ ] Kodu GitHub'a push et
+- [ ] iOS build yapılandırması hazırla
+- [ ] TestFlight upload talimatları ver
