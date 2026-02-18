@@ -200,4 +200,4 @@
 - [x] Şifre hash'leme (bcrypt) ekle
 - [x] Database schema güncellendi (passwordHash field)
 - [x] Her kullanıcının emaili ile ClickUp kullanıcısı eşleşsin (email unique)
-- [ ] Test et
+- [x] Test et (8 test başarılı - auth-register.test.ts)
