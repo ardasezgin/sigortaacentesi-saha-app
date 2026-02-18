@@ -183,19 +183,6 @@ export default function LoginScreen() {
               )}
               </View>
             </Pressable>
-
-            {/* Demo Info */}
-            <View className="mt-6 p-4 bg-surface/50 rounded-xl border border-border">
-              <Text className="text-xs text-muted text-center mb-2">
-                Demo Hesap Bilgileri:
-              </Text>
-              <Text className="text-xs text-foreground text-center font-mono">
-                Email: test@demo.com
-              </Text>
-              <Text className="text-xs text-foreground text-center font-mono">
-                Şifre: 123123123
-              </Text>
-            </View>
           </View>
         </View>
       </KeyboardAvoidingView>

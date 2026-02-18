@@ -172,3 +172,14 @@
 ## GitHub Push
 
 - [x] Tüm değişiklikler GitHub'a push edildi (8d9785f)
+
+
+## Real User Authentication (Backend Only)
+
+- [x] Backend'e email/password validation ekle (bcrypt)
+- [x] Hardcoded login'i kaldır
+- [x] Demo hesap bilgileri kutusunu login sayfasından kaldır
+- [x] Database schema güncellendi (passwordHash field)
+- [x] findUserByEmail ve updateUserLastSignedIn fonksiyonları eklendi
+- [x] CSV kullanıcıları ile test et (57 test başarılı, TypeScript 0 hata)
+- [ ] Checkpoint kaydet

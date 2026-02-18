@@ -675,3 +675,24 @@ export async function updateUserClickUpId(userId: number, clickupUserId: string)
     throw error;
   }
 }
+
+/**
+ * Update user's last signed in timestamp
+ */
+export async function updateUserLastSignedIn(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot update user: database not available");
+    return;
+  }
+
+  try {
+    await db
+      .update(users)
+      .set({ lastSignedIn: new Date() })
+      .where(eq(users.id, userId));
+  } catch (error) {
+    console.error("[Database] Failed to update user last signed in:", error);
+    throw error;
+  }
+}
