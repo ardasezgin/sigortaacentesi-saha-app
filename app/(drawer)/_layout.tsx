@@ -2,6 +2,63 @@ import { Drawer } from 'expo-router/drawer';
 import { useColors } from '@/hooks/use-colors';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { AuthGuard } from '@/components/auth-guard';
+import { DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navigation/drawer';
+import { useRouter } from 'expo-router';
+import { Alert, Platform } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { trpc } from '@/lib/trpc';
+
+function CustomDrawerContent(props: any) {
+  const colors = useColors();
+  const router = useRouter();
+  const logoutMutation = trpc.auth.logout.useMutation();
+
+  const handleLogout = async () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+
+    Alert.alert(
+      'Çıkış Yap',
+      'Çıkış yapmak istediğinizden emin misiniz?',
+      [
+        {
+          text: 'İptal',
+          style: 'cancel',
+        },
+        {
+          text: 'Çıkış Yap',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await logoutMutation.mutateAsync();
+              router.replace('/login');
+            } catch (error) {
+              console.error('Logout error:', error);
+              // Hata olsa bile login'e yönlendir
+              router.replace('/login');
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  return (
+    <DrawerContentScrollView {...props}>
+      <DrawerItemList {...props} />
+      <DrawerItem
+        label="Çıkış Yap"
+        onPress={handleLogout}
+        icon={({ color, size }) => (
+          <IconSymbol name="arrow.right.square.fill" color={color} size={size} />
+        )}
+        inactiveTintColor={colors.error}
+        style={{ marginTop: 20 }}
+      />
+    </DrawerContentScrollView>
+  );
+}
 
 export default function DrawerLayout() {
   const colors = useColors();
@@ -10,6 +67,7 @@ export default function DrawerLayout() {
     <AuthGuard>
     <Drawer
       initialRouteName="dashboard"
+      drawerContent={(props) => <CustomDrawerContent {...props} />}
       screenOptions={{
         headerShown: true,
         headerStyle: {

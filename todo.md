@@ -172,3 +172,11 @@
 ## GitHub Push
 
 - [x] Tüm değişiklikler GitHub'a push edildi (8d9785f)
+
+
+## Çıkış Yap Butonu
+
+- [x] Drawer menüsünün en altına "Çıkış Yap" butonu ekle
+- [x] Logout fonksiyonunu bağla (trpc.auth.logout)
+- [x] Onay dialogı ekle
+- [x] Test et (57 test başarılı)
