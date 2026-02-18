@@ -14,6 +14,7 @@ import * as DocumentPicker from 'expo-document-picker';
 
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
+import { useAuth } from '@/hooks/use-auth';
 import type { Visit, CommunicationType, PartnerType, AgendaType } from '@/lib/types/visit';
 import type { Agency } from '@/lib/types/agency';
 import { saveAgency } from '@/lib/services/storage';
@@ -27,6 +28,7 @@ import { cn } from '@/lib/utils';
  */
 export default function VisitScreen() {
   const colors = useColors();
+  const { user } = useAuth();
   
   // Form state
   const [iletisimTuru, setIletisimTuru] = useState<CommunicationType>('Ziyaret');
@@ -193,7 +195,7 @@ export default function VisitScreen() {
         hatirlatma: hatirlatma.trim() || undefined,
         hatirlatmaTarihi: hatirlatmaTarihi || undefined,
         dosyalar: dosyalar.length > 0 ? dosyalar : undefined,
-        createdBy: 'Kullanıcı', // TODO: Gerçek kullanıcı adı
+        createdBy: user?.name || user?.email || 'Kullanıcı',
         createdAt: new Date().toISOString(),
       };
 
@@ -215,7 +217,7 @@ export default function VisitScreen() {
           name: `[Ziyaret] ${acenteAdi} - ${gundem}`,
           description: `**İletişim Türü:** ${iletisimTuru}\n**İş Ortağı:** ${isOrtagi}\n**Levha No:** ${levhaNo}\n**Kimle Görüşüldü:** ${kimleGorusuldu}\n**Tarih:** ${tarih}\n**Gündem:** ${gundem}\n\n**Detay:**\n${detayAciklama}`,
           tags: ['Ziyaret', iletisimTuru, isOrtagi, gundem],
-          assigneeEmail: 'test@demo.com', // Giriş yapan kullanıcının emaili (şu an hardcoded)
+          assigneeEmail: user?.email || undefined, // Giriş yapan kullanıcının emaili (otomatik ClickUp'a assign edilecek)
         });
       } catch (clickupError) {
         console.warn('ClickUp gönderimi başarısız:', clickupError);

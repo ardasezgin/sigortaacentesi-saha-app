@@ -215,4 +215,14 @@
 - [x] ardasezgin@rsotomotivgrubu.com kullanıcısını ekle (ID: 16)
 - [x] Şifresini "Aksiyon2026" olarak ayarla (bcrypt hash)
 - [x] Login testi yap (57 test başarılı)
+- [x] Checkpoint kaydet (d369b15d)
+
+## ClickUp User Sync & Auto-Assignment
+
+- [x] User schema'da clickUpId alanını kontrol et (clickupUserId alanı mevcut)
+- [x] ClickUp'tan tüm kullanıcıları çek (520 kullanıcı)
+- [x] Database kullanıcıları ile email bazlı eşleştir (16/17 eşleşti)
+- [x] ClickUp ID'leri database'e kaydet (başarılı)
+- [x] Form gönderiminde otomatik assignee ayarla (visit.tsx güncellendi)
+- [x] Test et (57 test başarılı)
 - [ ] Checkpoint kaydet

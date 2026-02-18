@@ -1,0 +1,40 @@
+{
+  "query": "SELECT id, name, email, clickupUserId FROM users WHERE clickupUserId IS NOT NULL LIMIT 5;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT id, name, email, clickupUserId FROM users WHERE clickupUserId IS NOT NULL LIMIT 5;",
+  "rows": [
+    {
+      "id": "30024",
+      "name": "Kubra Oren",
+      "email": "kubra.oren@sigortaacentesi.com",
+      "clickupUserId": "101459170"
+    },
+    {
+      "id": "30025",
+      "name": "Ezgi Özdemir",
+      "email": "ezgi.ozdemir@sigortaacentesi.com",
+      "clickupUserId": "101459175"
+    },
+    {
+      "id": "30026",
+      "name": "okkan.nurikadioglu@sigortaacentesi.com",
+      "email": "okkan.nurikadioglu@sigortaacentesi.com",
+      "clickupUserId": "101459176"
+    },
+    {
+      "id": "30027",
+      "name": "Bo",
+      "email": "bogac.yurt@sigortaacentesi.com",
+      "clickupUserId": "101459177"
+    },
+    {
+      "id": "30099",
+      "name": "Tamar Bilgisu",
+      "email": "tamar.bilgisu@sigortaacentesi.com",
+      "clickupUserId": "107461071"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\tclickupUserId\n30024\tKubra Oren\tkubra.oren@sigortaacentesi.com\t101459170\n30025\tEzgi Özdemir\tezgi.ozdemir@sigortaacentesi.com\t101459175\n30026\tokkan.nurikadioglu@sigortaacentesi.com\tokkan.nurikadioglu@sigortaacentesi.com\t101459176\n30027\tBo\tbogac.yurt@sigortaacentesi.com\t101459177\n30099\tTamar Bilgisu\ttamar.bilgisu@sigortaacentesi.com\t107461071\n",
+  "stderr": "",
+  "execution_time_ms": 1543
+}
