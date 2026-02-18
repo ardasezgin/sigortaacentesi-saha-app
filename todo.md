@@ -180,3 +180,11 @@
 - [x] Logout fonksiyonunu bağla (trpc.auth.logout)
 - [x] Onay dialogı ekle
 - [x] Test et (57 test başarılı)
+
+
+## Çıkış Yap Butonu Bug
+
+- [x] Çıkış yap butonu çalışmıyor - debug et (düzeltildi)
+- [x] tRPC mutation yerine direkt Auth.removeSessionToken() kullanıldı
+- [x] Auth.clearUserInfo() eklendi
+- [x] Test et (57 test başarılı)

@@ -6,14 +6,13 @@ import { DrawerContentScrollView, DrawerItemList, DrawerItem } from '@react-navi
 import { useRouter } from 'expo-router';
 import { Alert, Platform } from 'react-native';
 import * as Haptics from 'expo-haptics';
-import { trpc } from '@/lib/trpc';
+import * as Auth from '@/lib/_core/auth';
 
 function CustomDrawerContent(props: any) {
   const colors = useColors();
   const router = useRouter();
-  const logoutMutation = trpc.auth.logout.useMutation();
 
-  const handleLogout = async () => {
+  const handleLogout = () => {
     if (Platform.OS !== 'web') {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     }
@@ -30,14 +29,13 @@ function CustomDrawerContent(props: any) {
           text: 'Çıkış Yap',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await logoutMutation.mutateAsync();
-              router.replace('/login');
-            } catch (error) {
-              console.error('Logout error:', error);
-              // Hata olsa bile login'e yönlendir
-              router.replace('/login');
-            }
+            console.log('[Logout] User confirmed logout');
+            // Session'u temizle
+            await Auth.removeSessionToken();
+            await Auth.clearUserInfo();
+            console.log('[Logout] Session cleared');
+            // Login sayfasına yönlendir
+            router.replace('/login');
           },
         },
       ]
