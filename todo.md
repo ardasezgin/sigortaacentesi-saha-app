@@ -208,4 +208,11 @@
 - [x] SDK session validation'u düzelt (hardcoded demo kaldırıldı)
 - [x] getUserById() fonksiyonu eklendi
 - [x] Login'i test et (57 test başarılı)
+- [x] Checkpoint kaydet (0ec8a85b)
+
+## Add New User
+
+- [x] ardasezgin@rsotomotivgrubu.com kullanıcısını ekle (ID: 16)
+- [x] Şifresini "Aksiyon2026" olarak ayarla (bcrypt hash)
+- [x] Login testi yap (57 test başarılı)
 - [ ] Checkpoint kaydet

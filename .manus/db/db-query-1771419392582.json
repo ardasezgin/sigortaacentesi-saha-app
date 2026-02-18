@@ -1,0 +1,17 @@
+{
+  "query": "SELECT id, name, email, role, passwordHash IS NOT NULL as has_password FROM users WHERE email = 'ardasezgin@rsotomotivgrubu.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT id, name, email, role, passwordHash IS NOT NULL as has_password FROM users WHERE email = 'ardasezgin@rsotomotivgrubu.com';",
+  "rows": [
+    {
+      "id": "120001",
+      "name": "Arda Sezgin",
+      "email": "ardasezgin@rsotomotivgrubu.com",
+      "role": "user",
+      "has_password": "1"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\thas_password\n120001\tArda Sezgin\tardasezgin@rsotomotivgrubu.com\tuser\t1\n",
+  "stderr": "",
+  "execution_time_ms": 1563
+}
