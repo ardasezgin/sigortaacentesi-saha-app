@@ -13,17 +13,21 @@ import * as Haptics from 'expo-haptics';
 
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
+import { useAuth } from '@/hooks/use-auth';
+import { trpc } from '@/lib/trpc';
 import type { Request, RequestType, RequestStatus, Priority } from '@/lib/types/visit';
 import type { Agency } from '@/lib/types/agency';
 import { findAgencyByLevhaNo, findAgencyByName } from '@/lib/services/agency-service';
 import { addRequest, getAllRequests, updateRequest } from '@/lib/services/visit-storage';
-import { createClickUpTask, mapPriorityToClickUp, mapStatusToClickUp } from '@/lib/services/clickup';
+import { getConfig, mapPriorityToClickUp, mapStatusToClickUp } from '@/lib/services/clickup';
 
 /**
  * Talep/İstek/Şikayet Ekranı
  */
 export default function RequestsScreen() {
   const colors = useColors();
+  const { user } = useAuth();
+  const createTaskMutation = trpc.clickup.createTask.useMutation();
   
   // Form state
   const [levhaNo, setLevhaNo] = useState('');
@@ -42,6 +46,8 @@ export default function RequestsScreen() {
   const [requests, setRequests] = useState<Request[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [filterStatus, setFilterStatus] = useState<'Tümü' | RequestStatus>('Tümü');
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
     loadData();
@@ -143,10 +149,15 @@ export default function RequestsScreen() {
   };
 
   const handleSave = async () => {
+    // Mesajları temizle
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    
     console.log('[requests] handleSave başlatıldı');
     
     if (!validateForm() || !selectedAgency) {
       console.log('[requests] Validation başarısız veya acente seçili değil');
+      setErrorMessage('Lütfen tüm zorunlu alanları doldurun');
       return;
     }
 
@@ -180,22 +191,23 @@ export default function RequestsScreen() {
       console.log('[requests] Request başarıyla kaydedildi');
 
       // ClickUp'ta task oluştur (otomatik assignee ataması ile)
+      console.log('[requests] Sending to ClickUp...');
       let clickupSuccess = false;
+      
       try {
-        const clickupTask = await createClickUpTask({
+        const config = getConfig();
+        const result = await createTaskMutation.mutateAsync({
+          listId: config.listId,
           name: `[${requestType}] ${subject.trim()}`,
-          description: `**Acente:** ${selectedAgency.acenteUnvani} (${selectedAgency.levhaNo})\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** Saha Personeli`,
+          description: `**Acente:** ${selectedAgency.acenteUnvani} (${selectedAgency.levhaNo})\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** ${user?.name || user?.email || 'Saha Personeli'}`,
           priority: mapPriorityToClickUp(priority),
           tags: ['Talep', requestType, selectedAgency.il || 'Bilinmeyen'],
-          assigneeEmail: 'test@demo.com', // Giriş yapan kullanıcının emaili (şu an hardcoded)
+          assigneeEmail: user?.email || undefined, // Giriş yapan kullanıcının emaili (otomatik ClickUp'a assign edilecek)
         });
-        
-        if (clickupTask) {
-          console.log('ClickUp task created:', clickupTask.url);
-          clickupSuccess = true;
-        }
+        console.log('[requests] ClickUp task created successfully:', result);
+        clickupSuccess = true;
       } catch (clickupError) {
-        console.error('ClickUp task creation failed:', clickupError);
+        console.error('[requests] ClickUp task creation failed:', clickupError);
         // ClickUp hatası uygulamanın durdurmasın
       }
 
@@ -204,29 +216,33 @@ export default function RequestsScreen() {
       }
       
       // Başarı mesajı
-      const successMessage = clickupSuccess 
-        ? 'Talep başarıyla kaydedildi ve ClickUp\u2019a gönderildi! \ud83c\udf89'
-        : 'Talep başarıyla kaydedildi! (ClickUp senkronizasyonu başarısız)';
+      const message = clickupSuccess 
+        ? 'Talep kaydedildi ve ClickUp\'a gönderildi \u2705'
+        : 'Talep kaydedildi ancak ClickUp\'a gönderilemedi \u26a0\ufe0f';
       
-      console.log('[requests] Başarı mesajı gösteriliyor:', successMessage);
+      console.log('[requests] Başarı mesajı gösteriliyor:', message);
       
-      Alert.alert(
-        '✅ Başarılı',
-        successMessage,
-        [
-          {
-            text: 'Tamam',
-            onPress: () => {
-              clearForm();
-              loadData();
-              setShowForm(false);
-            },
-          },
-        ]
-      );
+      if (clickupSuccess) {
+        setSuccessMessage(message);
+      } else {
+        setErrorMessage(message);
+      }
+      
+      // Formu temizle (5 saniye sonra)
+      setTimeout(() => {
+        clearForm();
+        loadData();
+        setShowForm(false);
+      }, 5000);
+      
+      // Mesajı 10 saniye sonra temizle
+      setTimeout(() => {
+        setSuccessMessage(null);
+        setErrorMessage(null);
+      }, 10000);
     } catch (error) {
-      console.error('Kaydetme hatası:', error);
-      Alert.alert('Hata', 'Kayıt sırasında bir hata oluştu');
+      console.error('[requests] Kaydetme hatası:', error);
+      setErrorMessage('Kayıt sırasında bir hata oluştu \u274c');
     } finally {
       setIsSaving(false);
     }
@@ -275,6 +291,22 @@ export default function RequestsScreen() {
                 + Yeni Talep Oluştur
               </Text>
             </TouchableOpacity>
+          )}
+
+          {/* Success/Error Messages */}
+          {successMessage && (
+            <View className="bg-green-50 dark:bg-green-900/20 border border-green-500 rounded-lg p-4">
+              <Text className="text-green-700 dark:text-green-300 font-medium text-center">
+                {successMessage}
+              </Text>
+            </View>
+          )}
+          {errorMessage && (
+            <View className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-500 rounded-lg p-4">
+              <Text className="text-yellow-700 dark:text-yellow-300 font-medium text-center">
+                {errorMessage}
+              </Text>
+            </View>
           )}
 
           {/* Form */}

@@ -15,12 +15,13 @@ import * as DocumentPicker from 'expo-document-picker';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import { useAuth } from '@/hooks/use-auth';
+import { trpc } from '@/lib/trpc';
 import type { Visit, CommunicationType, PartnerType, AgendaType } from '@/lib/types/visit';
 import type { Agency } from '@/lib/types/agency';
 import { saveAgency } from '@/lib/services/storage';
 import { findAgencyByLevhaNo, findAgencyByName } from '@/lib/services/agency-service';
 import { addVisit, getRecentVisits } from '@/lib/services/visit-storage';
-import { createClickUpTask } from '@/lib/services/clickup';
+import { getConfig } from '@/lib/services/clickup';
 import { cn } from '@/lib/utils';
 
 /**
@@ -29,6 +30,7 @@ import { cn } from '@/lib/utils';
 export default function VisitScreen() {
   const colors = useColors();
   const { user } = useAuth();
+  const createTaskMutation = trpc.clickup.createTask.useMutation();
   
   // Form state
   const [iletisimTuru, setIletisimTuru] = useState<CommunicationType>('Ziyaret');
@@ -52,6 +54,8 @@ export default function VisitScreen() {
   const [isSearchingName, setIsSearchingName] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [recentVisits, setRecentVisits] = useState<Visit[]>([]);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   // Dropdown visibility
   const [showIletisimTuruDropdown, setShowIletisimTuruDropdown] = useState(false);
@@ -165,20 +169,34 @@ export default function VisitScreen() {
   };
 
   const handleSave = async () => {
+    // Mesajları temizle
+    setSuccessMessage(null);
+    setErrorMessage(null);
+    
+    console.log('[Form] handleSave called');
+    console.log('[Form] levhaNo:', levhaNo);
+    console.log('[Form] acenteAdi:', acenteAdi);
+    console.log('[Form] kimleGorusuldu:', kimleGorusuldu);
+    console.log('[Form] user:', user);
+    
     // Validasyon
     if (!levhaNo.trim()) {
+      console.log('[Form] Validation failed: Levha No empty');
       Alert.alert('Uyarı', 'Levha No zorunludur');
       return;
     }
     if (!acenteAdi.trim()) {
+      console.log('[Form] Validation failed: Acente Adı empty');
       Alert.alert('Uyarı', 'Acente Adı zorunludur');
       return;
     }
     if (!kimleGorusuldu.trim()) {
+      console.log('[Form] Validation failed: Kimle Görüşüldü empty');
       Alert.alert('Uyarı', 'Kimle Görüşüldü alanı zorunludur');
       return;
     }
 
+    console.log('[Form] Validation passed, starting save...');
     setIsSaving(true);
 
     try {
@@ -200,7 +218,9 @@ export default function VisitScreen() {
       };
 
       // Ziyaret kaydet
+      console.log('[Form] Saving visit to local storage...');
       await addVisit(newVisit);
+      console.log('[Form] Visit saved successfully');
 
       // Eğer acente bilgileri güncellendiyse, acente kaydını da güncelle
       if (selectedAgency && isAutoFilled) {
@@ -212,15 +232,24 @@ export default function VisitScreen() {
       }
 
       // ClickUp'a gönder (opsiyonel, otomatik assignee ataması ile)
+      console.log('[Form] Sending to ClickUp...');
+      let clickupSuccess = false;
+      let clickupError: any = null;
+      
       try {
-        await createClickUpTask({
+        const config = getConfig();
+        const result = await createTaskMutation.mutateAsync({
+          listId: config.listId,
           name: `[Ziyaret] ${acenteAdi} - ${gundem}`,
           description: `**İletişim Türü:** ${iletisimTuru}\n**İş Ortağı:** ${isOrtagi}\n**Levha No:** ${levhaNo}\n**Kimle Görüşüldü:** ${kimleGorusuldu}\n**Tarih:** ${tarih}\n**Gündem:** ${gundem}\n\n**Detay:**\n${detayAciklama}`,
           tags: ['Ziyaret', iletisimTuru, isOrtagi, gundem],
           assigneeEmail: user?.email || undefined, // Giriş yapan kullanıcının emaili (otomatik ClickUp'a assign edilecek)
         });
-      } catch (clickupError) {
-        console.warn('ClickUp gönderimi başarısız:', clickupError);
+        console.log('[Form] ClickUp task created successfully:', result);
+        clickupSuccess = true;
+      } catch (error) {
+        console.error('[Form] ClickUp gönderimi başarısız:', error);
+        clickupError = error;
       }
 
       // Haptic feedback
@@ -228,29 +257,52 @@ export default function VisitScreen() {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       }
 
-      Alert.alert('Başarılı', 'Ziyaret kaydedildi', [
-        {
-          text: 'Tamam',
-          onPress: () => {
-            // Formu temizle
-            setLevhaNo('');
-            setAcenteAdi('');
-            setKimleGorusuldu('');
-            setDetayAciklama('');
-            setHatirlatma('');
-            setHatirlatmaTarihi('');
-            setDosyalar([]);
-            setSelectedAgency(null);
-            setIsAutoFilled(false);
-            
-            // Veriyi yenile
-            loadData();
-          },
-        },
-      ]);
+      console.log('[Form] All operations completed, showing success message');
+      
+      // Kullanıcıya ClickUp durumu hakkında bilgi ver
+      const message = clickupSuccess 
+        ? 'Ziyaret kaydedildi ve ClickUp\'a gönderildi \u2705'
+        : 'Ziyaret kaydedildi ancak ClickUp\'a gönderilemedi \u26a0\ufe0f';
+      
+      console.log('[Form] Setting message:', message);
+      console.log('[Form] clickupSuccess:', clickupSuccess);
+      
+      if (clickupSuccess) {
+        console.log('[Form] Setting success message');
+        setSuccessMessage(message);
+      } else {
+        console.log('[Form] Setting error message');
+        setErrorMessage(message);
+      }
+      
+      console.log('[Form] Message state updated');
+      
+      // Formu temizle (5 saniye sonra)
+      setTimeout(() => {
+        console.log('[Form] Clearing form...');
+        setLevhaNo('');
+        setAcenteAdi('');
+        setKimleGorusuldu('');
+        setDetayAciklama('');
+        setHatirlatma('');
+        setHatirlatmaTarihi('');
+        setDosyalar([]);
+        setSelectedAgency(null);
+        setIsAutoFilled(false);
+        
+        // Veriyi yenile
+        loadData();
+      }, 5000);
+      
+      // Mesajı 10 saniye sonra temizle
+      setTimeout(() => {
+        console.log('[Form] Clearing message...');
+        setSuccessMessage(null);
+        setErrorMessage(null);
+      }, 10000);
     } catch (error) {
-      console.error('Kaydetme hatası:', error);
-      Alert.alert('Hata', 'Ziyaret kaydedilirken bir hata oluştu');
+      console.error('[Form] Kaydetme hatası:', error);
+      setErrorMessage('Ziyaret kaydedilirken bir hata oluştu \u274c');
     } finally {
       setIsSaving(false);
     }
@@ -301,6 +353,22 @@ export default function VisitScreen() {
               Saha ziyareti veya arama kaydı oluşturun
             </Text>
           </View>
+
+          {/* Success/Error Messages */}
+          {successMessage && (
+            <View className="bg-green-50 dark:bg-green-900/20 border border-green-500 rounded-lg p-4">
+              <Text className="text-green-700 dark:text-green-300 font-medium text-center">
+                {successMessage}
+              </Text>
+            </View>
+          )}
+          {errorMessage && (
+            <View className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-500 rounded-lg p-4">
+              <Text className="text-yellow-700 dark:text-yellow-300 font-medium text-center">
+                {errorMessage}
+              </Text>
+            </View>
+          )}
 
           {/* Form */}
           <View className="bg-surface rounded-xl p-4 gap-4">

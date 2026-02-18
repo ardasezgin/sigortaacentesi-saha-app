@@ -225,4 +225,26 @@
 - [x] ClickUp ID'leri database'e kaydet (başarılı)
 - [x] Form gönderiminde otomatik assignee ayarla (visit.tsx güncellendi)
 - [x] Test et (57 test başarılı)
+- [x] Checkpoint kaydet (3517f285)
+
+## Form Submission Bug
+
+- [x] Console hatalarını kontrol et (hata yok, sessizce başarısız)
+- [x] Backend loglarını kontrol et
+- [x] Form submission kodunu debug et (createClickUpTask fetch yerine tRPC kullanmalı)
+- [x] Hatayı düzelt (tRPC mutation kullanıldı)
+- [x] Test et (57 test başarılı)
+- [x] ClickUp başarı/hata mesajları eklendi
+- [x] Alert yerine inline mesaj gösterimi eklendi (web uyumlu)
+- [ ] Kullanıcı ile test et
+- [ ] Checkpoint kaydet
+
+## Request/Complaint Form Fix
+
+- [x] Talep/İstek/Şikayet formunu bul (requests.tsx)
+- [x] tRPC mutation kullanacak şekilde güncelle
+- [x] Inline başarı/hata mesajı ekle
+- [x] useAuth ile giriş yapan kullanıcı bilgisi al
+- [x] Test et (57 test başarılı)
+- [ ] Kullanıcı ile test et
 - [ ] Checkpoint kaydet

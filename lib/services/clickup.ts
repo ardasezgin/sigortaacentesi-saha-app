@@ -16,7 +16,7 @@ const API_BASE_URL = 'https://api.clickup.com/api/v2';
 /**
  * ClickUp yapılandırmasını al
  */
-function getConfig(): ClickUpConfig {
+export function getConfig(): ClickUpConfig {
   // Geliştirme için hardcoded değerler
   // Üretim ortamında environment variable kullanılmalı
   const apiToken = Constants.expoConfig?.extra?.CLICKUP_API_TOKEN || 
