@@ -190,4 +190,11 @@
 - [x] Drawer menüsüne "Çıkış Yap" butonu ekle (en alta)
 - [x] Data Upload sayfasını drawer menüsünden gizle
 - [x] Test et
+- [x] Checkpoint kaydet (9066c45d)
+
+## Logout Button Bug Fix
+
+- [x] Çıkış yap butonu tepki vermiyor - sorunu tespit et (Drawer.Screen olarak eklendi)
+- [x] Butonu düzelt ve çalışır hale getir (logout.tsx sayfası oluşturuldu)
+- [x] Test et (57 test başarılı)
 - [ ] Checkpoint kaydet
