@@ -251,7 +251,15 @@
 
 ## GitHub Push & TestFlight Deployment
 
-- [ ] GitHub repository kontrol et
-- [ ] Kodu GitHub'a push et
+- [x] GitHub repository kontrol et (https://github.com/ardasezgin/sigortaacentesi-saha-app.git)
+- [x] Kodu GitHub'a push et (commit 994383b)
 - [ ] iOS build yapılandırması hazırla
 - [ ] TestFlight upload talimatları ver
+
+## CRITICAL: Production Backend Deployment
+
+- [ ] Mevcut API configuration'u kontrol et (app.config.ts, .env)
+- [ ] Production backend'i kalıcı ortama deploy et (Manus Publish veya external hosting)
+- [ ] App configuration'u production backend URL'i ile güncelle
+- [ ] Yeni build al ve TestFlight'a yükle
+- [ ] Production app'i test et (Manus kapalıyken çalışmalı)
