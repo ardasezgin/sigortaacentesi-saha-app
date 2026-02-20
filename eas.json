@@ -23,14 +23,5 @@
         "simulator": false
       }
     }
-  },
-  "submit": {
-    "production": {
-      "ios": {
-        "appleId": "sezginarda@yahoo.com",
-        "ascAppId": "placeholder",
-        "appleTeamId": "placeholder"
-      }
-    }
   }
 }
