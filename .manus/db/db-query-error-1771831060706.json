@@ -1,0 +1,10 @@
+{
+  "query": "INSERT INTO users (email, \"passwordHash\", \"createdAt\", \"updatedAt\") \nVALUES ('test@demo.com', '$2b$10$rZ7YqF5xK5xK5xK5xK5xKeO8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q', NOW(), NOW())\nON CONFLICT (email) DO UPDATE SET \"passwordHash\" = EXCLUDED.\"passwordHash\", \"updatedAt\" = NOW();",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute INSERT INTO users (email, \"passwordHash\", \"createdAt\", \"updatedAt\") \nVALUES ('test@demo.com', '$2b$10$rZ7YqF5xK5xK5xK5xK5xKeO8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q', NOW(), NOW())\nON CONFLICT (email) DO UPDATE SET \"passwordHash\" = EXCLUDED.\"passwordHash\", \"updatedAt\" = NOW();",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1064 (42000) at line 1: You have an error in your SQL syntax; check the manual that corresponds to your TiDB version for the right syntax to use line 1 column 40 near \"\"passwordHash\", \"createdAt\", \"updatedAt\") ",
+    "VALUES ('test@demo.com', '$2b$10$rZ7YqF5xK5xK5xK5xK5xKeO8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q8Q', NOW(), NOW())",
+    "ON CONFLICT (email) DO UPDATE SET \"passwordHash\" = EXCLUDED.\"passwordHash\", \"updatedAt\" = NOW()\""
+  ]
+}

@@ -263,3 +263,32 @@
 - [ ] App configuration'u production backend URL'i ile güncelle
 - [ ] Yeni build al ve TestFlight'a yükle
 - [ ] Production app'i test et (Manus kapalıyken çalışmalı)
+
+## Test User Addition
+
+- [x] Add test@demo.com user to database with password 123123123
+
+## Build #15 - Updated Sandbox URL
+
+- [x] Update EXPO_PUBLIC_API_BASE_URL with current sandbox URL
+- [x] Build iOS app #15 with EAS
+- [x] Download .ipa file
+- [ ] User uploads to TestFlight via Transporter
+
+## Build #16 - EAS Secret Fix
+
+- [x] Add EXPO_PUBLIC_API_BASE_URL as EAS Secret
+- [x] Build iOS app #16 with embedded environment variable
+- [x] Download .ipa file
+- [ ] User uploads to TestFlight via Transporter
+
+## Production Server Deployment Documentation
+
+- [x] Create comprehensive deployment guide (README_DEPLOYMENT.md)
+- [x] Prepare Dockerfile for containerized deployment
+- [x] Prepare docker-compose.yml for easy setup
+- [x] Create nginx configuration for reverse proxy and SSL
+- [x] Create deployment script (deploy.sh)
+- [x] Create PM2 ecosystem config for process management
+- [x] Create .env.production template
+- [ ] Test deployment locally with Docker
