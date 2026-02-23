@@ -2,7 +2,7 @@
 
 **Versiyon:** 1.0  
 **Tarih:** 23 Şubat 2026  
-**Hazırlayan:** Manus AI
+**Hazırlayan:** Arda Sezgin
 
 ---
 
