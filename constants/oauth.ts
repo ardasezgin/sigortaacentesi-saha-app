@@ -13,7 +13,8 @@ const env = {
   appId: process.env.EXPO_PUBLIC_APP_ID ?? "",
   ownerId: process.env.EXPO_PUBLIC_OWNER_OPEN_ID ?? "",
   ownerName: process.env.EXPO_PUBLIC_OWNER_NAME ?? "",
-  apiBaseUrl: process.env.EXPO_PUBLIC_API_BASE_URL ?? "",
+  // Production backend URL - hardcoded for reliability
+  apiBaseUrl: "http://45.74.244.201",
   deepLinkScheme: schemeFromBundleId,
 };
 
