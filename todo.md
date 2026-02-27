@@ -295,7 +295,7 @@
 
 ## Production Issues (CRITICAL)
 - [x] Import agency data to production database (19,364 records - match sandbox))
-- [ ] Fix logout button not showing in production app drawer menu
+- [x] Fix logout button not showing in production app drawer menu (included in Build #18)
 
 ## Production Backend Update (CRITICAL)
 
@@ -309,3 +309,11 @@
 - [ ] Build iOS version #18 with production backend
 - [ ] Upload to TestFlight
 - [ ] Test logout button in production app
+
+
+## CRITICAL BUG - Build #18
+
+- [ ] Agencies data not showing in Build #18 (backend API works, app code issue)
+- [ ] Debug tRPC client configuration
+- [ ] Check if auth token is being sent correctly
+- [ ] Verify API base URL in production build
