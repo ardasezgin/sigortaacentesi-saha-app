@@ -11,7 +11,7 @@ async function testQuery() {
   console.log('Testing query...');
   const result = await db.select().from(agencies).limit(50000);
   console.log(`Result count: ${result.length}`);
-  console.log('First 3 records:', result.slice(0, 3).map(r => r.levhaNo));
+  console.log('First 3 records:', result.slice(0, 3).map((r: any) => r.levhaNo));
   
   process.exit(0);
 }

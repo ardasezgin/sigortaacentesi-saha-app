@@ -292,3 +292,21 @@
 - [x] Create PM2 ecosystem config for process management
 - [x] Create .env.production template
 - [ ] Test deployment locally with Docker
+
+## Production Issues (CRITICAL)
+
+- [ ] Import agency data to production database (19,364 records - match sandbox)
+- [ ] Fix logout button not showing in production app drawer menu
+
+## Production Backend Update (CRITICAL)
+
+- [ ] Deploy updated backend code with agencies API endpoints to production
+- [ ] Restart PM2 process on production server
+- [ ] Verify agencies API returns 19,364 records
+
+## iOS Build #18 with Logout Feature
+
+- [ ] Push latest code to GitHub (includes logout feature)
+- [ ] Build iOS version #18 with production backend
+- [ ] Upload to TestFlight
+- [ ] Test logout button in production app
