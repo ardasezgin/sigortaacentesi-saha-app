@@ -294,15 +294,14 @@
 - [ ] Test deployment locally with Docker
 
 ## Production Issues (CRITICAL)
-
-- [ ] Import agency data to production database (19,364 records - match sandbox)
+- [x] Import agency data to production database (19,364 records - match sandbox))
 - [ ] Fix logout button not showing in production app drawer menu
 
 ## Production Backend Update (CRITICAL)
 
-- [ ] Deploy updated backend code with agencies API endpoints to production
-- [ ] Restart PM2 process on production server
-- [ ] Verify agencies API returns 19,364 records
+- [x] Deploy updated backend code with agencies API endpoints to production
+- [x] Restart PM2 process on production server
+- [x] Verify agencies API returns 19,364 records
 
 ## iOS Build #18 with Logout Feature
 
