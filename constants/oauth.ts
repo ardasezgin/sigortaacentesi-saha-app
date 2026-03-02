@@ -13,8 +13,8 @@ const env = {
   appId: process.env.EXPO_PUBLIC_APP_ID ?? "",
   ownerId: process.env.EXPO_PUBLIC_OWNER_OPEN_ID ?? "",
   ownerName: process.env.EXPO_PUBLIC_OWNER_NAME ?? "",
-  // Production backend URL - hardcoded for reliability
-  apiBaseUrl: "http://45.74.244.201",
+  // Production backend URL - HTTPS with Let's Encrypt SSL
+  apiBaseUrl: "https://aksiyonsaha.duckdns.org",
   deepLinkScheme: schemeFromBundleId,
 };
 
