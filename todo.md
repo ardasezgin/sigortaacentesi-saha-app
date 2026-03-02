@@ -317,3 +317,9 @@
 - [ ] Debug tRPC client configuration
 - [ ] Check if auth token is being sent correctly
 - [ ] Verify API base URL in production build
+
+## Acenteler Ekranı Düzeltmeleri (Build #24)
+
+- [x] Acenteler ekranı çökmesi düzeltildi (Build #23 uyumsuzluğu - yeni paginated API)
+- [x] Arama tüm veritabanında çalışsın (sunucu tarafı, sayfalama ile uyumlu)
+- [x] Sayfa numaraları tıklanabilir buton olarak Tümü/Aktif/Pasif altına eklendi

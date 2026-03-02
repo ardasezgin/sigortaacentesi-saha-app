@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Switch,
   Platform,
+  ScrollView,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -19,73 +20,89 @@ import { getAllAgencies, updateAgency } from '@/lib/services/agency-service';
 const PAGE_SIZE = 50;
 
 /**
- * Acentelerim Ekranı - Sayfalı yükleme ile tüm acenteleri listeler
+ * Acentelerim Ekranı - Sayfalı yükleme, sunucu tarafı arama, sayfa numarası navigasyonu
  */
 export default function AgenciesScreen() {
   const colors = useColors();
 
   const [agencies, setAgencies] = useState<Agency[]>([]);
   const [total, setTotal] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'Tümü' | 'Aktif' | 'Pasif'>('Tümü');
   const [updatingAgency, setUpdatingAgency] = useState<string | null>(null);
 
-  const pageRef = useRef(1);
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeSearchRef = useRef('');
+  const activeFilterRef = useRef<'Tümü' | 'Aktif' | 'Pasif'>('Tümü');
+  const listRef = useRef<FlatList>(null);
 
-  // İlk yükleme ve arama değiştiğinde sıfırla
-  const loadAgencies = useCallback(async (search?: string, reset = true) => {
-    if (reset) {
-      setIsLoading(true);
-      pageRef.current = 1;
-    } else {
+  const totalPages = Math.ceil(total / PAGE_SIZE);
+
+  // Veri yükle - sayfa ve arama parametreleriyle
+  const loadPage = useCallback(async (page: number, search?: string, append = false) => {
+    if (append) {
       setIsLoadingMore(true);
+    } else {
+      setIsLoading(true);
     }
 
     try {
-      const result = await getAllAgencies(pageRef.current, PAGE_SIZE, search);
-      if (reset) {
-        setAgencies(result.agencies);
-      } else {
+      // Aktif/Pasif filtresi için limit artır (client-side filtreleme)
+      const limit = PAGE_SIZE;
+      const result = await getAllAgencies(page, limit, search || undefined);
+      
+      if (append) {
         setAgencies(prev => [...prev, ...result.agencies]);
+      } else {
+        setAgencies(result.agencies);
+        // Sayfanın başına kaydır
+        setTimeout(() => listRef.current?.scrollToOffset({ offset: 0, animated: false }), 50);
       }
       setTotal(result.total);
-      setHasMore(result.hasMore);
-      console.log(`[agencies] Yüklendi: ${result.agencies.length} / ${result.total} (sayfa ${pageRef.current})`);
+      setCurrentPage(page);
+      console.log(`[agencies] Sayfa ${page}/${Math.ceil(result.total / PAGE_SIZE)}: ${result.agencies.length} acente (toplam ${result.total})`);
     } catch (error) {
-      console.error('Acenteler yüklenirken hata:', error);
+      console.error('[agencies] Yükleme hatası:', error);
     } finally {
       setIsLoading(false);
       setIsLoadingMore(false);
     }
   }, []);
 
+  // İlk yükleme
   useEffect(() => {
-    loadAgencies(undefined, true);
+    loadPage(1);
   }, []);
 
-  // Arama: 500ms debounce ile sunucu tarafı arama
+  // Arama: 600ms debounce ile sunucu tarafı arama (tüm 19.364 kayıtta)
   useEffect(() => {
     if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     searchTimerRef.current = setTimeout(() => {
       activeSearchRef.current = searchQuery;
-      loadAgencies(searchQuery || undefined, true);
-    }, 500);
+      loadPage(1, searchQuery || undefined);
+    }, 600);
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
   }, [searchQuery]);
 
-  // Sonsuz kaydırma: daha fazla yükle
+  // Sayfa değiştir
+  const goToPage = useCallback((page: number) => {
+    if (page < 1 || page > totalPages || page === currentPage) return;
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    loadPage(page, activeSearchRef.current || undefined);
+  }, [totalPages, currentPage, loadPage]);
+
+  // Sonsuz kaydırma: sonraki sayfayı yükle
   const loadMore = useCallback(() => {
-    if (!hasMore || isLoadingMore || isLoading) return;
-    pageRef.current += 1;
-    loadAgencies(activeSearchRef.current || undefined, false);
-  }, [hasMore, isLoadingMore, isLoading, loadAgencies]);
+    if (isLoadingMore || isLoading || currentPage >= totalPages) return;
+    loadPage(currentPage + 1, activeSearchRef.current || undefined, true);
+  }, [isLoadingMore, isLoading, currentPage, totalPages, loadPage]);
 
   const toggleAgencyStatus = async (agency: Agency) => {
     setUpdatingAgency(agency.levhaNo);
@@ -99,13 +116,13 @@ export default function AgenciesScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
     } catch (error) {
-      console.error('Acente durumu güncellenirken hata:', error);
+      console.error('[agencies] Durum güncelleme hatası:', error);
     } finally {
       setUpdatingAgency(null);
     }
   };
 
-  // Durum filtresi client-side (zaten yüklü veriler üzerinde)
+  // Durum filtresi client-side (yüklü sayfa üzerinde)
   const filteredAgencies = filterStatus === 'Tümü'
     ? agencies
     : filterStatus === 'Aktif'
@@ -118,7 +135,7 @@ export default function AgenciesScreen() {
         <View className="flex-1 items-center justify-center">
           <ActivityIndicator size="large" color={colors.primary} />
           <Text className="text-base text-muted mt-4">
-            Acenteler yükleniyor...
+            {searchQuery ? `"${searchQuery}" aranıyor...` : 'Acenteler yükleniyor...'}
           </Text>
         </View>
       </ScreenContainer>
@@ -126,20 +143,24 @@ export default function AgenciesScreen() {
   }
 
   const renderHeader = () => (
-    <View className="py-4 gap-4 px-4">
-      {/* Arama */}
+    <View className="py-4 gap-3 px-4">
+      {/* Arama - Tüm 19.364 kayıtta sunucu tarafı arama */}
       <TextInput
-        className="bg-surface border border-border rounded-lg px-4 py-3 text-foreground"
-        placeholder="Acente adı, levha no, şehir ara..."
+        className="bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-base"
+        placeholder="Tüm acentelerde ara (ad, levha no, şehir)..."
         placeholderTextColor={colors.muted}
         value={searchQuery}
         onChangeText={setSearchQuery}
         returnKeyType="search"
+        clearButtonMode="while-editing"
       />
 
       {/* Toplam sayı */}
       <Text className="text-xs text-muted px-1">
-        {searchQuery ? `"${searchQuery}" için ${total} sonuç` : `Toplam ${total.toLocaleString('tr-TR')} acente`}
+        {searchQuery
+          ? `"${searchQuery}" için ${total.toLocaleString('tr-TR')} sonuç`
+          : `Toplam ${total.toLocaleString('tr-TR')} acente`}
+        {totalPages > 1 && ` · Sayfa ${currentPage}/${totalPages}`}
       </Text>
 
       {/* Durum Filtreleri */}
@@ -166,6 +187,16 @@ export default function AgenciesScreen() {
           color={colors.error}
         />
       </View>
+
+      {/* Sayfa Numaraları */}
+      {totalPages > 1 && (
+        <PageNavigator
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onGoToPage={goToPage}
+          colors={colors}
+        />
+      )}
     </View>
   );
 
@@ -177,7 +208,7 @@ export default function AgenciesScreen() {
       </Text>
       <Text className="text-sm text-muted text-center">
         {searchQuery
-          ? 'Arama kriterlerinize uygun acente yok'
+          ? `"${searchQuery}" için sonuç yok`
           : 'Henüz kayıtlı acente bulunmuyor'}
       </Text>
     </View>
@@ -188,7 +219,7 @@ export default function AgenciesScreen() {
     return (
       <View className="py-4 items-center">
         <ActivityIndicator size="small" color={colors.primary} />
-        <Text className="text-xs text-muted mt-2">Daha fazla yükleniyor...</Text>
+        <Text className="text-xs text-muted mt-2">Yükleniyor...</Text>
       </View>
     );
   };
@@ -196,6 +227,7 @@ export default function AgenciesScreen() {
   return (
     <ScreenContainer className="bg-background">
       <FlatList
+        ref={listRef}
         data={filteredAgencies}
         keyExtractor={(item) => item.levhaNo}
         renderItem={({ item }) => (
@@ -209,7 +241,7 @@ export default function AgenciesScreen() {
         ListEmptyComponent={renderEmpty}
         ListFooterComponent={renderFooter}
         onEndReached={loadMore}
-        onEndReachedThreshold={0.3}
+        onEndReachedThreshold={0.4}
         contentContainerStyle={{ paddingBottom: 24, paddingHorizontal: 16, gap: 12 }}
         initialNumToRender={20}
         maxToRenderPerBatch={10}
@@ -218,6 +250,126 @@ export default function AgenciesScreen() {
         updateCellsBatchingPeriod={50}
       />
     </ScreenContainer>
+  );
+}
+
+/**
+ * Sayfa numarası navigatörü - önceki/sonraki + yakın sayfalar
+ */
+function PageNavigator({
+  currentPage,
+  totalPages,
+  onGoToPage,
+  colors,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onGoToPage: (page: number) => void;
+  colors: ReturnType<typeof useColors>;
+}) {
+  // Gösterilecek sayfa numaralarını hesapla (max 7 buton)
+  const getPageNumbers = () => {
+    const pages: (number | '...')[] = [];
+    
+    if (totalPages <= 7) {
+      for (let i = 1; i <= totalPages; i++) pages.push(i);
+      return pages;
+    }
+
+    pages.push(1);
+    
+    if (currentPage > 3) pages.push('...');
+    
+    const start = Math.max(2, currentPage - 1);
+    const end = Math.min(totalPages - 1, currentPage + 1);
+    
+    for (let i = start; i <= end; i++) pages.push(i);
+    
+    if (currentPage < totalPages - 2) pages.push('...');
+    
+    pages.push(totalPages);
+    return pages;
+  };
+
+  const pageNumbers = getPageNumbers();
+
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={{ gap: 6, paddingVertical: 2 }}
+    >
+      {/* Önceki */}
+      <TouchableOpacity
+        onPress={() => onGoToPage(currentPage - 1)}
+        disabled={currentPage === 1}
+        style={{
+          paddingHorizontal: 10,
+          paddingVertical: 7,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: currentPage === 1 ? colors.border : colors.primary,
+          backgroundColor: colors.background,
+          opacity: currentPage === 1 ? 0.4 : 1,
+        }}
+      >
+        <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>‹ Önceki</Text>
+      </TouchableOpacity>
+
+      {/* Sayfa numaraları */}
+      {pageNumbers.map((page, idx) =>
+        page === '...' ? (
+          <View
+            key={`dots-${idx}`}
+            style={{ paddingHorizontal: 6, paddingVertical: 7, justifyContent: 'center' }}
+          >
+            <Text style={{ color: colors.muted, fontSize: 13 }}>…</Text>
+          </View>
+        ) : (
+          <TouchableOpacity
+            key={page}
+            onPress={() => onGoToPage(page)}
+            style={{
+              minWidth: 36,
+              paddingHorizontal: 10,
+              paddingVertical: 7,
+              borderRadius: 8,
+              borderWidth: 1,
+              borderColor: page === currentPage ? colors.primary : colors.border,
+              backgroundColor: page === currentPage ? colors.primary : colors.background,
+              alignItems: 'center',
+            }}
+          >
+            <Text
+              style={{
+                color: page === currentPage ? colors.background : colors.foreground,
+                fontSize: 13,
+                fontWeight: page === currentPage ? '700' : '400',
+              }}
+            >
+              {page}
+            </Text>
+          </TouchableOpacity>
+        )
+      )}
+
+      {/* Sonraki */}
+      <TouchableOpacity
+        onPress={() => onGoToPage(currentPage + 1)}
+        disabled={currentPage === totalPages}
+        style={{
+          paddingHorizontal: 10,
+          paddingVertical: 7,
+          borderRadius: 8,
+          borderWidth: 1,
+          borderColor: currentPage === totalPages ? colors.border : colors.primary,
+          backgroundColor: colors.background,
+          opacity: currentPage === totalPages ? 0.4 : 1,
+        }}
+      >
+        <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>Sonraki ›</Text>
+      </TouchableOpacity>
+    </ScrollView>
   );
 }
 
@@ -239,10 +391,10 @@ const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
         {/* Başlık */}
         <View className="flex-row justify-between items-start mb-3">
           <View className="flex-1 mr-3">
-            <Text className="text-lg font-bold text-foreground mb-1">
+            <Text className="text-base font-bold text-foreground mb-1" numberOfLines={2}>
               {agency.acenteUnvani}
             </Text>
-            <Text className="text-sm text-muted">
+            <Text className="text-xs text-muted">
               Levha No: {agency.levhaNo}
             </Text>
           </View>
@@ -266,20 +418,12 @@ const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
         </View>
 
         {/* Detaylar */}
-        <View className="gap-2 pt-2 border-t border-border">
+        <View className="gap-1 pt-2 border-t border-border">
           {agency.teknikPersonel && (
-            <InfoRow
-              icon="👤"
-              label="Yetkili"
-              value={agency.teknikPersonel}
-            />
+            <InfoRow icon="👤" label="Yetkili" value={agency.teknikPersonel} />
           )}
           {agency.telefon && (
-            <InfoRow
-              icon="📞"
-              label="Telefon"
-              value={agency.telefon}
-            />
+            <InfoRow icon="📞" label="Telefon" value={agency.telefon} />
           )}
           {agency.il && (
             <InfoRow
@@ -349,9 +493,9 @@ function InfoRow({
 }) {
   return (
     <View className="flex-row items-center gap-2">
-      <Text className="text-base">{icon}</Text>
-      <Text className="text-xs text-muted w-16">{label}:</Text>
-      <Text className="text-sm text-foreground flex-1">{value}</Text>
+      <Text className="text-sm">{icon}</Text>
+      <Text className="text-xs text-muted w-14">{label}:</Text>
+      <Text className="text-xs text-foreground flex-1" numberOfLines={1}>{value}</Text>
     </View>
   );
 }
