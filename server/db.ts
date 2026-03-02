@@ -122,7 +122,7 @@ export async function getUserById(id: number) {
 // ============================================
 
 import { agencies, Agency, InsertAgency } from "../drizzle/schema";
-import { like, or } from "drizzle-orm";
+import { like, or, ilike } from "drizzle-orm";
 
 /**
  * Find agency by levha number (case-insensitive)
@@ -162,7 +162,7 @@ export async function findAgencyByName(name: string): Promise<Agency | null> {
     const result = await db
       .select()
       .from(agencies)
-      .where(like(agencies.acenteUnvani, `%${name}%`))
+      .where(ilike(agencies.acenteUnvani, `%${name}%`))
       .limit(1);
 
     return result.length > 0 ? result[0] : null;
@@ -188,10 +188,10 @@ export async function searchAgencies(query: string): Promise<Agency[]> {
       .from(agencies)
       .where(
         or(
-          like(agencies.levhaNo, `%${query}%`),
-          like(agencies.acenteUnvani, `%${query}%`),
-          like(agencies.il, `%${query}%`),
-          like(agencies.ilce, `%${query}%`)
+          ilike(agencies.levhaNo, `%${query}%`),
+          ilike(agencies.acenteUnvani, `%${query}%`),
+          ilike(agencies.il, `%${query}%`),
+          ilike(agencies.ilce, `%${query}%`)
         )
       )
       .limit(100); // Limit to 100 results for performance
@@ -328,10 +328,10 @@ export async function getAgenciesPaginated(
     if (search && search.trim()) {
       const s = `%${search.trim()}%`;
       const whereClause = or(
-        like(agencies.levhaNo, s),
-        like(agencies.acenteUnvani, s),
-        like(agencies.il, s),
-        like(agencies.ilce, s)
+        ilike(agencies.levhaNo, s),
+        ilike(agencies.acenteUnvani, s),
+        ilike(agencies.il, s),
+        ilike(agencies.ilce, s)
       );
       query = db.select().from(agencies).where(whereClause).orderBy(asc(agencies.acenteUnvani)).limit(limit).offset(offset);
       countQuery = db.select({ count: count() }).from(agencies).where(whereClause);
