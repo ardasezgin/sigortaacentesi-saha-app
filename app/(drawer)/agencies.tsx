@@ -1,4 +1,4 @@
-import { useState, useEffect, memo } from 'react';
+import { useState, useEffect, useCallback, useRef, memo } from 'react';
 import {
   FlatList,
   Text,
@@ -14,60 +14,90 @@ import * as Haptics from 'expo-haptics';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import type { Agency } from '@/lib/types/agency';
-import { getAllAgencies, updateAgency, searchAgencies as searchAgenciesAPI } from '@/lib/services/agency-service';
+import { getAllAgencies, updateAgency } from '@/lib/services/agency-service';
+
+const PAGE_SIZE = 50;
 
 /**
- * Acentelerim Ekranı - Tüm acenteleri listeleme ve arama
+ * Acentelerim Ekranı - Sayfalı yükleme ile tüm acenteleri listeler
  */
 export default function AgenciesScreen() {
   const colors = useColors();
-  
+
   const [agencies, setAgencies] = useState<Agency[]>([]);
-  const [filteredAgencies, setFilteredAgencies] = useState<Agency[]>([]);
+  const [total, setTotal] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'Tümü' | 'Aktif' | 'Pasif'>('Tümü');
   const [updatingAgency, setUpdatingAgency] = useState<string | null>(null);
 
-  useEffect(() => {
-    loadAgencies();
-  }, []);
+  const pageRef = useRef(1);
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeSearchRef = useRef('');
 
-  useEffect(() => {
-    applyFilters();
-  }, [searchQuery, filterStatus, agencies]);
+  // İlk yükleme ve arama değiştiğinde sıfırla
+  const loadAgencies = useCallback(async (search?: string, reset = true) => {
+    if (reset) {
+      setIsLoading(true);
+      pageRef.current = 1;
+    } else {
+      setIsLoadingMore(true);
+    }
 
-  const loadAgencies = async () => {
-    setIsLoading(true);
     try {
-      const data = await getAllAgencies();
-      setAgencies(data);
-      setFilteredAgencies(data);
-      console.log('[agencies] Acenteler backend\'den yüklendi:', data.length);
+      const result = await getAllAgencies(pageRef.current, PAGE_SIZE, search);
+      if (reset) {
+        setAgencies(result.agencies);
+      } else {
+        setAgencies(prev => [...prev, ...result.agencies]);
+      }
+      setTotal(result.total);
+      setHasMore(result.hasMore);
+      console.log(`[agencies] Yüklendi: ${result.agencies.length} / ${result.total} (sayfa ${pageRef.current})`);
     } catch (error) {
       console.error('Acenteler yüklenirken hata:', error);
     } finally {
       setIsLoading(false);
+      setIsLoadingMore(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    loadAgencies(undefined, true);
+  }, []);
+
+  // Arama: 500ms debounce ile sunucu tarafı arama
+  useEffect(() => {
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      activeSearchRef.current = searchQuery;
+      loadAgencies(searchQuery || undefined, true);
+    }, 500);
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, [searchQuery]);
+
+  // Sonsuz kaydırma: daha fazla yükle
+  const loadMore = useCallback(() => {
+    if (!hasMore || isLoadingMore || isLoading) return;
+    pageRef.current += 1;
+    loadAgencies(activeSearchRef.current || undefined, false);
+  }, [hasMore, isLoadingMore, isLoading, loadAgencies]);
 
   const toggleAgencyStatus = async (agency: Agency) => {
     setUpdatingAgency(agency.levhaNo);
     try {
       const newStatus = agency.isActive === 0 ? 1 : 0;
-      
       await updateAgency(agency.levhaNo, { isActive: newStatus });
-      
-      // Local state güncelle
-      setAgencies(prev => 
+      setAgencies(prev =>
         prev.map(a => a.levhaNo === agency.levhaNo ? { ...a, isActive: newStatus } : a)
       );
-      
       if (Platform.OS !== 'web') {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
-      
-      console.log('[agencies] Acente durumu güncellendi:', agency.levhaNo, newStatus);
     } catch (error) {
       console.error('Acente durumu güncellenirken hata:', error);
     } finally {
@@ -75,30 +105,12 @@ export default function AgenciesScreen() {
     }
   };
 
-  const applyFilters = () => {
-    let filtered = [...agencies];
-
-    // Durum filtresi (isActive kullan: 1=active, 0=inactive)
-    if (filterStatus === 'Aktif') {
-      filtered = filtered.filter(a => a.isActive !== 0);
-    } else if (filterStatus === 'Pasif') {
-      filtered = filtered.filter(a => a.isActive === 0);
-    }
-
-    // Arama filtresi
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      filtered = filtered.filter(
-        a =>
-          a.acenteUnvani?.toLowerCase().includes(query) ||
-          a.levhaNo?.toLowerCase().includes(query) ||
-          a.il?.toLowerCase().includes(query) ||
-          a.ilce?.toLowerCase().includes(query)
-      );
-    }
-
-    setFilteredAgencies(filtered);
-  };
+  // Durum filtresi client-side (zaten yüklü veriler üzerinde)
+  const filteredAgencies = filterStatus === 'Tümü'
+    ? agencies
+    : filterStatus === 'Aktif'
+      ? agencies.filter(a => a.isActive !== 0)
+      : agencies.filter(a => a.isActive === 0);
 
   if (isLoading) {
     return (
@@ -112,6 +124,7 @@ export default function AgenciesScreen() {
       </ScreenContainer>
     );
   }
+
   const renderHeader = () => (
     <View className="py-4 gap-4 px-4">
       {/* Arama */}
@@ -121,7 +134,13 @@ export default function AgenciesScreen() {
         placeholderTextColor={colors.muted}
         value={searchQuery}
         onChangeText={setSearchQuery}
+        returnKeyType="search"
       />
+
+      {/* Toplam sayı */}
+      <Text className="text-xs text-muted px-1">
+        {searchQuery ? `"${searchQuery}" için ${total} sonuç` : `Toplam ${total.toLocaleString('tr-TR')} acente`}
+      </Text>
 
       {/* Durum Filtreleri */}
       <View className="flex-row gap-2">
@@ -164,6 +183,16 @@ export default function AgenciesScreen() {
     </View>
   );
 
+  const renderFooter = () => {
+    if (!isLoadingMore) return null;
+    return (
+      <View className="py-4 items-center">
+        <ActivityIndicator size="small" color={colors.primary} />
+        <Text className="text-xs text-muted mt-2">Daha fazla yükleniyor...</Text>
+      </View>
+    );
+  };
+
   return (
     <ScreenContainer className="bg-background">
       <FlatList
@@ -178,6 +207,9 @@ export default function AgenciesScreen() {
         )}
         ListHeaderComponent={renderHeader}
         ListEmptyComponent={renderEmpty}
+        ListFooterComponent={renderFooter}
+        onEndReached={loadMore}
+        onEndReachedThreshold={0.3}
         contentContainerStyle={{ paddingBottom: 24, paddingHorizontal: 16, gap: 12 }}
         initialNumToRender={20}
         maxToRenderPerBatch={10}
@@ -200,7 +232,7 @@ interface AgencyCardProps {
 
 const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
   const colors = useColors();
-  
+
   return (
     <TouchableOpacity activeOpacity={0.7}>
       <View className="bg-surface rounded-xl p-4 border border-border">
@@ -216,7 +248,7 @@ const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
           </View>
           {/* Aktif/Pasif Toggle */}
           <View className="flex-row items-center gap-2">
-            <Text 
+            <Text
               className="text-xs font-semibold"
               style={{ color: agency.isActive !== 0 ? colors.success : colors.muted }}
             >
@@ -279,7 +311,7 @@ function FilterButton({
   color: string;
 }) {
   const colors = useColors();
-  
+
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -315,8 +347,6 @@ function InfoRow({
   label: string;
   value: string;
 }) {
-  const colors = useColors();
-  
   return (
     <View className="flex-row items-center gap-2">
       <Text className="text-base">{icon}</Text>

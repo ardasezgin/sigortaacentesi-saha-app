@@ -1,0 +1,9 @@
+{
+  "query": "UPDATE users SET `passwordHash` = '$2b$10$ao09in.T03RFdyo0cvjssutF/IYQtTaYkm0Wzqs.W91C5c5BFcV8i', `loginMethod` = 'password' WHERE email IN ('ezgi.ozdemir@sigortaacentesi.com','kubra.oren@sigortaacentesi.com','ardasezgin@rsotomotivgrubu.com','gokhan.genc@sigortaacentesi.com','aybeniz.apo@sigortaacentesi.com','ahmet.genc@sigortaacentesi.com','tugce.alagas@sigortaacentesi.com','arda.sezgin@sigortaacentesi.com','busra.oner@sigortaacentesi.com','irem.unal@sigortaacentesi.com','mehmet.kaya@sigortaacentesi.com','ayse.yilmaz@sigortaacentesi.com','fatma.demir@sigortaacentesi.com','ali.celik@sigortaacentesi.com','zeynep.sahin@sigortaacentesi.com','test@demo.com','admin@sigortaacentesi.com');",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute UPDATE users SET `passwordHash` = '$2b$10$ao09in.T03RFdyo0cvjssutF/IYQtTaYkm0Wzqs.W91C5c5BFcV8i', `loginMethod` = 'password' WHERE email IN ('ezgi.ozdemir@sigortaacentesi.com','kubra.oren@sigortaacentesi.com','ardasezgin@rsotomotivgrubu.com','gokhan.genc@sigortaacentesi.com','aybeniz.apo@sigortaacentesi.com','ahmet.genc@sigortaacentesi.com','tugce.alagas@sigortaacentesi.com','arda.sezgin@sigortaacentesi.com','busra.oner@sigortaacentesi.com','irem.unal@sigortaacentesi.com','mehmet.kaya@sigortaacentesi.com','ayse.yilmaz@sigortaacentesi.com','fatma.demir@sigortaacentesi.com','ali.celik@sigortaacentesi.com','zeynep.sahin@sigortaacentesi.com','test@demo.com','admin@sigortaacentesi.com');",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1520
+}

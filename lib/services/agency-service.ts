@@ -33,16 +33,26 @@ const vanillaTrpc = createTRPCClient<AppRouter>({
  * Artık tüm veriler PostgreSQL'de tutuluyor (IndexedDB/AsyncStorage yerine)
  */
 
+export interface AgenciesPage {
+  agencies: Agency[];
+  total: number;
+  hasMore: boolean;
+}
+
 /**
- * Tüm acenteleri getir (backend'den)
+ * Acenteleri sayfalı olarak getir (backend'den) - mobil performans için
  */
-export async function getAllAgencies(): Promise<Agency[]> {
+export async function getAllAgencies(
+  page: number = 1,
+  limit: number = 50,
+  search?: string
+): Promise<AgenciesPage> {
   try {
-    const agencies = await vanillaTrpc.agencies.getAll.query();
-    return agencies as Agency[];
+    const result = await vanillaTrpc.agencies.getAll.query({ page, limit, search });
+    return result as AgenciesPage;
   } catch (error) {
     console.error('[AgencyService] getAllAgencies error:', error);
-    return [];
+    return { agencies: [], total: 0, hasMore: false };
   }
 }
 

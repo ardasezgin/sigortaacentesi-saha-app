@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { eq, asc } from "drizzle-orm";
 import { drizzle as drizzleMysql } from "drizzle-orm/mysql2";
 import { drizzle as drizzlePostgres } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
@@ -123,26 +123,6 @@ export async function getUserById(id: number) {
 
 import { agencies, Agency, InsertAgency } from "../drizzle/schema";
 import { like, or } from "drizzle-orm";
-
-/**
- * Get all agencies from database
- */
-export async function getAllAgencies(): Promise<Agency[]> {
-  const db = await getDb();
-  if (!db) {
-    console.warn("[Database] Cannot get agencies: database not available");
-    return [];
-  }
-
-  try {
-    const result = await db.select().from(agencies);
-    console.log('[getAllAgencies] Fetched', result.length, 'agencies');
-    return result;
-  } catch (error) {
-    console.error("[Database] Failed to get agencies:", error);
-    return [];
-  }
-}
 
 /**
  * Find agency by levha number (case-insensitive)
@@ -311,10 +291,9 @@ export async function getAgencyCount(): Promise<number> {
     console.warn("[Database] Cannot get agency count: database not available");
     return 0;
   }
-
   try {
-    const result = await db.select().from(agencies);
-    return result.length;
+    const result = await db.select({ count: count() }).from(agencies);
+    return Number(result[0]?.count ?? 0);
   } catch (error) {
     console.error("[Database] Failed to get agency count:", error);
     return 0;
@@ -329,6 +308,68 @@ import { visits, Visit, InsertVisit, communications, Communication, InsertCommun
 import { desc, and, gte, lte, count, sql } from "drizzle-orm";
 
 /**
+ * Get agencies with pagination (for mobile performance)
+ */
+export async function getAgenciesPaginated(
+  page: number = 1,
+  limit: number = 50,
+  search?: string
+): Promise<{ agencies: Agency[]; total: number; hasMore: boolean }> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get agencies: database not available");
+    return { agencies: [], total: 0, hasMore: false };
+  }
+  try {
+    const offset = (page - 1) * limit;
+    let query: any;
+    let countQuery: any;
+
+    if (search && search.trim()) {
+      const s = `%${search.trim()}%`;
+      const whereClause = or(
+        like(agencies.levhaNo, s),
+        like(agencies.acenteUnvani, s),
+        like(agencies.il, s),
+        like(agencies.ilce, s)
+      );
+      query = db.select().from(agencies).where(whereClause).orderBy(asc(agencies.acenteUnvani)).limit(limit).offset(offset);
+      countQuery = db.select({ count: count() }).from(agencies).where(whereClause);
+    } else {
+      query = db.select().from(agencies).orderBy(asc(agencies.acenteUnvani)).limit(limit).offset(offset);
+      countQuery = db.select({ count: count() }).from(agencies);
+    }
+
+    const [rows, countResult] = await Promise.all([query, countQuery]);
+    const total = Number(countResult[0]?.count ?? 0);
+    console.log(`[getAgenciesPaginated] page=${page} limit=${limit} search=${search} fetched=${rows.length} total=${total}`);
+    return { agencies: rows, total, hasMore: offset + rows.length < total };
+  } catch (error) {
+    console.error("[Database] Failed to get agencies paginated:", error);
+    return { agencies: [], total: 0, hasMore: false };
+  }
+}
+
+/**
+ * Get all agencies from database (kept for backward compat, use getAgenciesPaginated for mobile)
+ */
+export async function getAllAgencies(): Promise<Agency[]> {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get agencies: database not available");
+    return [];
+  }
+  try {
+    const result = await db.select().from(agencies).orderBy(asc(agencies.acenteUnvani));
+    console.log('[getAllAgencies] Fetched', result.length, 'agencies');
+    return result;
+  } catch (error) {
+    console.error("[Database] Failed to get agencies:", error);
+    return [];
+  }
+}
+
+/**
  * Get all visits
  */
 export async function getAllVisits(): Promise<Visit[]> {
@@ -337,7 +378,6 @@ export async function getAllVisits(): Promise<Visit[]> {
     console.warn("[Database] Cannot get visits: database not available");
     return [];
   }
-
   try {
     const result = await db.select().from(visits).orderBy(desc(visits.createdAt));
     return result;

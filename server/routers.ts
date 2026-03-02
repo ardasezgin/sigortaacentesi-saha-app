@@ -62,10 +62,21 @@ export const appRouter = router({
 
   // Agency management routes (public - no auth required for shared data)
   agencies: router({
-    // Get all agencies
-    getAll: publicProcedure.query(async () => {
-      return await db.getAllAgencies();
-    }),
+    // Get agencies with pagination (mobile-friendly)
+    getAll: publicProcedure
+      .input(
+        z.object({
+          page: z.number().min(1).default(1),
+          limit: z.number().min(1).max(200).default(50),
+          search: z.string().optional(),
+        }).optional()
+      )
+      .query(async ({ input }) => {
+        const page = input?.page ?? 1;
+        const limit = input?.limit ?? 50;
+        const search = input?.search;
+        return await db.getAgenciesPaginated(page, limit, search);
+      }),
 
     // Find agency by levha number
     findByLevhaNo: publicProcedure
