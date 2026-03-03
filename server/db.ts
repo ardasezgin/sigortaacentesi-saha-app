@@ -6,6 +6,7 @@ import { InsertUser, users } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
 let _db: any = null;
+let _pgClient: any = null; // raw postgres-js client for direct SQL queries
 
 // Lazily create the drizzle instance so local tooling can run without a DB.
 export async function getDb() {
@@ -16,8 +17,8 @@ export async function getDb() {
       // Check if it's PostgreSQL or MySQL
       if (dbUrl.startsWith('postgres://') || dbUrl.startsWith('postgresql://')) {
         console.log('[Database] Connecting to PostgreSQL...');
-        const client = postgres(dbUrl);
-        _db = drizzlePostgres(client);
+        _pgClient = postgres(dbUrl);
+        _db = drizzlePostgres(_pgClient);
       } else {
         console.log('[Database] Connecting to MySQL/TiDB...');
         _db = drizzleMysql(dbUrl);
@@ -30,6 +31,12 @@ export async function getDb() {
     }
   }
   return _db;
+}
+
+// Get raw postgres-js client for direct SQL queries (bypasses Drizzle ORM schema issues)
+export async function getPgClient() {
+  await getDb(); // ensure connection is initialized
+  return _pgClient;
 }
 
 export async function upsertUser(user: InsertUser): Promise<void> {
@@ -610,65 +617,54 @@ export async function updateRequest(id: number, data: Partial<InsertRequest>): P
  * Get dashboard metrics (active/passive agencies, visits, requests)
  */
 export async function getDashboardMetrics() {
-  const db = await getDb();
-  if (!db) {
-    return {
-      totalAgencies: 0,
-      activeAgencies: 0,
-      passiveAgencies: 0,
-      totalVisitsThisWeek: 0,
-      totalVisitsThisMonth: 0,
-      newAgenciesThisMonth: 0,
-      openRequests: 0,
-    };
-  }
+  // Always use a direct postgres-js connection to bypass Drizzle ORM schema issues.
+  // Production PostgreSQL has camelCase columns ("isActive", "createdAt") in agencies table
+  // but snake_case (created_at) in visits/requests tables.
+  const directClient = postgres({
+    host: '127.0.0.1',
+    port: 5432,
+    database: 'sigorta_db',
+    username: 'sigorta_user',
+    password: 'SigortaDB2026!',
+    max: 1,
+    connect_timeout: 10,
+  });
 
   try {
-    // Get agency counts
-    const totalAgenciesResult = await db.select({ count: count() }).from(agencies);
-    const totalAgencies = totalAgenciesResult[0]?.count || 0;
-
-    const activeAgenciesResult = await db
-      .select({ count: count() })
-      .from(agencies)
-      .where(eq(agencies.isActive, 1));
-    const activeAgencies = activeAgenciesResult[0]?.count || 0;
-
-    const passiveAgencies = totalAgencies - activeAgencies;
-
-    // Get visit counts (this week and this month)
     const now = new Date();
     const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - now.getDay()); // Sunday
+    startOfWeek.setDate(now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
-
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    const visitsThisWeekResult = await db
-      .select({ count: count() })
-      .from(visits)
-      .where(gte(visits.createdAt, startOfWeek));
-    const totalVisitsThisWeek = visitsThisWeekResult[0]?.count || 0;
+    // Run each query independently so one failure doesn't block others
+    const [agencyResult, visitsWeekResult, visitsMonthResult, newAgenciesResult, openRequestsResult] = await Promise.allSettled([
+      directClient`SELECT COUNT(*) as totalcount, SUM(CASE WHEN "isActive" = 1 THEN 1 ELSE 0 END) as activecount FROM agencies`,
+      directClient`SELECT COUNT(*) as cnt FROM visits WHERE created_at >= ${startOfWeek}`,
+      directClient`SELECT COUNT(*) as cnt FROM visits WHERE created_at >= ${startOfMonth}`,
+      directClient`SELECT COUNT(*) as cnt FROM agencies WHERE "createdAt" >= ${startOfMonth}`,
+      directClient`SELECT COUNT(*) as cnt FROM requests WHERE status = 'A\u00e7\u0131k'`,
+    ]);
 
-    const visitsThisMonthResult = await db
-      .select({ count: count() })
-      .from(visits)
-      .where(gte(visits.createdAt, startOfMonth));
-    const totalVisitsThisMonth = visitsThisMonthResult[0]?.count || 0;
+    const agencyRows = agencyResult.status === 'fulfilled' ? agencyResult.value : [];
+    const visitsWeekRows = visitsWeekResult.status === 'fulfilled' ? visitsWeekResult.value : [];
+    const visitsMonthRows = visitsMonthResult.status === 'fulfilled' ? visitsMonthResult.value : [];
+    const newAgenciesRows = newAgenciesResult.status === 'fulfilled' ? newAgenciesResult.value : [];
+    const openRequestsRows = openRequestsResult.status === 'fulfilled' ? openRequestsResult.value : [];
 
-    // Get new agencies this month
-    const newAgenciesResult = await db
-      .select({ count: count() })
-      .from(agencies)
-      .where(gte(agencies.createdAt, startOfMonth));
-    const newAgenciesThisMonth = newAgenciesResult[0]?.count || 0;
+    // Log any failures for debugging
+    if (agencyResult.status === 'rejected') console.error('[getDashboardMetrics] agencyRows failed:', agencyResult.reason?.message);
+    if (visitsWeekResult.status === 'rejected') console.error('[getDashboardMetrics] visitsWeek failed:', visitsWeekResult.reason?.message);
 
-    // Get open requests count
-    const openRequestsResult = await db
-      .select({ count: count() })
-      .from(requests)
-      .where(eq(requests.status, "Açık"));
-    const openRequests = openRequestsResult[0]?.count || 0;
+    const totalAgencies = Number(agencyRows[0]?.totalcount) || 0;
+    const activeAgencies = Number(agencyRows[0]?.activecount) || 0;
+    const passiveAgencies = totalAgencies - activeAgencies;
+    const totalVisitsThisWeek = Number(visitsWeekRows[0]?.cnt) || 0;
+    const totalVisitsThisMonth = Number(visitsMonthRows[0]?.cnt) || 0;
+    const newAgenciesThisMonth = Number(newAgenciesRows[0]?.cnt) || 0;
+    const openRequests = Number(openRequestsRows[0]?.cnt) || 0;
+
+    console.log('[getDashboardMetrics] totalAgencies:', totalAgencies, 'activeAgencies:', activeAgencies);
 
     return {
       totalAgencies,
@@ -690,6 +686,8 @@ export async function getDashboardMetrics() {
       newAgenciesThisMonth: 0,
       openRequests: 0,
     };
+  } finally {
+    try { await directClient.end(); } catch (_) {}
   }
 }
 

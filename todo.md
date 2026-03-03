@@ -323,3 +323,7 @@
 - [x] Acenteler ekranı çökmesi düzeltildi (Build #23 uyumsuzluğu - yeni paginated API)
 - [x] Arama tüm veritabanında çalışsın (sunucu tarafı, sayfalama ile uyumlu)
 - [x] Sayfa numaraları tıklanabilir buton olarak Tümü/Aktif/Pasif altına eklendi
+
+## Dashboard İstatistikleri Düzeltmesi
+
+- [x] getDashboardMetrics count() MySQL/PostgreSQL uyumsuzluğu düzeltildi (doğrudan postgres-js bağlantısı ile)

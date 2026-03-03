@@ -409,8 +409,14 @@ export const appRouter = router({
     // Get dashboard metrics
     getMetrics: publicProcedure.query(async () => {
       const metrics = await db.getDashboardMetrics();
-      const recentVisits = await db.getRecentVisits(5);
-      const recentRequests = await db.getRecentRequests(5);
+      // Use Promise.allSettled so a schema mismatch in recentVisits/recentRequests
+      // doesn't prevent the main metrics (counts) from being returned.
+      const [visitsResult, requestsResult] = await Promise.allSettled([
+        db.getRecentVisits(5),
+        db.getRecentRequests(5),
+      ]);
+      const recentVisits = visitsResult.status === 'fulfilled' ? visitsResult.value : [];
+      const recentRequests = requestsResult.status === 'fulfilled' ? requestsResult.value : [];
       return {
         ...metrics,
         recentVisits,

@@ -1,0 +1,15 @@
+{
+  "query": "SELECT id, email, name FROM users WHERE email = 'test@demo.com';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT id, email, name FROM users WHERE email = 'test@demo.com';",
+  "rows": [
+    {
+      "id": "90001",
+      "email": "test@demo.com",
+      "name": "Demo Kullanıcı"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\temail\tname\n90001\ttest@demo.com\tDemo Kullanıcı\n",
+  "stderr": "",
+  "execution_time_ms": 1547
+}
