@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ScrollView,
   Text,
@@ -57,6 +57,11 @@ export default function VisitScreen() {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
+  // Acente adı öneri listesi
+  const [acenteSuggestions, setAcenteSuggestions] = useState<Agency[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const acenteSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   // Dropdown visibility
   const [showIletisimTuruDropdown, setShowIletisimTuruDropdown] = useState(false);
   const [showIsOrtagiDropdown, setShowIsOrtagiDropdown] = useState(false);
@@ -179,9 +184,12 @@ export default function VisitScreen() {
     console.log('[Form] kimleGorusuldu:', kimleGorusuldu);
     console.log('[Form] user:', user);
     
+    // Levha no zorunluluk kontrolü: sadece Aday Acente ve Mevcut Acente için zorunlu
+    const levhaNoRequired = isOrtagi === 'Aday Acente' || isOrtagi === 'Mevcut Acente';
+    
     // Validasyon
-    if (!levhaNo.trim()) {
-      console.log('[Form] Validation failed: Levha No empty');
+    if (levhaNoRequired && !levhaNo.trim()) {
+      console.log('[Form] Validation failed: Levha No empty (required for', isOrtagi, ')');
       Alert.alert('Uyarı', 'Levha No zorunludur');
       return;
     }
@@ -442,10 +450,10 @@ export default function VisitScreen() {
               )}
             </View>
 
-            {/* Levha No */}
+            {/* Levha No - Aday/Mevcut Acente için zorunlu, diğerlerinde isteğe bağlı */}
             <View>
               <Text className="text-sm font-medium text-foreground mb-2">
-                Levha No *
+                Levha No {(isOrtagi === 'Aday Acente' || isOrtagi === 'Mevcut Acente') ? '*' : '(isteğe bağlı)'}
               </Text>
               <View className="flex-row items-center">
                 <TextInput
@@ -522,40 +530,43 @@ export default function VisitScreen() {
               <View className="flex-row items-center">
                 <TextInput
                   value={acenteAdi}
-                  onChangeText={async (text) => {
+                  onChangeText={(text) => {
                     setAcenteAdi(text);
-                    
-                    // 5 karakterden az ise sadece state güncelle
-                    if (text.length < 5) {
-                      return;
-                    }
-                    
-                    // 5+ karakter girildiğinde acente adına göre ara
-                    setIsSearchingName(true);
-                    try {
-                      console.log('[visit] Acente adı araması başlatıldı:', text);
-                      const found = await findAgencyByName(text);
-                      console.log('[visit] Acente adı arama sonucu:', found ? found.levhaNo : 'Bulunamadı');
-                      
-                      if (found) {
-                        setSelectedAgency(found);
-                        setLevhaNo(found.levhaNo);
-                        setAcenteAdi(found.acenteUnvani);
-                        setIsAutoFilled(true);
-                        if (Platform.OS !== 'web') {
-                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                        }
+                    setIsAutoFilled(false);
+                    setSelectedAgency(null);
+                    setShowSuggestions(false);
+                    setAcenteSuggestions([]);
+
+                    if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
+
+                    // 5 karakterden az ise aramayı durdur
+                    if (text.trim().length < 5) return;
+
+                    // 600ms debounce ile sunucu tarafı arama
+                    acenteSearchTimer.current = setTimeout(async () => {
+                      setIsSearchingName(true);
+                      try {
+                        const { getAllAgencies } = await import('@/lib/services/agency-service');
+                        const result = await getAllAgencies(1, 8, text.trim());
+                        setAcenteSuggestions(result.agencies);
+                        setShowSuggestions(result.agencies.length > 0);
+                      } catch (error) {
+                        console.error('Acente adı arama hatası:', error);
+                      } finally {
+                        setIsSearchingName(false);
                       }
-                      // Bulunamadıysa hiçbir şey yapma (kullanıcı manuel yazıyor)
-                    } catch (error) {
-                      console.error('Acente adı arama hatası:', error);
-                    } finally {
-                      setIsSearchingName(false);
-                    }
+                    }, 600);
                   }}
-                  placeholder="Acente ünvanı"
+                  onBlur={() => {
+                    // Kısa gecikme ile kapat (seçim için zaman tanı)
+                    setTimeout(() => setShowSuggestions(false), 200);
+                  }}
+                  placeholder="Acente ünvanı (en az 5 harf)"
                   placeholderTextColor={colors.muted}
                   className="flex-1 border border-border rounded-lg p-3 text-foreground bg-background"
+                  autoCorrect={false}
+                  autoComplete="off"
+                  spellCheck={false}
                 />
                 {isSearchingName && (
                   <ActivityIndicator
@@ -565,6 +576,34 @@ export default function VisitScreen() {
                   />
                 )}
               </View>
+              {/* Öneri listesi */}
+              {showSuggestions && acenteSuggestions.length > 0 && (
+                <View className="mt-1 border border-border rounded-lg bg-background" style={{ maxHeight: 200 }}>
+                  {acenteSuggestions.map((agency) => (
+                    <TouchableOpacity
+                      key={agency.levhaNo}
+                      onPress={() => {
+                        setAcenteAdi(agency.acenteUnvani);
+                        setLevhaNo(agency.levhaNo);
+                        setSelectedAgency(agency);
+                        setIsAutoFilled(true);
+                        setShowSuggestions(false);
+                        setAcenteSuggestions([]);
+                        if (Platform.OS !== 'web') {
+                          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                        }
+                      }}
+                      className="p-3 border-b border-border"
+                    >
+                      <Text className="text-foreground text-sm font-medium">{agency.acenteUnvani}</Text>
+                      <Text className="text-muted text-xs">{agency.levhaNo} • {agency.il}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              )}
+              {isAutoFilled && (
+                <Text className="text-xs text-success mt-1">✓ Acente seçildi: {selectedAgency?.levhaNo}</Text>
+              )}
             </View>
 
             {/* Kimle Görüşüldü */}

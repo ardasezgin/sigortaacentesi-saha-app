@@ -21,6 +21,10 @@ const PAGE_SIZE = 50;
 
 /**
  * Acentelerim Ekranı - Sayfalı yükleme, sunucu tarafı arama, sayfa numarası navigasyonu
+ *
+ * Klavye sorunu çözümü: TextInput'u FlatList ListHeaderComponent'ından AYRI tutuyoruz.
+ * ListHeaderComponent her render'da yeniden oluşunca TextInput unmount/remount oluyor
+ * ve klavye kapanıyor. Çözüm: arama kutusunu FlatList dışında, üstte sabit tutmak.
  */
 export default function AgenciesScreen() {
   const colors = useColors();
@@ -36,7 +40,6 @@ export default function AgenciesScreen() {
 
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const activeSearchRef = useRef('');
-  const activeFilterRef = useRef<'Tümü' | 'Aktif' | 'Pasif'>('Tümü');
   const listRef = useRef<FlatList>(null);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
@@ -50,20 +53,16 @@ export default function AgenciesScreen() {
     }
 
     try {
-      // Aktif/Pasif filtresi için limit artır (client-side filtreleme)
-      const limit = PAGE_SIZE;
-      const result = await getAllAgencies(page, limit, search || undefined);
+      const result = await getAllAgencies(page, PAGE_SIZE, search || undefined);
       
       if (append) {
         setAgencies(prev => [...prev, ...result.agencies]);
       } else {
         setAgencies(result.agencies);
-        // Sayfanın başına kaydır
         setTimeout(() => listRef.current?.scrollToOffset({ offset: 0, animated: false }), 50);
       }
       setTotal(result.total);
       setCurrentPage(page);
-      console.log(`[agencies] Sayfa ${page}/${Math.ceil(result.total / PAGE_SIZE)}: ${result.agencies.length} acente (toplam ${result.total})`);
     } catch (error) {
       console.error('[agencies] Yükleme hatası:', error);
     } finally {
@@ -129,32 +128,9 @@ export default function AgenciesScreen() {
       ? agencies.filter(a => a.isActive !== 0)
       : agencies.filter(a => a.isActive === 0);
 
-  if (isLoading) {
-    return (
-      <ScreenContainer className="bg-background">
-        <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color={colors.primary} />
-          <Text className="text-base text-muted mt-4">
-            {searchQuery ? `"${searchQuery}" aranıyor...` : 'Acenteler yükleniyor...'}
-          </Text>
-        </View>
-      </ScreenContainer>
-    );
-  }
-
-  const renderHeader = () => (
-    <View className="py-4 gap-3 px-4">
-      {/* Arama - Tüm 19.364 kayıtta sunucu tarafı arama */}
-      <TextInput
-        className="bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-base"
-        placeholder="Tüm acentelerde ara (ad, levha no, şehir)..."
-        placeholderTextColor={colors.muted}
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        returnKeyType="search"
-        clearButtonMode="while-editing"
-      />
-
+  // FlatList list header - filtreler ve sayfa numaraları (TextInput BURAYA KONULMADI)
+  const renderListHeader = useCallback(() => (
+    <View className="gap-3 pb-2">
       {/* Toplam sayı */}
       <Text className="text-xs text-muted px-1">
         {searchQuery
@@ -198,9 +174,9 @@ export default function AgenciesScreen() {
         />
       )}
     </View>
-  );
+  ), [searchQuery, total, totalPages, currentPage, agencies, filterStatus, colors, goToPage]);
 
-  const renderEmpty = () => (
+  const renderEmpty = useCallback(() => (
     <View className="items-center justify-center py-12">
       <Text className="text-6xl mb-4">🏢</Text>
       <Text className="text-lg font-bold text-foreground mb-2">
@@ -212,9 +188,9 @@ export default function AgenciesScreen() {
           : 'Henüz kayıtlı acente bulunmuyor'}
       </Text>
     </View>
-  );
+  ), [searchQuery]);
 
-  const renderFooter = () => {
+  const renderFooter = useCallback(() => {
     if (!isLoadingMore) return null;
     return (
       <View className="py-4 items-center">
@@ -222,39 +198,67 @@ export default function AgenciesScreen() {
         <Text className="text-xs text-muted mt-2">Yükleniyor...</Text>
       </View>
     );
-  };
+  }, [isLoadingMore, colors.primary]);
 
   return (
     <ScreenContainer className="bg-background">
-      <FlatList
-        ref={listRef}
-        data={filteredAgencies}
-        keyExtractor={(item) => item.levhaNo}
-        renderItem={({ item }) => (
-          <AgencyCard
-            agency={item}
-            onToggle={toggleAgencyStatus}
-            isUpdating={updatingAgency === item.levhaNo}
-          />
-        )}
-        ListHeaderComponent={renderHeader}
-        ListEmptyComponent={renderEmpty}
-        ListFooterComponent={renderFooter}
-        onEndReached={loadMore}
-        onEndReachedThreshold={0.4}
-        contentContainerStyle={{ paddingBottom: 24, paddingHorizontal: 16, gap: 12 }}
-        initialNumToRender={20}
-        maxToRenderPerBatch={10}
-        windowSize={5}
-        removeClippedSubviews={true}
-        updateCellsBatchingPeriod={50}
-      />
+      {/* Arama kutusu - FlatList DIŞINDA sabit tutuldu (klavye sorunu çözümü) */}
+      <View className="px-4 pt-4 pb-2">
+        <TextInput
+          className="bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-base"
+          placeholder="Tüm acentelerde ara (ad, levha no, şehir)..."
+          placeholderTextColor={colors.muted}
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          returnKeyType="search"
+          clearButtonMode="while-editing"
+          autoCorrect={false}
+          autoComplete="off"
+          spellCheck={false}
+          keyboardType="default"
+        />
+      </View>
+
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color={colors.primary} />
+          <Text className="text-base text-muted mt-4">
+            {searchQuery ? `"${searchQuery}" aranıyor...` : 'Acenteler yükleniyor...'}
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          ref={listRef}
+          data={filteredAgencies}
+          keyExtractor={(item) => item.levhaNo}
+          renderItem={({ item }) => (
+            <AgencyCard
+              agency={item}
+              onToggle={toggleAgencyStatus}
+              isUpdating={updatingAgency === item.levhaNo}
+            />
+          )}
+          ListHeaderComponent={renderListHeader}
+          ListEmptyComponent={renderEmpty}
+          ListFooterComponent={renderFooter}
+          onEndReached={loadMore}
+          onEndReachedThreshold={0.4}
+          contentContainerStyle={{ paddingBottom: 24, paddingHorizontal: 16, gap: 12 }}
+          initialNumToRender={20}
+          maxToRenderPerBatch={10}
+          windowSize={5}
+          removeClippedSubviews={true}
+          updateCellsBatchingPeriod={50}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+        />
+      )}
     </ScreenContainer>
   );
 }
 
 /**
- * Sayfa numarası navigatörü - önceki/sonraki + yakın sayfalar
+ * Sayfa numarası navigatörü
  */
 function PageNavigator({
   currentPage,
@@ -267,7 +271,6 @@ function PageNavigator({
   onGoToPage: (page: number) => void;
   colors: ReturnType<typeof useColors>;
 }) {
-  // Gösterilecek sayfa numaralarını hesapla (max 7 buton)
   const getPageNumbers = () => {
     const pages: (number | '...')[] = [];
     
@@ -277,16 +280,13 @@ function PageNavigator({
     }
 
     pages.push(1);
-    
     if (currentPage > 3) pages.push('...');
     
     const start = Math.max(2, currentPage - 1);
     const end = Math.min(totalPages - 1, currentPage + 1);
-    
     for (let i = start; i <= end; i++) pages.push(i);
     
     if (currentPage < totalPages - 2) pages.push('...');
-    
     pages.push(totalPages);
     return pages;
   };
@@ -299,7 +299,6 @@ function PageNavigator({
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{ gap: 6, paddingVertical: 2 }}
     >
-      {/* Önceki */}
       <TouchableOpacity
         onPress={() => onGoToPage(currentPage - 1)}
         disabled={currentPage === 1}
@@ -316,7 +315,6 @@ function PageNavigator({
         <Text style={{ color: colors.primary, fontSize: 13, fontWeight: '600' }}>‹ Önceki</Text>
       </TouchableOpacity>
 
-      {/* Sayfa numaraları */}
       {pageNumbers.map((page, idx) =>
         page === '...' ? (
           <View
@@ -353,7 +351,6 @@ function PageNavigator({
         )
       )}
 
-      {/* Sonraki */}
       <TouchableOpacity
         onPress={() => onGoToPage(currentPage + 1)}
         disabled={currentPage === totalPages}
@@ -388,7 +385,6 @@ const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
   return (
     <TouchableOpacity activeOpacity={0.7}>
       <View className="bg-surface rounded-xl p-4 border border-border">
-        {/* Başlık */}
         <View className="flex-row justify-between items-start mb-3">
           <View className="flex-1 mr-3">
             <Text className="text-base font-bold text-foreground mb-1" numberOfLines={2}>
@@ -398,7 +394,6 @@ const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
               Levha No: {agency.levhaNo}
             </Text>
           </View>
-          {/* Aktif/Pasif Toggle */}
           <View className="flex-row items-center gap-2">
             <Text
               className="text-xs font-semibold"
@@ -417,7 +412,6 @@ const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
           </View>
         </View>
 
-        {/* Detaylar */}
         <View className="gap-1 pt-2 border-t border-border">
           {agency.teknikPersonel && (
             <InfoRow icon="👤" label="Yetkili" value={agency.teknikPersonel} />

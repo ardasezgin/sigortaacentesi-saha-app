@@ -327,3 +327,10 @@
 ## Dashboard İstatistikleri Düzeltmesi
 
 - [x] getDashboardMetrics count() MySQL/PostgreSQL uyumsuzluğu düzeltildi (doğrudan postgres-js bağlantısı ile)
+
+## Kullanıcı Bulguları - Düzeltmeler
+
+- [ ] Acentelerim sayfasında arama kutusunda klavye her harften sonra kapanıyor - düzeltilecek
+- [ ] Arama kutusunda otomatik tamamlama (autocomplete) devre dışı bırakılacak
+- [ ] Ziyaret/arama girişinde acente türü "Aday" veya "Mevcut" ise levha no zorunlu, diğerlerinde zorunlu değil
+- [ ] Talep/istek/şikayet formunda "kimden" acenteden seçilirse acente seçimi isteğe bağlı olsun

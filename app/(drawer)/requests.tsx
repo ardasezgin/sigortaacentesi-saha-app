@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   ScrollView,
   Text,
@@ -30,6 +30,7 @@ export default function RequestsScreen() {
   const createTaskMutation = trpc.clickup.createTask.useMutation();
   
   // Form state
+  const [kimden, setKimden] = useState<'Acente' | 'Diğer'>('Acente');
   const [levhaNo, setLevhaNo] = useState('');
   const [acenteAdi, setAcenteAdi] = useState('');
   const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null);
@@ -38,6 +39,9 @@ export default function RequestsScreen() {
   const [priority, setPriority] = useState<Priority>('Orta');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
+  const acenteSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [acenteSuggestions, setAcenteSuggestions] = useState<Agency[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   
   // UI state
   const [isSearchingLevha, setIsSearchingLevha] = useState(false);
@@ -249,10 +253,13 @@ export default function RequestsScreen() {
   };
 
   const clearForm = () => {
+    setKimden('Acente');
     setLevhaNo('');
     setAcenteAdi('');
     setSelectedAgency(null);
     setIsAutoFilled(false);
+    setAcenteSuggestions([]);
+    setShowSuggestions(false);
     setRequestType('Talep');
     setPriority('Orta');
     setSubject('');
@@ -312,10 +319,49 @@ export default function RequestsScreen() {
           {/* Form */}
           {showForm && (
             <View className="bg-surface rounded-2xl p-4 gap-4 border border-border shadow-sm">
-              {/* Levha No */}
+              {/* Kimden */}
+              <View className="gap-2">
+                <Text className="text-sm font-semibold text-foreground">Kimden *</Text>
+                <View className="flex-row gap-2">
+                  {(['Acente', 'Diğer'] as const).map((k) => (
+                    <TouchableOpacity
+                      key={k}
+                      onPress={() => {
+                        setKimden(k);
+                        // Acente'den Diğer'e geçince acente alanlarını temizle
+                        if (k === 'Diğer') {
+                          setLevhaNo('');
+                          setAcenteAdi('');
+                          setSelectedAgency(null);
+                          setIsAutoFilled(false);
+                        }
+                      }}
+                      disabled={isSaving}
+                      style={{
+                        flex: 1,
+                        paddingVertical: 10,
+                        borderRadius: 8,
+                        borderWidth: 1,
+                        borderColor: kimden === k ? colors.primary : colors.border,
+                        backgroundColor: kimden === k ? colors.primary + '20' : colors.background,
+                      }}
+                    >
+                      <Text
+                        className="text-center font-semibold text-sm"
+                        style={{ color: kimden === k ? colors.primary : colors.foreground }}
+                      >
+                        {k}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              {/* Levha No - sadece Kimden=Acente ise göster */}
+              {kimden === 'Acente' && (
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">
-                  Acente Levha No *
+                  Acente Levha No (isteğe bağlı)
                 </Text>
                 <View className="flex-row items-center">
                   <TextInput
@@ -383,8 +429,10 @@ export default function RequestsScreen() {
                   )
                 )}
               </View>
+              )}
 
-              {/* Acente Adı */}
+              {/* Acente Adı - sadece Kimden=Acente ise göster */}
+              {kimden === 'Acente' && (
               <View className="gap-2">
                 <Text className="text-sm font-semibold text-foreground">
                   Acente Adı *
@@ -392,40 +440,35 @@ export default function RequestsScreen() {
                 <View className="flex-row items-center">
                   <TextInput
                     className="flex-1 bg-background border border-border rounded-lg px-4 py-3 text-foreground"
-                    placeholder="Acente ünvanı"
+                    placeholder="Acente ünvanı (en az 5 harf)"
                     placeholderTextColor={colors.muted}
                     value={acenteAdi}
-                    onChangeText={async (text) => {
+                    autoCorrect={false}
+                    autoComplete="off"
+                    spellCheck={false}
+                    onChangeText={(text) => {
                       setAcenteAdi(text);
-                      
-                      // 5 karakterden az ise sadece state güncelle
-                      if (text.length < 5) {
-                        return;
-                      }
-                      
-                      // 5+ karakter girildiğinde acente adına göre ara
-                      setIsSearchingName(true);
-                      try {
-                        console.log('[requests] Acente adı araması başlatıldı:', text);
-                        const found = await findAgencyByName(text);
-                        console.log('[requests] Acente adı arama sonucu:', found ? found.levhaNo : 'Bulunamadı');
-                        
-                        if (found) {
-                          setSelectedAgency(found);
-                          setLevhaNo(found.levhaNo);
-                          setAcenteAdi(found.acenteUnvani);
-                          setIsAutoFilled(true);
-                          if (Platform.OS !== 'web') {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          }
+                      setIsAutoFilled(false);
+                      setSelectedAgency(null);
+                      setShowSuggestions(false);
+                      setAcenteSuggestions([]);
+                      if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
+                      if (text.trim().length < 5) return;
+                      acenteSearchTimer.current = setTimeout(async () => {
+                        setIsSearchingName(true);
+                        try {
+                          const { getAllAgencies } = await import('@/lib/services/agency-service');
+                          const result = await getAllAgencies(1, 8, text.trim());
+                          setAcenteSuggestions(result.agencies);
+                          setShowSuggestions(result.agencies.length > 0);
+                        } catch (error) {
+                          console.error('Acente adı arama hatası:', error);
+                        } finally {
+                          setIsSearchingName(false);
                         }
-                        // Bulunamadıysa hiçbir şey yapma (kullanıcı manuel yazıyor)
-                      } catch (error) {
-                        console.error('Acente adı arama hatası:', error);
-                      } finally {
-                        setIsSearchingName(false);
-                      }
+                      }, 600);
                     }}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
                     editable={!isSaving}
                   />
                   {isSearchingName && (
@@ -436,7 +479,35 @@ export default function RequestsScreen() {
                     />
                   )}
                 </View>
+                {showSuggestions && acenteSuggestions.length > 0 && (
+                  <View className="mt-1 border border-border rounded-lg bg-background" style={{ maxHeight: 200 }}>
+                    {acenteSuggestions.map((agency) => (
+                      <TouchableOpacity
+                        key={agency.levhaNo}
+                        onPress={() => {
+                          setAcenteAdi(agency.acenteUnvani);
+                          setLevhaNo(agency.levhaNo);
+                          setSelectedAgency(agency);
+                          setIsAutoFilled(true);
+                          setShowSuggestions(false);
+                          setAcenteSuggestions([]);
+                          if (Platform.OS !== 'web') {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                          }
+                        }}
+                        className="p-3 border-b border-border"
+                      >
+                        <Text className="text-foreground text-sm font-medium">{agency.acenteUnvani}</Text>
+                        <Text className="text-muted text-xs">{agency.levhaNo} • {agency.il}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+                {isAutoFilled && (
+                  <Text className="text-xs text-success mt-1">✓ Acente seçildi: {selectedAgency?.levhaNo}</Text>
+                )}
               </View>
+              )}
 
               {/* Talep Türü */}
               <View className="gap-2">
