@@ -122,59 +122,65 @@ export default function AgenciesScreen() {
   };
 
   // Durum filtresi client-side (yüklü sayfa üzerinde)
+  const safeAgenciesForFilter = agencies ?? [];
   const filteredAgencies = filterStatus === 'Tümü'
-    ? agencies
+    ? safeAgenciesForFilter
     : filterStatus === 'Aktif'
-      ? agencies.filter(a => a.isActive !== 0)
-      : agencies.filter(a => a.isActive === 0);
+      ? safeAgenciesForFilter.filter(a => a.isActive !== 0)
+      : safeAgenciesForFilter.filter(a => a.isActive === 0);
 
   // FlatList list header - filtreler ve sayfa numaraları (TextInput BURAYA KONULMADI)
-  const renderListHeader = useCallback(() => (
-    <View className="gap-3 pb-2">
-      {/* Toplam sayı */}
-      <Text className="text-xs text-muted px-1">
-        {searchQuery
-          ? `"${searchQuery}" için ${total.toLocaleString('tr-TR')} sonuç`
-          : `Toplam ${total.toLocaleString('tr-TR')} acente`}
-        {totalPages > 1 && ` · Sayfa ${currentPage}/${totalPages}`}
-      </Text>
+  const renderListHeader = useCallback(() => {
+    const safeAgencies = agencies ?? [];
+    const safeTotal = total ?? 0;
+    const safeTotalPages = totalPages ?? 0;
+    return (
+      <View className="gap-3 pb-2">
+        {/* Toplam sayı */}
+        <Text className="text-xs text-muted px-1">
+          {searchQuery
+            ? `"${searchQuery}" için ${safeTotal.toLocaleString('tr-TR')} sonuç`
+            : `Toplam ${safeTotal.toLocaleString('tr-TR')} acente`}
+          {safeTotalPages > 1 && ` · Sayfa ${currentPage}/${safeTotalPages}`}
+        </Text>
 
-      {/* Durum Filtreleri */}
-      <View className="flex-row gap-2">
-        <FilterButton
-          label="Tümü"
-          count={agencies.length}
-          isActive={filterStatus === 'Tümü'}
-          onPress={() => setFilterStatus('Tümü')}
-          color={colors.primary}
-        />
-        <FilterButton
-          label="Aktif"
-          count={agencies.filter(a => a.isActive !== 0).length}
-          isActive={filterStatus === 'Aktif'}
-          onPress={() => setFilterStatus('Aktif')}
-          color={colors.success}
-        />
-        <FilterButton
-          label="Pasif"
-          count={agencies.filter(a => a.isActive === 0).length}
-          isActive={filterStatus === 'Pasif'}
-          onPress={() => setFilterStatus('Pasif')}
-          color={colors.error}
-        />
+        {/* Durum Filtreleri */}
+        <View className="flex-row gap-2">
+          <FilterButton
+            label="Tümü"
+            count={safeAgencies.length}
+            isActive={filterStatus === 'Tümü'}
+            onPress={() => setFilterStatus('Tümü')}
+            color={colors.primary}
+          />
+          <FilterButton
+            label="Aktif"
+            count={safeAgencies.filter(a => a.isActive !== 0).length}
+            isActive={filterStatus === 'Aktif'}
+            onPress={() => setFilterStatus('Aktif')}
+            color={colors.success}
+          />
+          <FilterButton
+            label="Pasif"
+            count={safeAgencies.filter(a => a.isActive === 0).length}
+            isActive={filterStatus === 'Pasif'}
+            onPress={() => setFilterStatus('Pasif')}
+            color={colors.error}
+          />
+        </View>
+
+        {/* Sayfa Numaraları */}
+        {safeTotalPages > 1 && (
+          <PageNavigator
+            currentPage={currentPage}
+            totalPages={safeTotalPages}
+            onGoToPage={goToPage}
+            colors={colors}
+          />
+        )}
       </View>
-
-      {/* Sayfa Numaraları */}
-      {totalPages > 1 && (
-        <PageNavigator
-          currentPage={currentPage}
-          totalPages={totalPages}
-          onGoToPage={goToPage}
-          colors={colors}
-        />
-      )}
-    </View>
-  ), [searchQuery, total, totalPages, currentPage, agencies, filterStatus, colors, goToPage]);
+    );
+  }, [searchQuery, total, totalPages, currentPage, agencies, filterStatus, colors, goToPage]);
 
   const renderEmpty = useCallback(() => (
     <View className="items-center justify-center py-12">
