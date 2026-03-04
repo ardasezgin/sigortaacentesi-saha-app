@@ -162,6 +162,9 @@ export const appRouter = router({
       .input(
         z.object({
           levhaNo: z.string(),
+          personelSayisi: z.string().nullable().optional(),
+          organizasyoncu: z.string().nullable().optional(),
+          subeSayisi: z.string().nullable().optional(),
           yonetimIliskisi: z.string().nullable().optional(),
           acenteyeVerilenSoz: z.string().nullable().optional(),
           hayatHayatDisi: z.string().nullable().optional(),

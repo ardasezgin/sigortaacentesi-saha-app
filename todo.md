@@ -374,3 +374,9 @@
 - [x] Acentelerim ekranına "Dışa Aktar" butonu ekle (arama kutusu yanına)
 - [x] Export akışı: API'den CSV indir, expo-sharing ile paylaşım menüsünü aç
 - [ ] Checkpoint al ve yeni build başlat
+
+## Acente Karnesi Kaydetme Hataları (Build #32 Sonrası)
+
+- [x] Sayı alanları (Personel Sayısı, Şube Sayısı) kaydedilmiyor - ÇÖZÜM: saveKarne router Zod şemasında personelSayisi, organizasyoncu, subeSayisi eksikti, eklendi
+- [x] Export boş geliyor - Export endpoint zaten doğruydu, kaydetme sorunu çözülünce export da düzeldı
+- [x] Karne ekranına tekrar girildiğinde son kaydedilen verinin gelmesi doğrulandı (test edildi: personelSayisi=42, subeSayisi=5, organizasyoncu=Evet)
