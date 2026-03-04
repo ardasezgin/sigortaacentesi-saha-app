@@ -1,0 +1,75 @@
+{
+  "query": "SELECT column_name, data_type, column_default FROM information_schema.columns WHERE table_name = 'requests' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT column_name, data_type, column_default FROM information_schema.columns WHERE table_name = 'requests' ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id",
+      "data_type": "int",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "levhaNo",
+      "data_type": "varchar",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "acenteAdi",
+      "data_type": "text",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "requestType",
+      "data_type": "varchar",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "priority",
+      "data_type": "varchar",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "status",
+      "data_type": "varchar",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "subject",
+      "data_type": "varchar",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "description",
+      "data_type": "text",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "response",
+      "data_type": "text",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "createdBy",
+      "data_type": "varchar",
+      "column_default": "NULL"
+    },
+    {
+      "column_name": "createdAt",
+      "data_type": "timestamp",
+      "column_default": "CURRENT_TIMESTAMP"
+    },
+    {
+      "column_name": "updatedAt",
+      "data_type": "timestamp",
+      "column_default": "CURRENT_TIMESTAMP"
+    },
+    {
+      "column_name": "resolvedAt",
+      "data_type": "timestamp",
+      "column_default": "NULL"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\tcolumn_default\nid\tint\tNULL\nlevhaNo\tvarchar\tNULL\nacenteAdi\ttext\tNULL\nrequestType\tvarchar\tNULL\npriority\tvarchar\tNULL\nstatus\tvarchar\tNULL\nsubject\tvarchar\tNULL\ndescription\ttext\tNULL\nresponse\ttext\tNULL\ncreatedBy\tvarchar\tNULL\ncreatedAt\ttimestamp\tCURRENT_TIMESTAMP\nupdatedAt\ttimestamp\tCURRENT_TIMESTAMP\nresolvedAt\ttimestamp\tNULL\n",
+  "stderr": "",
+  "execution_time_ms": 1503
+}

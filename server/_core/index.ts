@@ -144,6 +144,24 @@ async function startServer() {
     }
   });
 
+  // Debug endpoint - check table schema in production
+  app.get("/api/debug/schema", async (_req, res) => {
+    try {
+      const pg = await getPgClient();
+      if (!pg) {
+        res.status(503).json({ error: "Database not available" });
+        return;
+      }
+      const [requestsCols, visitsCols] = await Promise.all([
+        pg`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'requests' ORDER BY ordinal_position`,
+        pg`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'visits' ORDER BY ordinal_position`,
+      ]);
+      res.json({ requests: requestsCols, visits: visitsCols });
+    } catch (error: any) {
+      res.status(500).json({ error: error.message });
+    }
+  });
+
   app.use(
     "/api/trpc",
     createExpressMiddleware({

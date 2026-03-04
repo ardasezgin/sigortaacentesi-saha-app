@@ -388,3 +388,7 @@
 ## Acente Arama Seçim Hatası
 
 - [x] Arama sonuçlarında ilk sıra dışındaki acenteye tıklanınca seçilmiyor - ÇÖZÜM: TouchableOpacity + map() yerine FlatList + Pressable + keyboardShouldPersistTaps="always" kullanıldı (visit.tsx + requests.tsx)
+
+## Talep/İstek/Şikayet Kayıt Hatası
+
+- [ ] "Kayıt sırasında bir hata oluştu" - Talep formu kaydedilemiyor, API hatası tespit et ve düzelt

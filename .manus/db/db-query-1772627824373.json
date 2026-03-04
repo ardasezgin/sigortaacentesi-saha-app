@@ -1,0 +1,75 @@
+{
+  "query": "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'requests' ORDER BY ordinal_position;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = 'requests' ORDER BY ordinal_position;",
+  "rows": [
+    {
+      "column_name": "id",
+      "data_type": "int",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "levhaNo",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "acenteAdi",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "requestType",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "priority",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "status",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "subject",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "description",
+      "data_type": "text",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "response",
+      "data_type": "text",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "createdBy",
+      "data_type": "varchar",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "createdAt",
+      "data_type": "timestamp",
+      "is_nullable": "NO"
+    },
+    {
+      "column_name": "updatedAt",
+      "data_type": "timestamp",
+      "is_nullable": "YES"
+    },
+    {
+      "column_name": "resolvedAt",
+      "data_type": "timestamp",
+      "is_nullable": "YES"
+    }
+  ],
+  "messages": [],
+  "stdout": "column_name\tdata_type\tis_nullable\nid\tint\tNO\nlevhaNo\tvarchar\tNO\nacenteAdi\ttext\tYES\nrequestType\tvarchar\tNO\npriority\tvarchar\tNO\nstatus\tvarchar\tNO\nsubject\tvarchar\tNO\ndescription\ttext\tNO\nresponse\ttext\tYES\ncreatedBy\tvarchar\tNO\ncreatedAt\ttimestamp\tNO\nupdatedAt\ttimestamp\tYES\nresolvedAt\ttimestamp\tYES\n",
+  "stderr": "",
+  "execution_time_ms": 1879
+}
