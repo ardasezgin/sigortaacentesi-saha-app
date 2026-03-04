@@ -380,3 +380,11 @@
 - [x] Sayı alanları (Personel Sayısı, Şube Sayısı) kaydedilmiyor - ÇÖZÜM: saveKarne router Zod şemasında personelSayisi, organizasyoncu, subeSayisi eksikti, eklendi
 - [x] Export boş geliyor - Export endpoint zaten doğruydu, kaydetme sorunu çözülünce export da düzeldı
 - [x] Karne ekranına tekrar girildiğinde son kaydedilen verinin gelmesi doğrulandı (test edildi: personelSayisi=42, subeSayisi=5, organizasyoncu=Evet)
+
+## ClickUp Tekrarlayan Hata
+
+- [x] "ClickUp'a gönderilemedi" hatası tekrar çıkıyor - ÇÖZÜM: Eski token geçersizdi + liste ID yanlıştı (901315064975 → 901814074449). Yeni token ve doğru liste ID ile production güncellendi.
+
+## Acente Arama Seçim Hatası
+
+- [x] Arama sonuçlarında ilk sıra dışındaki acenteye tıklanınca seçilmiyor - ÇÖZÜM: TouchableOpacity + map() yerine FlatList + Pressable + keyboardShouldPersistTaps="always" kullanıldı (visit.tsx + requests.tsx)

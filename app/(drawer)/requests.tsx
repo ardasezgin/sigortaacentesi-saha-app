@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  FlatList,
+  Pressable,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
@@ -480,27 +482,37 @@ export default function RequestsScreen() {
                   )}
                 </View>
                 {showSuggestions && acenteSuggestions.length > 0 && (
-                  <View className="mt-1 border border-border rounded-lg bg-background" style={{ maxHeight: 200 }}>
-                    {acenteSuggestions.map((agency) => (
-                      <TouchableOpacity
-                        key={agency.levhaNo}
-                        onPress={() => {
-                          setAcenteAdi(agency.acenteUnvani);
-                          setLevhaNo(agency.levhaNo);
-                          setSelectedAgency(agency);
-                          setIsAutoFilled(true);
-                          setShowSuggestions(false);
-                          setAcenteSuggestions([]);
-                          if (Platform.OS !== 'web') {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                          }
-                        }}
-                        className="p-3 border-b border-border"
-                      >
-                        <Text className="text-foreground text-sm font-medium">{agency.acenteUnvani}</Text>
-                        <Text className="text-muted text-xs">{agency.levhaNo} • {agency.il}</Text>
-                      </TouchableOpacity>
-                    ))}
+                  <View className="mt-1 border border-border rounded-lg bg-background overflow-hidden" style={{ maxHeight: 200 }}>
+                    <FlatList
+                      data={acenteSuggestions}
+                      keyExtractor={(item) => item.levhaNo}
+                      keyboardShouldPersistTaps="always"
+                      scrollEnabled={acenteSuggestions.length > 4}
+                      renderItem={({ item: agency }) => (
+                        <Pressable
+                          onPress={() => {
+                            setAcenteAdi(agency.acenteUnvani);
+                            setLevhaNo(agency.levhaNo);
+                            setSelectedAgency(agency);
+                            setIsAutoFilled(true);
+                            setShowSuggestions(false);
+                            setAcenteSuggestions([]);
+                            if (Platform.OS !== 'web') {
+                              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            }
+                          }}
+                          style={({ pressed }) => ({
+                            padding: 12,
+                            borderBottomWidth: 0.5,
+                            borderBottomColor: '#E5E7EB',
+                            backgroundColor: pressed ? 'rgba(0,0,0,0.05)' : 'transparent',
+                          })}
+                        >
+                          <Text className="text-foreground text-sm font-medium">{agency.acenteUnvani}</Text>
+                          <Text className="text-muted text-xs">{agency.levhaNo} • {agency.il}</Text>
+                        </Pressable>
+                      )}
+                    />
                   </View>
                 )}
                 {isAutoFilled && (
