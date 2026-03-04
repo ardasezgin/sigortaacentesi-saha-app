@@ -367,3 +367,10 @@
 - [x] "Personel Sayısı" alanını düzenlenebilir yap (sayı alanı) - EDIT_FIELDS'a taşındı
 - [x] "Organizasyoncu mu? Alt bayisi var mı?" alanını düzenlenebilir yap (combo box: Evet/Hayır/Bilmiyorum) - EDIT_FIELDS'a taşındı
 - [x] "Şube Sayısı" alanını düzenlenebilir yap (sayı alanı) - EDIT_FIELDS'a taşındı
+
+## Dışa Aktar Özelliği
+
+- [x] Backend'e Excel export endpoint'i ekle (tüm acenteler + karne alanları, REST endpoint olarak) - /api/export/agencies
+- [x] Acentelerim ekranına "Dışa Aktar" butonu ekle (arama kutusu yanına)
+- [x] Export akışı: API'den CSV indir, expo-sharing ile paylaşım menüsünü aç
+- [ ] Checkpoint al ve yeni build başlat

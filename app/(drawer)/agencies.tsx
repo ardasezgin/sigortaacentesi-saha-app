@@ -9,14 +9,17 @@ import {
   Switch,
   Platform,
   ScrollView,
+  Alert,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import * as FileSystem from 'expo-file-system/legacy';
+import * as Sharing from 'expo-sharing';
 import { useRouter } from 'expo-router';
-
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import type { Agency } from '@/lib/types/agency';
 import { getAllAgencies, updateAgency } from '@/lib/services/agency-service';
+import { getApiBaseUrl } from '@/constants/oauth';
 
 const PAGE_SIZE = 50;
 
@@ -44,6 +47,45 @@ export default function AgenciesScreen() {
   const listRef = useRef<FlatList>(null);
 
   const totalPages = Math.ceil(total / PAGE_SIZE);
+  const [isExporting, setIsExporting] = useState(false);
+
+  const handleExport = useCallback(async () => {
+    if (isExporting) return;
+    setIsExporting(true);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    }
+    try {
+      const url = `${getApiBaseUrl()}/api/export/agencies`;
+      const filename = `acenteler_karne_${new Date().toISOString().slice(0, 10)}.csv`;
+      const fileUri = FileSystem.documentDirectory + filename;
+      const downloadResult = await FileSystem.downloadAsync(url, fileUri);
+      if (downloadResult.status !== 200) {
+        throw new Error(`HTTP ${downloadResult.status}`);
+      }
+      const canShare = await Sharing.isAvailableAsync();
+      if (canShare) {
+        await Sharing.shareAsync(downloadResult.uri, {
+          mimeType: 'text/csv',
+          dialogTitle: 'Acente Karnesi Excel',
+          UTI: 'public.comma-separated-values-text',
+        });
+      } else {
+        Alert.alert('Dışa Aktarıldı', `Dosya kaydedildi: ${filename}`);
+      }
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      }
+    } catch (error) {
+      console.error('[export] Error:', error);
+      Alert.alert('Hata', 'Dışa aktarma sırasında bir hata oluştu. Lütfen tekrar deneyin.');
+      if (Platform.OS !== 'web') {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  }, [isExporting]);
 
   // Veri yükle - sayfa ve arama parametreleriyle
   const loadPage = useCallback(async (page: number, search?: string, append = false) => {
@@ -209,21 +251,37 @@ export default function AgenciesScreen() {
 
   return (
     <ScreenContainer className="bg-background">
-      {/* Arama kutusu - FlatList DIŞINDA sabit tutuldu (klavye sorunu çözümü) */}
+      {/* Arama kutusu + Dışa Aktar butonu - FlatList DıŞİNDA sabit tutuldu (klavye sorunu çözümü) */}
       <View className="px-4 pt-4 pb-2">
-        <TextInput
-          className="bg-surface border border-border rounded-xl px-4 py-3 text-foreground text-base"
-          placeholder="Tüm acentelerde ara (ad, levha no, şehir)..."
-          placeholderTextColor={colors.muted}
-          value={searchQuery}
-          onChangeText={setSearchQuery}
-          returnKeyType="search"
-          clearButtonMode="while-editing"
-          autoCorrect={false}
-          autoComplete="off"
-          spellCheck={false}
-          keyboardType="default"
-        />
+        <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+          <TextInput
+            style={{ flex: 1, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, borderRadius: 12, paddingHorizontal: 16, paddingVertical: 12, color: colors.foreground, fontSize: 16 }}
+            placeholder="Tüm acentelerde ara (ad, levha no, şehir)..."
+            placeholderTextColor={colors.muted}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            returnKeyType="search"
+            clearButtonMode="while-editing"
+            autoCorrect={false}
+            autoComplete="off"
+            spellCheck={false}
+            keyboardType="default"
+          />
+          <TouchableOpacity
+            onPress={handleExport}
+            disabled={isExporting}
+            style={[
+              { backgroundColor: colors.primary, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, flexDirection: 'row', alignItems: 'center', gap: 6 },
+              isExporting && { opacity: 0.6 },
+            ]}
+          >
+            {isExporting ? (
+              <ActivityIndicator size="small" color={colors.background} />
+            ) : (
+              <Text style={{ color: colors.background, fontWeight: '600', fontSize: 14 }}>↓ Dışa Aktar</Text>
+            )}
+          </TouchableOpacity>
+        </View>
       </View>
 
       {isLoading ? (

@@ -1,0 +1,60 @@
+npm warn exec The following package was not found and will be installed: eas-cli@18.1.0
+(node:89979) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+
+⚠️ Detected that your app uses Expo Go for development, this is not recommended when building production apps.
+Learn more: https://expo.fyi/why-not-build-expo-go-for-production
+To suppress this warning, set EAS_BUILD_NO_EXPO_GO_WARNING=true.
+
+Resolved "production" environment for the build. Learn more: https://docs.expo.dev/eas/environment-variables/#setting-the-environment-for-your-builds
+Environment variables with visibility "Plain text" and "Sensitive" loaded from the "production" environment on EAS: EXPO_PUBLIC_API_BASE_URL.
+Environment variables loaded from the "production" build profile "env" configuration: EXPO_PUBLIC_API_BASE_URL.
+The following environment variables are defined in both the "production" build profile "env" configuration and the "production" environment on EAS: EXPO_PUBLIC_API_BASE_URL. The values from the build profile configuration will be used.
+
+- Incrementing buildNumber from 30 to 31.
+✔ Incremented buildNumber from 30 to 31.
+
+
+✔ Using remote iOS credentials (Expo server)
+
+Distribution Certificate is not validated for non-interactive builds.
+Skipping Provisioning Profile validation on Apple Servers because we aren't authenticated.
+
+Project Credentials Configuration
+
+Project                   @ardasezgin/sigortaacentesi-saha-app
+Bundle Identifier         space.manus.sigortaacentesi.saha.app.t20260204062206
+                          
+App Store Configuration   
+                          
+Distribution Certificate  
+Serial Number             1AC255B1ED20BA6354F57FB3B8AA553F
+Expiration Date           Wed, 17 Feb 2027 03:16:30 EST
+Apple Team                3FY5UQG667 (DESTECH HASAR COZUMLERI VE YAZILIM SANAYI TICARET ANONIM SIRKETI (Company/Organization))
+Updated                   15 days ago
+                          
+Provisioning Profile      
+Developer Portal ID       Z48G6635T3
+Status                    active
+Expiration                Wed, 17 Feb 2027 03:16:30 EST
+Apple Team                3FY5UQG667 (DESTECH HASAR COZUMLERI VE YAZILIM SANAYI TICARET ANONIM SIRKETI (Company/Organization))
+Updated                   15 days ago
+                          
+All credentials are ready to build @ardasezgin/sigortaacentesi-saha-app (space.manus.sigortaacentesi.saha.app.t20260204062206)
+
+
+Compressing project files and uploading to EAS Build. Learn more: https://expo.fyi/eas-build-archive
+- Compressing project files
+- Uploading to EAS Build (0 / 15.9 MB)
+✔ Uploaded to EAS 2s
+- Computing project fingerprint
+✔ Computed project fingerprint
+
+See logs: https://expo.dev/accounts/ardasezgin/projects/sigortaacentesi-saha-app/builds/aabb2651-287e-41e1-b3be-0269838756a2
+
+Waiting for build to complete. You can press Ctrl+C to exit.
+- Waiting for build to complete.
+✔ Build finished
+
+🍏 iOS app:
+https://expo.dev/artifacts/eas/n5MRVNPb5LLSdUDmyLPVDU.ipa
