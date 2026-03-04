@@ -881,6 +881,9 @@ export async function getAgencyKarneByLevhaNo(levhaNo: string): Promise<AgencyKa
 }
 
 export type KarneEditFields = {
+  personelSayisi?: string | null;
+  organizasyoncu?: string | null;
+  subeSayisi?: string | null;
   yonetimIliskisi?: string | null;
   acenteyeVerilenSoz?: string | null;
   hayatHayatDisi?: string | null;
@@ -921,6 +924,9 @@ export async function saveAgencyKarneByLevhaNo(levhaNo: string, data: KarneEditF
   try {
     await pg`
       UPDATE agencies SET
+        "personelSayisi" = ${data.personelSayisi ?? null},
+        "organizasyoncu" = ${data.organizasyoncu ?? null},
+        "subeSayisi" = ${data.subeSayisi ?? null},
         "yonetimIliskisi" = ${data.yonetimIliskisi ?? null},
         "acenteyeVerilenSoz" = ${data.acenteyeVerilenSoz ?? null},
         "hayatHayatDisi" = ${data.hayatHayatDisi ?? null},
@@ -968,6 +974,9 @@ export async function saveAgencyKarne(agencyId: number, data: KarneEditFields): 
   try {
     await pg`
       UPDATE agencies SET
+        "personelSayisi" = ${data.personelSayisi ?? null},
+        "organizasyoncu" = ${data.organizasyoncu ?? null},
+        "subeSayisi" = ${data.subeSayisi ?? null},
         "yonetimIliskisi" = ${data.yonetimIliskisi ?? null},
         "acenteyeVerilenSoz" = ${data.acenteyeVerilenSoz ?? null},
         "hayatHayatDisi" = ${data.hayatHayatDisi ?? null},

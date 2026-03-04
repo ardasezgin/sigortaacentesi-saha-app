@@ -80,7 +80,7 @@ interface FieldDef {
   required?: boolean;
 }
 
-// Sistem alanları (satır 1-13) - readonly
+// Sistem alanları (satır 1-13) - readonly (personelSayisi, organizasyoncu, subeSayisi edit'e taşındı)
 const SYSTEM_FIELDS: FieldDef[] = [
   { key: 'levhaNo', label: 'Levha No', type: 'readonly' },
   { key: 'acenteUnvani', label: 'Acente Adı', type: 'readonly' },
@@ -89,16 +89,16 @@ const SYSTEM_FIELDS: FieldDef[] = [
   { key: 'kurucuPersonel', label: 'Kurucu Personel', type: 'readonly' },
   { key: 'kurulusTarihi', label: 'Kuruluş Tarihi', type: 'readonly' },
   { key: 'kurulusTarihiSacom', label: 'Kuruluş Tarihi SA.com', type: 'readonly' },
-  { key: 'personelSayisi', label: 'Personel Sayısı', type: 'readonly' },
   { key: 'subeMudurSayisi', label: 'Şube Müdürü Sayısı', type: 'readonly' },
-  { key: 'organizasyoncu', label: 'Organizasyoncu mu? Alt bayisi var mı?', type: 'readonly' },
-  { key: 'subeSayisi', label: 'Şube Sayısı', type: 'readonly' },
   { key: 'kacSirketleCalisiyor', label: 'Kaç Şirketle Çalışıyor', type: 'readonly' },
   { key: 'acenteSegmenti', label: 'Acente Segmenti', type: 'readonly' },
 ];
 
-// Saha giriş/edit alanları (satır 14-40)
+// Saha giriş/edit alanları (satır 8-40, editlenebilir olanlar)
 const EDIT_FIELDS: FieldDef[] = [
+  { key: 'personelSayisi', label: 'Personel Sayısı', type: 'number' },
+  { key: 'organizasyoncu', label: 'Organizasyoncu mu? Alt bayisi var mı?', type: 'combo', options: ['Evet', 'Hayır', 'Bilmiyorum'] },
+  { key: 'subeSayisi', label: 'Şube Sayısı', type: 'number' },
   {
     key: 'yonetimIliskisi',
     label: 'Yönetim İlişkisi Var Mı?',

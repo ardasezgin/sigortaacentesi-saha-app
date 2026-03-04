@@ -361,3 +361,9 @@
 ## Acente Karnesi Bug
 
 - [x] "Karne verisi bulunamadı" hatası - ÇÖZÜM: agencyId yerine levhaNo kullanılacak şekilde değiştirildi (agencyId import sonrası değişiyor, levhaNo sabit)
+
+## Acente Karnesi Düzenlenebilir Alan Düzeltmeleri
+
+- [x] "Personel Sayısı" alanını düzenlenebilir yap (sayı alanı) - EDIT_FIELDS'a taşındı
+- [x] "Organizasyoncu mu? Alt bayisi var mı?" alanını düzenlenebilir yap (combo box: Evet/Hayır/Bilmiyorum) - EDIT_FIELDS'a taşındı
+- [x] "Şube Sayısı" alanını düzenlenebilir yap (sayı alanı) - EDIT_FIELDS'a taşındı
