@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef, memo } from 'react';
+import React, { useState, useEffect, useCallback, useRef, memo } from 'react';
 import {
   FlatList,
   Text,
@@ -11,6 +11,7 @@ import {
   ScrollView,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
+import { useRouter } from 'expo-router';
 
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
@@ -387,9 +388,23 @@ interface AgencyCardProps {
 
 const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
   const colors = useColors();
+  const router = useRouter();
+
+  const handlePress = () => {
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+    router.push({
+      pathname: '/(drawer)/agency-karne',
+      params: {
+        agencyId: String(agency.id ?? ''),
+        agencyName: agency.acenteUnvani,
+      },
+    });
+  };
 
   return (
-    <TouchableOpacity activeOpacity={0.7}>
+    <TouchableOpacity activeOpacity={0.7} onPress={handlePress}>
       <View className="bg-surface rounded-xl p-4 border border-border">
         <View className="flex-row justify-between items-start mb-3">
           <View className="flex-1 mr-3">

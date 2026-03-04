@@ -343,6 +343,16 @@
 
 - [x] ClickUp entegrasyonu hatası: "Ziyaret kaydedildi ancak ClickUp'a gönderilemedi" uyarısı - Dernek/Komite seçilince oluşuyor - nedeni tespit et ve düzelt (ÇÖZÜM: Production sunucusunda CLICKUP_API_TOKEN env değişkeni eksikti, ecosystem.config.js'e eklendi ve PM2 yeniden başlatıldı)
 
+## Sayfa2 Import + Acente Karnesi Ekranı
+
+- [x] Production DB yedeği al
+- [x] Sayfa2'deki 19.452 acente kaydını import et (mevcut datayı replace et)
+- [x] DB schema'ya yeni alanları ekle (kurucuPersonel, kurulusTarihi, kurulusTarihiSacom, personelSayisi, subeMudurSayisi, organizasyoncu, subeSayisi, kacSirketleCalisiyor, acenteSegmenti, + 27 karne alanı)
+- [x] Backend API'ye acente karnesi endpoint'leri ekle (getKarne, saveKarne)
+- [x] Acente Karnesi ekranı oluştur (otomatik dolan + düzenlenebilir alanlar, combo box, % alanı, free text, çoklu seçim)
+- [x] Acentelerim ekranından acente karnesi ekranına navigasyon ekle
+- [ ] Checkpoint al ve yeni build başlat
+
 ## iOS Build #26
 
 - [ ] EAS ile yeni iOS build al (tüm son düzeltmeleri içeriyor)

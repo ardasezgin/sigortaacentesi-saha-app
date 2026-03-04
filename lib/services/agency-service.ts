@@ -145,3 +145,27 @@ export async function importAgenciesFromExcel(): Promise<{
     };
   }
 }
+
+/**
+ * Acente karnesini getir (id ile)
+ */
+export async function getAgencyKarne(agencyId: number) {
+  try {
+    return await vanillaTrpc.agencies.getKarne.query({ agencyId });
+  } catch (error) {
+    console.error('[AgencyService] getAgencyKarne error:', error);
+    return null;
+  }
+}
+
+/**
+ * Acente karnesi saha alanlarını kaydet
+ */
+export async function saveAgencyKarne(agencyId: number, data: Record<string, string | null | undefined>) {
+  try {
+    return await vanillaTrpc.agencies.saveKarne.mutate({ agencyId, ...data } as any);
+  } catch (error) {
+    console.error('[AgencyService] saveAgencyKarne error:', error);
+    throw error;
+  }
+}

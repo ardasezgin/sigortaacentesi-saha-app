@@ -760,3 +760,165 @@ export async function updateUserLastSignedIn(userId: number) {
     throw error;
   }
 }
+
+// ============================================
+// ACENTE KARNESİ DATABASE FUNCTIONS
+// ============================================
+
+export interface AgencyKarne {
+  // Sistem alanları (otomatik dolan, Sayfa2'den)
+  id: number;
+  levhaNo: string;
+  acenteUnvani: string;
+  il: string | null;
+  ilce: string | null;
+  kurucuPersonel: string | null;
+  kurulusTarihi: string | null;
+  kurulusTarihiSacom: string | null;
+  personelSayisi: string | null;
+  subeMudurSayisi: string | null;
+  organizasyoncu: string | null;
+  subeSayisi: string | null;
+  kacSirketleCalisiyor: string | null;
+  acenteSegmenti: string | null;
+  // Saha giriş/edit alanları (kullanıcı doldurur)
+  yonetimIliskisi: string | null;
+  acenteyeVerilenSoz: string | null;
+  hayatHayatDisi: string | null;
+  uretim2025: string | null;
+  portfoyAgirligi: string | null;
+  trafikYuzde: string | null;
+  kaskoYuzde: string | null;
+  otoDisiYuzde: string | null;
+  saglikYuzde: string | null;
+  cmYapilanmasi: string | null;
+  acenteKararAlicisi: string | null;
+  teknolojiIlgisi: string | null;
+  hizliTeklifEkrani: string | null;
+  hizliTeklifPartneri: string | null;
+  whatsappKullanimi: string | null;
+  whatsappPartneri: string | null;
+  webSitesi: string | null;
+  webPartneri: string | null;
+  mobilUygulama: string | null;
+  appPartneri: string | null;
+  dijitalPazarlama: string | null;
+  musteriNeredenGeliyor: string | null;
+  operasyonelVerimlilik: string | null;
+  leadYonlendirme: string | null;
+  dijitallesmeHarcama: string | null;
+  filoMusteriYogunlugu: string | null;
+  galeriMusterisi: string | null;
+  karneLastUpdated: string | null;
+}
+
+/**
+ * Get agency karne (full card data) by agency id
+ */
+export async function getAgencyKarneById(agencyId: number): Promise<AgencyKarne | null> {
+  const pg = await getPgClient();
+  if (!pg) {
+    console.warn("[Database] Cannot get agency karne: database not available");
+    return null;
+  }
+  try {
+    const result = await pg`
+      SELECT 
+        id, "levhaNo", "acenteUnvani", il, ilce,
+        "kurucuPersonel", "kurulusTarihi", "kurulusTarihiSacom",
+        "personelSayisi", "subeMudurSayisi", "organizasyoncu",
+        "subeSayisi", "kacSirketleCalisiyor", "acenteSegmenti",
+        "yonetimIliskisi", "acenteyeVerilenSoz", "hayatHayatDisi",
+        "uretim2025", "portfoyAgirligi", "trafikYuzde", "kaskoYuzde",
+        "otoDisiYuzde", "saglikYuzde", "cmYapilanmasi", "acenteKararAlicisi",
+        "teknolojiIlgisi", "hizliTeklifEkrani", "hizliTeklifPartneri",
+        "whatsappKullanimi", "whatsappPartneri", "webSitesi", "webPartneri",
+        "mobilUygulama", "appPartneri", "dijitalPazarlama", "musteriNeredenGeliyor",
+        "operasyonelVerimlilik", "leadYonlendirme", "dijitallesmeHarcama",
+        "filoMusteriYogunlugu", "galeriMusterisi",
+        to_char("karneLastUpdated", 'DD.MM.YYYY HH24:MI') as "karneLastUpdated"
+      FROM agencies WHERE id = ${agencyId} LIMIT 1
+    `;
+    return result.length > 0 ? (result[0] as AgencyKarne) : null;
+  } catch (error) {
+    console.error("[Database] Failed to get agency karne:", error);
+    return null;
+  }
+}
+
+export type KarneEditFields = {
+  yonetimIliskisi?: string | null;
+  acenteyeVerilenSoz?: string | null;
+  hayatHayatDisi?: string | null;
+  uretim2025?: string | null;
+  portfoyAgirligi?: string | null;
+  trafikYuzde?: string | null;
+  kaskoYuzde?: string | null;
+  otoDisiYuzde?: string | null;
+  saglikYuzde?: string | null;
+  cmYapilanmasi?: string | null;
+  acenteKararAlicisi?: string | null;
+  teknolojiIlgisi?: string | null;
+  hizliTeklifEkrani?: string | null;
+  hizliTeklifPartneri?: string | null;
+  whatsappKullanimi?: string | null;
+  whatsappPartneri?: string | null;
+  webSitesi?: string | null;
+  webPartneri?: string | null;
+  mobilUygulama?: string | null;
+  appPartneri?: string | null;
+  dijitalPazarlama?: string | null;
+  musteriNeredenGeliyor?: string | null;
+  operasyonelVerimlilik?: string | null;
+  leadYonlendirme?: string | null;
+  dijitallesmeHarcama?: string | null;
+  filoMusteriYogunlugu?: string | null;
+  galeriMusterisi?: string | null;
+};
+
+/**
+ * Save agency karne edit fields
+ */
+export async function saveAgencyKarne(agencyId: number, data: KarneEditFields): Promise<void> {
+  const pg = await getPgClient();
+  if (!pg) {
+    throw new Error("Database not available");
+  }
+  try {
+    await pg`
+      UPDATE agencies SET
+        "yonetimIliskisi" = ${data.yonetimIliskisi ?? null},
+        "acenteyeVerilenSoz" = ${data.acenteyeVerilenSoz ?? null},
+        "hayatHayatDisi" = ${data.hayatHayatDisi ?? null},
+        "uretim2025" = ${data.uretim2025 ?? null},
+        "portfoyAgirligi" = ${data.portfoyAgirligi ?? null},
+        "trafikYuzde" = ${data.trafikYuzde ?? null},
+        "kaskoYuzde" = ${data.kaskoYuzde ?? null},
+        "otoDisiYuzde" = ${data.otoDisiYuzde ?? null},
+        "saglikYuzde" = ${data.saglikYuzde ?? null},
+        "cmYapilanmasi" = ${data.cmYapilanmasi ?? null},
+        "acenteKararAlicisi" = ${data.acenteKararAlicisi ?? null},
+        "teknolojiIlgisi" = ${data.teknolojiIlgisi ?? null},
+        "hizliTeklifEkrani" = ${data.hizliTeklifEkrani ?? null},
+        "hizliTeklifPartneri" = ${data.hizliTeklifPartneri ?? null},
+        "whatsappKullanimi" = ${data.whatsappKullanimi ?? null},
+        "whatsappPartneri" = ${data.whatsappPartneri ?? null},
+        "webSitesi" = ${data.webSitesi ?? null},
+        "webPartneri" = ${data.webPartneri ?? null},
+        "mobilUygulama" = ${data.mobilUygulama ?? null},
+        "appPartneri" = ${data.appPartneri ?? null},
+        "dijitalPazarlama" = ${data.dijitalPazarlama ?? null},
+        "musteriNeredenGeliyor" = ${data.musteriNeredenGeliyor ?? null},
+        "operasyonelVerimlilik" = ${data.operasyonelVerimlilik ?? null},
+        "leadYonlendirme" = ${data.leadYonlendirme ?? null},
+        "dijitallesmeHarcama" = ${data.dijitallesmeHarcama ?? null},
+        "filoMusteriYogunlugu" = ${data.filoMusteriYogunlugu ?? null},
+        "galeriMusterisi" = ${data.galeriMusterisi ?? null},
+        "karneLastUpdated" = NOW()
+      WHERE id = ${agencyId}
+    `;
+  } catch (error) {
+    console.error("[Database] Failed to save agency karne:", error);
+    throw error;
+  }
+}

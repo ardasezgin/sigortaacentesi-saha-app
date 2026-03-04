@@ -149,6 +149,53 @@ export const appRouter = router({
     importFromExcel: publicProcedure.mutation(async () => {
       return await importAgenciesFromExcel();
     }),
+
+    // Get agency karne (full card) by agency id
+    getKarne: publicProcedure
+      .input(z.object({ agencyId: z.number() }))
+      .query(async ({ input }) => {
+        return await db.getAgencyKarneById(input.agencyId);
+      }),
+
+    // Save agency karne edit fields
+    saveKarne: publicProcedure
+      .input(
+        z.object({
+          agencyId: z.number(),
+          yonetimIliskisi: z.string().nullable().optional(),
+          acenteyeVerilenSoz: z.string().nullable().optional(),
+          hayatHayatDisi: z.string().nullable().optional(),
+          uretim2025: z.string().nullable().optional(),
+          portfoyAgirligi: z.string().nullable().optional(),
+          trafikYuzde: z.string().nullable().optional(),
+          kaskoYuzde: z.string().nullable().optional(),
+          otoDisiYuzde: z.string().nullable().optional(),
+          saglikYuzde: z.string().nullable().optional(),
+          cmYapilanmasi: z.string().nullable().optional(),
+          acenteKararAlicisi: z.string().nullable().optional(),
+          teknolojiIlgisi: z.string().nullable().optional(),
+          hizliTeklifEkrani: z.string().nullable().optional(),
+          hizliTeklifPartneri: z.string().nullable().optional(),
+          whatsappKullanimi: z.string().nullable().optional(),
+          whatsappPartneri: z.string().nullable().optional(),
+          webSitesi: z.string().nullable().optional(),
+          webPartneri: z.string().nullable().optional(),
+          mobilUygulama: z.string().nullable().optional(),
+          appPartneri: z.string().nullable().optional(),
+          dijitalPazarlama: z.string().nullable().optional(),
+          musteriNeredenGeliyor: z.string().nullable().optional(),
+          operasyonelVerimlilik: z.string().nullable().optional(),
+          leadYonlendirme: z.string().nullable().optional(),
+          dijitallesmeHarcama: z.string().nullable().optional(),
+          filoMusteriYogunlugu: z.string().nullable().optional(),
+          galeriMusterisi: z.string().nullable().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const { agencyId, ...fields } = input;
+        await db.saveAgencyKarne(agencyId, fields);
+        return { success: true };
+      }),
   }),
 
   // Visit management routes

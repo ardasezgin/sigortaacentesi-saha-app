@@ -80,6 +80,15 @@ export default function DrawerLayout() {
         }}
       />
 
+      {/* Acente Karnesi - menüde gizli, acentelerim'den açılır */}
+      <Drawer.Screen
+        name="agency-karne"
+        options={{
+          drawerItemStyle: { display: 'none' },
+          title: 'Acente Karnesi',
+        }}
+      />
+
       {/* Logout Screen */}
       <Drawer.Screen
         name="logout"
