@@ -380,6 +380,16 @@ export async function getAllAgencies(): Promise<Agency[]> {
  * Get all visits
  */
 export async function getAllVisits(): Promise<Visit[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM visits ORDER BY "createdAt" DESC`;
+      return result as Visit[];
+    } catch (error) {
+      console.error("[Database] Failed to get visits (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot get visits: database not available");
@@ -398,11 +408,20 @@ export async function getAllVisits(): Promise<Visit[]> {
  * Get visits by agency levha number
  */
 export async function getVisitsByAgency(levhaNo: string): Promise<Visit[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM visits WHERE "levhaNo" = ${levhaNo} ORDER BY "createdAt" DESC`;
+      return result as Visit[];
+    } catch (error) {
+      console.error("[Database] Failed to get visits by agency (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     return [];
   }
-
   try {
     const result = await db
       .select()
@@ -420,11 +439,20 @@ export async function getVisitsByAgency(levhaNo: string): Promise<Visit[]> {
  * Get recent visits (limited)
  */
 export async function getRecentVisits(limit: number = 10): Promise<Visit[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM visits ORDER BY "createdAt" DESC LIMIT ${limit}`;
+      return result as Visit[];
+    } catch (error) {
+      console.error("[Database] Failed to get recent visits (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     return [];
   }
-
   try {
     const result = await db
       .select()
@@ -442,11 +470,33 @@ export async function getRecentVisits(limit: number = 10): Promise<Visit[]> {
  * Add a new visit
  */
 export async function addVisit(data: InsertVisit): Promise<number> {
+  // Use raw SQL to bypass Drizzle ORM MySQL/PostgreSQL schema incompatibility
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`
+        INSERT INTO visits (
+          "iletisimTuru", "isOrtagi", "levhaNo", "acenteAdi",
+          "kimleGorusuldu", "tarih", "gundem", "detayAciklama",
+          "hatirlatma", "hatirlatmaTarihi", "dosyalar", "createdBy"
+        ) VALUES (
+          ${data.iletisimTuru}, ${data.isOrtagi}, ${data.levhaNo}, ${data.acenteAdi ?? null},
+          ${data.kimleGorusuldu}, ${data.tarih}, ${data.gundem}, ${data.detayAciklama},
+          ${data.hatirlatma ?? null}, ${data.hatirlatmaTarihi ?? null}, ${data.dosyalar ?? null}, ${data.createdBy}
+        ) RETURNING id
+      `;
+      return result[0]?.id ?? 0;
+    } catch (error) {
+      console.error("[Database] Failed to add visit (raw SQL):", error);
+      throw error;
+    }
+  }
+
+  // Fallback to Drizzle ORM (MySQL)
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     const result = await db.insert(visits).values(data);
     return result[0].insertId;
@@ -460,11 +510,36 @@ export async function addVisit(data: InsertVisit): Promise<number> {
  * Update a visit
  */
 export async function updateVisit(id: number, data: Partial<InsertVisit>): Promise<void> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      // Build SET clause dynamically from provided fields
+      const setClauses: string[] = [];
+      const values: any[] = [];
+      let paramIdx = 1;
+      for (const [key, val] of Object.entries(data)) {
+        if (val !== undefined) {
+          setClauses.push(`"${key}" = $${paramIdx}`);
+          values.push(val);
+          paramIdx++;
+        }
+      }
+      if (setClauses.length === 0) return;
+      values.push(id);
+      await pgClient.unsafe(
+        `UPDATE visits SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`,
+        values
+      );
+      return;
+    } catch (error) {
+      console.error("[Database] Failed to update visit (raw SQL):", error);
+      throw error;
+    }
+  }
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     await db.update(visits).set(data).where(eq(visits.id, id));
   } catch (error) {
@@ -477,11 +552,20 @@ export async function updateVisit(id: number, data: Partial<InsertVisit>): Promi
  * Delete a visit
  */
 export async function deleteVisit(id: number): Promise<void> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      await pgClient`DELETE FROM visits WHERE id = ${id}`;
+      return;
+    } catch (error) {
+      console.error("[Database] Failed to delete visit (raw SQL):", error);
+      throw error;
+    }
+  }
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     await db.delete(visits).where(eq(visits.id, id));
   } catch (error) {
@@ -538,11 +622,20 @@ export async function addCommunication(data: InsertCommunication): Promise<numbe
  * Get all requests
  */
 export async function getAllRequests(): Promise<Request[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM requests ORDER BY "createdAt" DESC`;
+      return result as Request[];
+    } catch (error) {
+      console.error("[Database] Failed to get requests (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     return [];
   }
-
   try {
     const result = await db.select().from(requests).orderBy(desc(requests.createdAt));
     return result;
@@ -556,11 +649,20 @@ export async function getAllRequests(): Promise<Request[]> {
  * Get recent requests (limited)
  */
 export async function getRecentRequests(limit: number = 10): Promise<Request[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM requests ORDER BY "createdAt" DESC LIMIT ${limit}`;
+      return result as Request[];
+    } catch (error) {
+      console.error("[Database] Failed to get recent requests (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     return [];
   }
-
   try {
     const result = await db
       .select()
@@ -578,11 +680,31 @@ export async function getRecentRequests(limit: number = 10): Promise<Request[]> 
  * Add a new request
  */
 export async function addRequest(data: InsertRequest): Promise<number> {
+  // Use raw SQL to bypass Drizzle ORM MySQL/PostgreSQL schema incompatibility
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`
+        INSERT INTO requests (
+          "levhaNo", "acenteAdi", "requestType", "priority",
+          "status", "subject", "description", "response", "createdBy"
+        ) VALUES (
+          ${data.levhaNo}, ${data.acenteAdi ?? null}, ${data.requestType}, ${data.priority},
+          ${data.status}, ${data.subject}, ${data.description}, ${data.response ?? null}, ${data.createdBy}
+        ) RETURNING id
+      `;
+      return result[0]?.id ?? 0;
+    } catch (error) {
+      console.error("[Database] Failed to add request (raw SQL):", error);
+      throw error;
+    }
+  }
+
+  // Fallback to Drizzle ORM (MySQL)
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     const result = await db.insert(requests).values(data);
     return result[0].insertId;
@@ -596,11 +718,35 @@ export async function addRequest(data: InsertRequest): Promise<number> {
  * Update a request
  */
 export async function updateRequest(id: number, data: Partial<InsertRequest>): Promise<void> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const setClauses: string[] = [];
+      const values: any[] = [];
+      let paramIdx = 1;
+      for (const [key, val] of Object.entries(data)) {
+        if (val !== undefined) {
+          setClauses.push(`"${key}" = $${paramIdx}`);
+          values.push(val);
+          paramIdx++;
+        }
+      }
+      if (setClauses.length === 0) return;
+      values.push(id);
+      await pgClient.unsafe(
+        `UPDATE requests SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`,
+        values
+      );
+      return;
+    } catch (error) {
+      console.error("[Database] Failed to update request (raw SQL):", error);
+      throw error;
+    }
+  }
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     await db.update(requests).set(data).where(eq(requests.id, id));
   } catch (error) {
