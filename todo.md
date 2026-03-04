@@ -334,3 +334,16 @@
 - [ ] Arama kutusunda otomatik tamamlama (autocomplete) devre dışı bırakılacak
 - [ ] Ziyaret/arama girişinde acente türü "Aday" veya "Mevcut" ise levha no zorunlu, diğerlerinde zorunlu değil
 - [ ] Talep/istek/şikayet formunda "kimden" acenteden seçilirse acente seçimi isteğe bağlı olsun
+
+## Performans Optimizasyonu
+
+- [ ] Acentelerim sayfası yavaş yükleme sorunu - veritabanı index optimizasyonu
+
+## ClickUp Entegrasyon Hatası
+
+- [x] ClickUp entegrasyonu hatası: "Ziyaret kaydedildi ancak ClickUp'a gönderilemedi" uyarısı - Dernek/Komite seçilince oluşuyor - nedeni tespit et ve düzelt (ÇÖZÜM: Production sunucusunda CLICKUP_API_TOKEN env değişkeni eksikti, ecosystem.config.js'e eklendi ve PM2 yeniden başlatıldı)
+
+## iOS Build #26
+
+- [ ] EAS ile yeni iOS build al (tüm son düzeltmeleri içeriyor)
+- [ ] IPA dosyasını indirip kullanıcıya teslim et
