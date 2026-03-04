@@ -147,11 +147,11 @@ export async function importAgenciesFromExcel(): Promise<{
 }
 
 /**
- * Acente karnesini getir (id ile)
+ * Acente karnesini getir (levhaNo ile)
  */
-export async function getAgencyKarne(agencyId: number) {
+export async function getAgencyKarne(levhaNo: string) {
   try {
-    return await vanillaTrpc.agencies.getKarne.query({ agencyId });
+    return await vanillaTrpc.agencies.getKarne.query({ levhaNo });
   } catch (error) {
     console.error('[AgencyService] getAgencyKarne error:', error);
     return null;
@@ -161,9 +161,9 @@ export async function getAgencyKarne(agencyId: number) {
 /**
  * Acente karnesi saha alanlarını kaydet
  */
-export async function saveAgencyKarne(agencyId: number, data: Record<string, string | null | undefined>) {
+export async function saveAgencyKarne(levhaNo: string, data: Record<string, string | null | undefined>) {
   try {
-    return await vanillaTrpc.agencies.saveKarne.mutate({ agencyId, ...data } as any);
+    return await vanillaTrpc.agencies.saveKarne.mutate({ levhaNo, ...data } as any);
   } catch (error) {
     console.error('[AgencyService] saveAgencyKarne error:', error);
     throw error;

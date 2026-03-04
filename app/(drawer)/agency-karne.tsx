@@ -260,7 +260,7 @@ const EDIT_FIELDS: FieldDef[] = [
 // ============================================================
 
 export default function AgencyKarneScreen() {
-  const { agencyId, agencyName } = useLocalSearchParams<{ agencyId: string; agencyName: string }>();
+  const { levhaNo, agencyName } = useLocalSearchParams<{ levhaNo: string; agencyName: string }>();
   const colors = useColors();
   const router = useRouter();
 
@@ -272,14 +272,14 @@ export default function AgencyKarneScreen() {
 
   // Karne verisini yükle
   useEffect(() => {
-    if (!agencyId) return;
+    if (!levhaNo) return;
     loadKarne();
-  }, [agencyId]);
+  }, [levhaNo]);
 
   const loadKarne = async () => {
     setIsLoading(true);
     try {
-      const data = await getAgencyKarne(Number(agencyId));
+      const data = await getAgencyKarne(levhaNo);
       if (data) {
         setKarne(data as KarneData);
         // Edit alanlarını mevcut değerlerle doldur
@@ -315,7 +315,7 @@ export default function AgencyKarneScreen() {
         const val = editValues[f.key] ?? '';
         payload[f.key] = val.trim() === '' ? null : val.trim();
       });
-      await saveAgencyKarne(karne.id, payload);
+      await saveAgencyKarne(karne.levhaNo, payload);
       setIsDirty(false);
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);

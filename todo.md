@@ -351,9 +351,13 @@
 - [x] Backend API'ye acente karnesi endpoint'leri ekle (getKarne, saveKarne)
 - [x] Acente Karnesi ekranı oluştur (otomatik dolan + düzenlenebilir alanlar, combo box, % alanı, free text, çoklu seçim)
 - [x] Acentelerim ekranından acente karnesi ekranına navigasyon ekle
-- [ ] Checkpoint al ve yeni build başlat
+- [x] Checkpoint al ve yeni build başlat (Build #28: 66ea3631-3448-43a6-aa14-3486965103a4)
 
 ## iOS Build #26
 
 - [ ] EAS ile yeni iOS build al (tüm son düzeltmeleri içeriyor)
 - [ ] IPA dosyasını indirip kullanıcıya teslim et
+
+## Acente Karnesi Bug
+
+- [x] "Karne verisi bulunamadı" hatası - ÇÖZÜM: agencyId yerine levhaNo kullanılacak şekilde değiştirildi (agencyId import sonrası değişiyor, levhaNo sabit)

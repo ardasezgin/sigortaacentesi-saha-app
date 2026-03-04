@@ -150,18 +150,18 @@ export const appRouter = router({
       return await importAgenciesFromExcel();
     }),
 
-    // Get agency karne (full card) by agency id
+    // Get agency karne (full card) by levhaNo
     getKarne: publicProcedure
-      .input(z.object({ agencyId: z.number() }))
+      .input(z.object({ levhaNo: z.string() }))
       .query(async ({ input }) => {
-        return await db.getAgencyKarneById(input.agencyId);
+        return await db.getAgencyKarneByLevhaNo(input.levhaNo);
       }),
 
     // Save agency karne edit fields
     saveKarne: publicProcedure
       .input(
         z.object({
-          agencyId: z.number(),
+          levhaNo: z.string(),
           yonetimIliskisi: z.string().nullable().optional(),
           acenteyeVerilenSoz: z.string().nullable().optional(),
           hayatHayatDisi: z.string().nullable().optional(),
@@ -192,8 +192,8 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ input }) => {
-        const { agencyId, ...fields } = input;
-        await db.saveAgencyKarne(agencyId, fields);
+        const { levhaNo, ...fields } = input;
+        await db.saveAgencyKarneByLevhaNo(levhaNo, fields);
         return { success: true };
       }),
   }),

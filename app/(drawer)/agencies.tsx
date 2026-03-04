@@ -397,7 +397,7 @@ const AgencyCard = memo(({ agency, onToggle, isUpdating }: AgencyCardProps) => {
     router.push({
       pathname: '/(drawer)/agency-karne',
       params: {
-        agencyId: String(agency.id ?? ''),
+        levhaNo: agency.levhaNo,
         agencyName: agency.acenteUnvani,
       },
     });
