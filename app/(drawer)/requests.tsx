@@ -139,10 +139,12 @@ export default function RequestsScreen() {
   };
 
   const validateForm = (): boolean => {
+    // Acente zorunluluğu sadece 'Acente' seçiliyken geçerli
     if (kimden === 'Acente' && !selectedAgency) {
       Alert.alert('Hata', 'Lütfen geçerli bir acente seçin');
       return false;
     }
+    // 'Diğer' seçiliyken acente kontrolü yapılmaz
     if (!subject.trim()) {
       Alert.alert('Hata', 'Lütfen konu girin');
       return false;
@@ -162,12 +164,7 @@ export default function RequestsScreen() {
     console.log('[requests] handleSave başlatıldı');
     
     if (!validateForm()) {
-      console.log('[requests] Validation başarısız');
-      setErrorMessage('Lütfen tüm zorunlu alanları doldurun');
-      return;
-    }
-    if (kimden === 'Acente' && !selectedAgency) {
-      console.log('[requests] Acente seçili değil');
+      console.log('[requests] Validation başarısız, kimden:', kimden, 'selectedAgency:', selectedAgency?.levhaNo);
       setErrorMessage('Lütfen tüm zorunlu alanları doldurun');
       return;
     }
