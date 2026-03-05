@@ -380,6 +380,16 @@ export async function getAllAgencies(): Promise<Agency[]> {
  * Get all visits
  */
 export async function getAllVisits(): Promise<Visit[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM visits ORDER BY "createdAt" DESC`;
+      return result as Visit[];
+    } catch (error) {
+      console.error("[Database] Failed to get visits (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     console.warn("[Database] Cannot get visits: database not available");
@@ -398,11 +408,20 @@ export async function getAllVisits(): Promise<Visit[]> {
  * Get visits by agency levha number
  */
 export async function getVisitsByAgency(levhaNo: string): Promise<Visit[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM visits WHERE "levhaNo" = ${levhaNo} ORDER BY "createdAt" DESC`;
+      return result as Visit[];
+    } catch (error) {
+      console.error("[Database] Failed to get visits by agency (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     return [];
   }
-
   try {
     const result = await db
       .select()
@@ -420,11 +439,20 @@ export async function getVisitsByAgency(levhaNo: string): Promise<Visit[]> {
  * Get recent visits (limited)
  */
 export async function getRecentVisits(limit: number = 10): Promise<Visit[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM visits ORDER BY "createdAt" DESC LIMIT ${limit}`;
+      return result as Visit[];
+    } catch (error) {
+      console.error("[Database] Failed to get recent visits (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     return [];
   }
-
   try {
     const result = await db
       .select()
@@ -442,11 +470,33 @@ export async function getRecentVisits(limit: number = 10): Promise<Visit[]> {
  * Add a new visit
  */
 export async function addVisit(data: InsertVisit): Promise<number> {
+  // Use raw SQL to bypass Drizzle ORM MySQL/PostgreSQL schema incompatibility
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`
+        INSERT INTO visits (
+          "iletisimTuru", "isOrtagi", "levhaNo", "acenteAdi",
+          "kimleGorusuldu", "tarih", "gundem", "detayAciklama",
+          "hatirlatma", "hatirlatmaTarihi", "dosyalar", "createdBy"
+        ) VALUES (
+          ${data.iletisimTuru}, ${data.isOrtagi}, ${data.levhaNo}, ${data.acenteAdi ?? null},
+          ${data.kimleGorusuldu}, ${data.tarih}, ${data.gundem}, ${data.detayAciklama},
+          ${data.hatirlatma ?? null}, ${data.hatirlatmaTarihi ?? null}, ${data.dosyalar ?? null}, ${data.createdBy}
+        ) RETURNING id
+      `;
+      return result[0]?.id ?? 0;
+    } catch (error) {
+      console.error("[Database] Failed to add visit (raw SQL):", error);
+      throw error;
+    }
+  }
+
+  // Fallback to Drizzle ORM (MySQL)
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     const result = await db.insert(visits).values(data);
     return result[0].insertId;
@@ -460,11 +510,36 @@ export async function addVisit(data: InsertVisit): Promise<number> {
  * Update a visit
  */
 export async function updateVisit(id: number, data: Partial<InsertVisit>): Promise<void> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      // Build SET clause dynamically from provided fields
+      const setClauses: string[] = [];
+      const values: any[] = [];
+      let paramIdx = 1;
+      for (const [key, val] of Object.entries(data)) {
+        if (val !== undefined) {
+          setClauses.push(`"${key}" = $${paramIdx}`);
+          values.push(val);
+          paramIdx++;
+        }
+      }
+      if (setClauses.length === 0) return;
+      values.push(id);
+      await pgClient.unsafe(
+        `UPDATE visits SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`,
+        values
+      );
+      return;
+    } catch (error) {
+      console.error("[Database] Failed to update visit (raw SQL):", error);
+      throw error;
+    }
+  }
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     await db.update(visits).set(data).where(eq(visits.id, id));
   } catch (error) {
@@ -477,11 +552,20 @@ export async function updateVisit(id: number, data: Partial<InsertVisit>): Promi
  * Delete a visit
  */
 export async function deleteVisit(id: number): Promise<void> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      await pgClient`DELETE FROM visits WHERE id = ${id}`;
+      return;
+    } catch (error) {
+      console.error("[Database] Failed to delete visit (raw SQL):", error);
+      throw error;
+    }
+  }
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     await db.delete(visits).where(eq(visits.id, id));
   } catch (error) {
@@ -538,11 +622,20 @@ export async function addCommunication(data: InsertCommunication): Promise<numbe
  * Get all requests
  */
 export async function getAllRequests(): Promise<Request[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM requests ORDER BY "createdAt" DESC`;
+      return result as Request[];
+    } catch (error) {
+      console.error("[Database] Failed to get requests (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     return [];
   }
-
   try {
     const result = await db.select().from(requests).orderBy(desc(requests.createdAt));
     return result;
@@ -556,11 +649,20 @@ export async function getAllRequests(): Promise<Request[]> {
  * Get recent requests (limited)
  */
 export async function getRecentRequests(limit: number = 10): Promise<Request[]> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`SELECT * FROM requests ORDER BY "createdAt" DESC LIMIT ${limit}`;
+      return result as Request[];
+    } catch (error) {
+      console.error("[Database] Failed to get recent requests (raw SQL):", error);
+      return [];
+    }
+  }
   const db = await getDb();
   if (!db) {
     return [];
   }
-
   try {
     const result = await db
       .select()
@@ -578,11 +680,31 @@ export async function getRecentRequests(limit: number = 10): Promise<Request[]> 
  * Add a new request
  */
 export async function addRequest(data: InsertRequest): Promise<number> {
+  // Use raw SQL to bypass Drizzle ORM MySQL/PostgreSQL schema incompatibility
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const result = await pgClient`
+        INSERT INTO requests (
+          "levhaNo", "acenteAdi", "requestType", "priority",
+          "status", "subject", "description", "response", "createdBy"
+        ) VALUES (
+          ${data.levhaNo}, ${data.acenteAdi ?? null}, ${data.requestType}, ${data.priority},
+          ${data.status}, ${data.subject}, ${data.description}, ${data.response ?? null}, ${data.createdBy}
+        ) RETURNING id
+      `;
+      return result[0]?.id ?? 0;
+    } catch (error) {
+      console.error("[Database] Failed to add request (raw SQL):", error);
+      throw error;
+    }
+  }
+
+  // Fallback to Drizzle ORM (MySQL)
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     const result = await db.insert(requests).values(data);
     return result[0].insertId;
@@ -596,11 +718,35 @@ export async function addRequest(data: InsertRequest): Promise<number> {
  * Update a request
  */
 export async function updateRequest(id: number, data: Partial<InsertRequest>): Promise<void> {
+  const pgClient = await getPgClient();
+  if (pgClient) {
+    try {
+      const setClauses: string[] = [];
+      const values: any[] = [];
+      let paramIdx = 1;
+      for (const [key, val] of Object.entries(data)) {
+        if (val !== undefined) {
+          setClauses.push(`"${key}" = $${paramIdx}`);
+          values.push(val);
+          paramIdx++;
+        }
+      }
+      if (setClauses.length === 0) return;
+      values.push(id);
+      await pgClient.unsafe(
+        `UPDATE requests SET ${setClauses.join(', ')} WHERE id = $${paramIdx}`,
+        values
+      );
+      return;
+    } catch (error) {
+      console.error("[Database] Failed to update request (raw SQL):", error);
+      throw error;
+    }
+  }
   const db = await getDb();
   if (!db) {
     throw new Error("Database not available");
   }
-
   try {
     await db.update(requests).set(data).where(eq(requests.id, id));
   } catch (error) {
@@ -757,6 +903,258 @@ export async function updateUserLastSignedIn(userId: number) {
       .where(eq(users.id, userId));
   } catch (error) {
     console.error("[Database] Failed to update user last signed in:", error);
+    throw error;
+  }
+}
+
+// ============================================
+// ACENTE KARNESİ DATABASE FUNCTIONS
+// ============================================
+
+export interface AgencyKarne {
+  // Sistem alanları (otomatik dolan, Sayfa2'den)
+  id: number;
+  levhaNo: string;
+  acenteUnvani: string;
+  il: string | null;
+  ilce: string | null;
+  kurucuPersonel: string | null;
+  kurulusTarihi: string | null;
+  kurulusTarihiSacom: string | null;
+  personelSayisi: string | null;
+  subeMudurSayisi: string | null;
+  organizasyoncu: string | null;
+  subeSayisi: string | null;
+  kacSirketleCalisiyor: string | null;
+  acenteSegmenti: string | null;
+  // Saha giriş/edit alanları (kullanıcı doldurur)
+  yonetimIliskisi: string | null;
+  acenteyeVerilenSoz: string | null;
+  hayatHayatDisi: string | null;
+  uretim2025: string | null;
+  portfoyAgirligi: string | null;
+  trafikYuzde: string | null;
+  kaskoYuzde: string | null;
+  otoDisiYuzde: string | null;
+  saglikYuzde: string | null;
+  cmYapilanmasi: string | null;
+  acenteKararAlicisi: string | null;
+  teknolojiIlgisi: string | null;
+  hizliTeklifEkrani: string | null;
+  hizliTeklifPartneri: string | null;
+  whatsappKullanimi: string | null;
+  whatsappPartneri: string | null;
+  webSitesi: string | null;
+  webPartneri: string | null;
+  mobilUygulama: string | null;
+  appPartneri: string | null;
+  dijitalPazarlama: string | null;
+  musteriNeredenGeliyor: string | null;
+  operasyonelVerimlilik: string | null;
+  leadYonlendirme: string | null;
+  dijitallesmeHarcama: string | null;
+  filoMusteriYogunlugu: string | null;
+  galeriMusterisi: string | null;
+  karneLastUpdated: string | null;
+}
+
+/**
+ * Get agency karne (full card data) by agency id
+ */
+export async function getAgencyKarneById(agencyId: number): Promise<AgencyKarne | null> {
+  const pg = await getPgClient();
+  if (!pg) {
+    console.warn("[Database] Cannot get agency karne: database not available");
+    return null;
+  }
+  try {
+    const result = await pg`
+      SELECT 
+        id, "levhaNo", "acenteUnvani", il, ilce,
+        "kurucuPersonel", "kurulusTarihi", "kurulusTarihiSacom",
+        "personelSayisi", "subeMudurSayisi", "organizasyoncu",
+        "subeSayisi", "kacSirketleCalisiyor", "acenteSegmenti",
+        "yonetimIliskisi", "acenteyeVerilenSoz", "hayatHayatDisi",
+        "uretim2025", "portfoyAgirligi", "trafikYuzde", "kaskoYuzde",
+        "otoDisiYuzde", "saglikYuzde", "cmYapilanmasi", "acenteKararAlicisi",
+        "teknolojiIlgisi", "hizliTeklifEkrani", "hizliTeklifPartneri",
+        "whatsappKullanimi", "whatsappPartneri", "webSitesi", "webPartneri",
+        "mobilUygulama", "appPartneri", "dijitalPazarlama", "musteriNeredenGeliyor",
+        "operasyonelVerimlilik", "leadYonlendirme", "dijitallesmeHarcama",
+        "filoMusteriYogunlugu", "galeriMusterisi",
+        to_char("karneLastUpdated", 'DD.MM.YYYY HH24:MI') as "karneLastUpdated"
+      FROM agencies WHERE id = ${agencyId} LIMIT 1
+    `;
+    return result.length > 0 ? (result[0] as AgencyKarne) : null;
+  } catch (error) {
+    console.error("[Database] Failed to get agency karne:", error);
+    return null;
+  }
+}
+
+/**
+ * Get agency karne (full card data) by levhaNo
+ */
+export async function getAgencyKarneByLevhaNo(levhaNo: string): Promise<AgencyKarne | null> {
+  const pg = await getPgClient();
+  if (!pg) {
+    console.warn("[Database] Cannot get agency karne: database not available");
+    return null;
+  }
+  try {
+    const result = await pg`
+      SELECT 
+        id, "levhaNo", "acenteUnvani", il, ilce,
+        "kurucuPersonel", "kurulusTarihi", "kurulusTarihiSacom",
+        "personelSayisi", "subeMudurSayisi", "organizasyoncu",
+        "subeSayisi", "kacSirketleCalisiyor", "acenteSegmenti",
+        "yonetimIliskisi", "acenteyeVerilenSoz", "hayatHayatDisi",
+        "uretim2025", "portfoyAgirligi", "trafikYuzde", "kaskoYuzde",
+        "otoDisiYuzde", "saglikYuzde", "cmYapilanmasi", "acenteKararAlicisi",
+        "teknolojiIlgisi", "hizliTeklifEkrani", "hizliTeklifPartneri",
+        "whatsappKullanimi", "whatsappPartneri", "webSitesi", "webPartneri",
+        "mobilUygulama", "appPartneri", "dijitalPazarlama", "musteriNeredenGeliyor",
+        "operasyonelVerimlilik", "leadYonlendirme", "dijitallesmeHarcama",
+        "filoMusteriYogunlugu", "galeriMusterisi",
+        to_char("karneLastUpdated", 'DD.MM.YYYY HH24:MI') as "karneLastUpdated"
+      FROM agencies WHERE "levhaNo" = ${levhaNo} LIMIT 1
+    `;
+    return result.length > 0 ? (result[0] as AgencyKarne) : null;
+  } catch (error) {
+    console.error("[Database] Failed to get agency karne by levhaNo:", error);
+    return null;
+  }
+}
+
+export type KarneEditFields = {
+  personelSayisi?: string | null;
+  organizasyoncu?: string | null;
+  subeSayisi?: string | null;
+  yonetimIliskisi?: string | null;
+  acenteyeVerilenSoz?: string | null;
+  hayatHayatDisi?: string | null;
+  uretim2025?: string | null;
+  portfoyAgirligi?: string | null;
+  trafikYuzde?: string | null;
+  kaskoYuzde?: string | null;
+  otoDisiYuzde?: string | null;
+  saglikYuzde?: string | null;
+  cmYapilanmasi?: string | null;
+  acenteKararAlicisi?: string | null;
+  teknolojiIlgisi?: string | null;
+  hizliTeklifEkrani?: string | null;
+  hizliTeklifPartneri?: string | null;
+  whatsappKullanimi?: string | null;
+  whatsappPartneri?: string | null;
+  webSitesi?: string | null;
+  webPartneri?: string | null;
+  mobilUygulama?: string | null;
+  appPartneri?: string | null;
+  dijitalPazarlama?: string | null;
+  musteriNeredenGeliyor?: string | null;
+  operasyonelVerimlilik?: string | null;
+  leadYonlendirme?: string | null;
+  dijitallesmeHarcama?: string | null;
+  filoMusteriYogunlugu?: string | null;
+  galeriMusterisi?: string | null;
+};
+
+/**
+ * Save agency karne edit fields by levhaNo
+ */
+export async function saveAgencyKarneByLevhaNo(levhaNo: string, data: KarneEditFields): Promise<void> {
+  const pg = await getPgClient();
+  if (!pg) {
+    throw new Error("Database not available");
+  }
+  try {
+    await pg`
+      UPDATE agencies SET
+        "personelSayisi" = ${data.personelSayisi ?? null},
+        "organizasyoncu" = ${data.organizasyoncu ?? null},
+        "subeSayisi" = ${data.subeSayisi ?? null},
+        "yonetimIliskisi" = ${data.yonetimIliskisi ?? null},
+        "acenteyeVerilenSoz" = ${data.acenteyeVerilenSoz ?? null},
+        "hayatHayatDisi" = ${data.hayatHayatDisi ?? null},
+        "uretim2025" = ${data.uretim2025 ?? null},
+        "portfoyAgirligi" = ${data.portfoyAgirligi ?? null},
+        "trafikYuzde" = ${data.trafikYuzde ?? null},
+        "kaskoYuzde" = ${data.kaskoYuzde ?? null},
+        "otoDisiYuzde" = ${data.otoDisiYuzde ?? null},
+        "saglikYuzde" = ${data.saglikYuzde ?? null},
+        "cmYapilanmasi" = ${data.cmYapilanmasi ?? null},
+        "acenteKararAlicisi" = ${data.acenteKararAlicisi ?? null},
+        "teknolojiIlgisi" = ${data.teknolojiIlgisi ?? null},
+        "hizliTeklifEkrani" = ${data.hizliTeklifEkrani ?? null},
+        "hizliTeklifPartneri" = ${data.hizliTeklifPartneri ?? null},
+        "whatsappKullanimi" = ${data.whatsappKullanimi ?? null},
+        "whatsappPartneri" = ${data.whatsappPartneri ?? null},
+        "webSitesi" = ${data.webSitesi ?? null},
+        "webPartneri" = ${data.webPartneri ?? null},
+        "mobilUygulama" = ${data.mobilUygulama ?? null},
+        "appPartneri" = ${data.appPartneri ?? null},
+        "dijitalPazarlama" = ${data.dijitalPazarlama ?? null},
+        "musteriNeredenGeliyor" = ${data.musteriNeredenGeliyor ?? null},
+        "operasyonelVerimlilik" = ${data.operasyonelVerimlilik ?? null},
+        "leadYonlendirme" = ${data.leadYonlendirme ?? null},
+        "dijitallesmeHarcama" = ${data.dijitallesmeHarcama ?? null},
+        "filoMusteriYogunlugu" = ${data.filoMusteriYogunlugu ?? null},
+        "galeriMusterisi" = ${data.galeriMusterisi ?? null},
+        "karneLastUpdated" = NOW()
+      WHERE "levhaNo" = ${levhaNo}
+    `;
+  } catch (error) {
+    console.error("[Database] Failed to save agency karne by levhaNo:", error);
+    throw error;
+  }
+}
+
+/**
+ * Save agency karne edit fields
+ */
+export async function saveAgencyKarne(agencyId: number, data: KarneEditFields): Promise<void> {
+  const pg = await getPgClient();
+  if (!pg) {
+    throw new Error("Database not available");
+  }
+  try {
+    await pg`
+      UPDATE agencies SET
+        "personelSayisi" = ${data.personelSayisi ?? null},
+        "organizasyoncu" = ${data.organizasyoncu ?? null},
+        "subeSayisi" = ${data.subeSayisi ?? null},
+        "yonetimIliskisi" = ${data.yonetimIliskisi ?? null},
+        "acenteyeVerilenSoz" = ${data.acenteyeVerilenSoz ?? null},
+        "hayatHayatDisi" = ${data.hayatHayatDisi ?? null},
+        "uretim2025" = ${data.uretim2025 ?? null},
+        "portfoyAgirligi" = ${data.portfoyAgirligi ?? null},
+        "trafikYuzde" = ${data.trafikYuzde ?? null},
+        "kaskoYuzde" = ${data.kaskoYuzde ?? null},
+        "otoDisiYuzde" = ${data.otoDisiYuzde ?? null},
+        "saglikYuzde" = ${data.saglikYuzde ?? null},
+        "cmYapilanmasi" = ${data.cmYapilanmasi ?? null},
+        "acenteKararAlicisi" = ${data.acenteKararAlicisi ?? null},
+        "teknolojiIlgisi" = ${data.teknolojiIlgisi ?? null},
+        "hizliTeklifEkrani" = ${data.hizliTeklifEkrani ?? null},
+        "hizliTeklifPartneri" = ${data.hizliTeklifPartneri ?? null},
+        "whatsappKullanimi" = ${data.whatsappKullanimi ?? null},
+        "whatsappPartneri" = ${data.whatsappPartneri ?? null},
+        "webSitesi" = ${data.webSitesi ?? null},
+        "webPartneri" = ${data.webPartneri ?? null},
+        "mobilUygulama" = ${data.mobilUygulama ?? null},
+        "appPartneri" = ${data.appPartneri ?? null},
+        "dijitalPazarlama" = ${data.dijitalPazarlama ?? null},
+        "musteriNeredenGeliyor" = ${data.musteriNeredenGeliyor ?? null},
+        "operasyonelVerimlilik" = ${data.operasyonelVerimlilik ?? null},
+        "leadYonlendirme" = ${data.leadYonlendirme ?? null},
+        "dijitallesmeHarcama" = ${data.dijitallesmeHarcama ?? null},
+        "filoMusteriYogunlugu" = ${data.filoMusteriYogunlugu ?? null},
+        "galeriMusterisi" = ${data.galeriMusterisi ?? null},
+        "karneLastUpdated" = NOW()
+      WHERE id = ${agencyId}
+    `;
+  } catch (error) {
+    console.error("[Database] Failed to save agency karne:", error);
     throw error;
   }
 }
