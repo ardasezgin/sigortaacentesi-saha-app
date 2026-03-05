@@ -48,9 +48,6 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   newArchEnabled: true,
   extra: {
-    eas: {
-      projectId: "5ba9aef5-e478-41fd-aa49-fb8eda257082"
-    },
     CLICKUP_API_TOKEN: process.env.CLICKUP_API_TOKEN,
     CLICKUP_WORKSPACE_ID: process.env.CLICKUP_WORKSPACE_ID,
     CLICKUP_LIST_ID: process.env.CLICKUP_LIST_ID,
@@ -95,16 +92,10 @@ const config: ExpoConfig = {
   plugins: [
     "expo-router",
     [
-      "expo-audio",
-      {
-        microphonePermission: "Allow $(PRODUCT_NAME) to access your microphone.",
-      },
-    ],
-    [
       "expo-video",
       {
-        supportsBackgroundPlayback: true,
-        supportsPictureInPicture: true,
+        supportsBackgroundPlayback: false,
+        supportsPictureInPicture: false,
       },
     ],
     [
