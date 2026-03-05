@@ -51,6 +51,9 @@ const config: ExpoConfig = {
     CLICKUP_API_TOKEN: process.env.CLICKUP_API_TOKEN,
     CLICKUP_WORKSPACE_ID: process.env.CLICKUP_WORKSPACE_ID,
     CLICKUP_LIST_ID: process.env.CLICKUP_LIST_ID,
+    eas: {
+      projectId: "5ba9aef5-e478-41fd-aa49-fb8eda257082",
+    },
   },
   ios: {
     supportsTablet: true,
