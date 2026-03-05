@@ -139,7 +139,7 @@ export default function RequestsScreen() {
   };
 
   const validateForm = (): boolean => {
-    if (!selectedAgency) {
+    if (kimden === 'Acente' && !selectedAgency) {
       Alert.alert('Hata', 'Lütfen geçerli bir acente seçin');
       return false;
     }
@@ -161,8 +161,13 @@ export default function RequestsScreen() {
     
     console.log('[requests] handleSave başlatıldı');
     
-    if (!validateForm() || !selectedAgency) {
-      console.log('[requests] Validation başarısız veya acente seçili değil');
+    if (!validateForm()) {
+      console.log('[requests] Validation başarısız');
+      setErrorMessage('Lütfen tüm zorunlu alanları doldurun');
+      return;
+    }
+    if (kimden === 'Acente' && !selectedAgency) {
+      console.log('[requests] Acente seçili değil');
       setErrorMessage('Lütfen tüm zorunlu alanları doldurun');
       return;
     }
@@ -173,8 +178,8 @@ export default function RequestsScreen() {
       console.log('[requests] Request oluşturuluyor...');
       const request: Request = {
         id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        levhaNo: selectedAgency.levhaNo,
-        acenteUnvani: selectedAgency.acenteUnvani,
+        levhaNo: kimden === 'Acente' && selectedAgency ? selectedAgency.levhaNo : '',
+        acenteUnvani: kimden === 'Acente' && selectedAgency ? selectedAgency.acenteUnvani : 'Diğer',
         requestType,
         priority,
         status: 'Açık',
@@ -205,9 +210,11 @@ export default function RequestsScreen() {
         const result = await createTaskMutation.mutateAsync({
           listId: config.listId,
           name: `[${requestType}] ${subject.trim()}`,
-          description: `**Acente:** ${selectedAgency.acenteUnvani} (${selectedAgency.levhaNo})\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** ${user?.name || user?.email || 'Saha Personeli'}`,
+          description: kimden === 'Acente' && selectedAgency
+            ? `**Acente:** ${selectedAgency.acenteUnvani} (${selectedAgency.levhaNo})\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** ${user?.name || user?.email || 'Saha Personeli'}`
+            : `**Kimden:** Diğer\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** ${user?.name || user?.email || 'Saha Personeli'}`,
           priority: mapPriorityToClickUp(priority),
-          tags: ['Talep', requestType, selectedAgency.il || 'Bilinmeyen'],
+          tags: ['Talep', requestType, ...(kimden === 'Acente' && selectedAgency ? [selectedAgency.il || 'Bilinmeyen'] : ['Diğer'])],
           assigneeEmail: user?.email || undefined, // Giriş yapan kullanıcının emaili (otomatik ClickUp'a assign edilecek)
         });
         console.log('[requests] ClickUp task created successfully:', result);
