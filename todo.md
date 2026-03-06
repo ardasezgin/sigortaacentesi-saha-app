@@ -400,4 +400,8 @@
 - [x] Backend'e HT Talep Formu için createHtTask router'ı ekle (dosya yükleme + ClickUp)
 - [x] HT Talep Formu sayfası oluştur (app/(drawer)/ht-talep.tsx)
 - [x] Drawer navigasyona HT Talep Formu ekle
-- [ ] GitHub'a push et
+- [x] GitHub'a push et
+
+## HT Talep Formu - Arama İyileştirmesi
+
+- [x] Talebi Giren arama: 5 karakter girilince liste görünsün, daha az karakterde liste gizlensin

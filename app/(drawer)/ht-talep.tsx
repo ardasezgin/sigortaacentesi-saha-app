@@ -57,15 +57,28 @@ export default function HtTalepScreen() {
   const uploadFileMutation = trpc.htTalep.uploadFile.useMutation();
   const createTaskMutation = trpc.htTalep.createTask.useMutation();
 
-  // Üye arama filtresi
-  const filteredMembers = (membersQuery.data || []).filter((m) => {
-    if (!memberSearch.trim()) return true;
-    const q = memberSearch.toLowerCase();
-    return (
-      m.username.toLowerCase().includes(q) ||
-      (m.email && m.email.toLowerCase().includes(q))
-    );
-  });
+  const SEARCH_MIN_CHARS = 5;
+
+  // Üye arama filtresi — en az 5 karakter girilince çalışır
+  const filteredMembers = memberSearch.trim().length >= SEARCH_MIN_CHARS
+    ? (membersQuery.data || []).filter((m) => {
+        const q = memberSearch.toLowerCase();
+        return (
+          m.username.toLowerCase().includes(q) ||
+          (m.email && m.email.toLowerCase().includes(q))
+        );
+      })
+    : [];
+
+  // Arama metnini güncelleyince liste görünürlüğünü de yönet
+  const handleMemberSearchChange = (text: string) => {
+    setMemberSearch(text);
+    if (text.trim().length >= SEARCH_MIN_CHARS) {
+      setShowMemberList(true);
+    } else {
+      setShowMemberList(false);
+    }
+  };
 
   // Dosya seç ve base64'e çevir
   const pickFile = useCallback(async (
@@ -207,29 +220,36 @@ export default function HtTalepScreen() {
           <Text style={[styles.label, { color: colors.foreground }]}>
             Talebi Giren <Text style={{ color: colors.error }}>*</Text>
           </Text>
-          <TouchableOpacity
-            style={[styles.selectButton, { backgroundColor: colors.surface, borderColor: colors.border }]}
-            onPress={() => {
-              setShowMemberList(!showMemberList);
-              setMemberSearch('');
-            }}
-          >
-            <Text style={{ color: talepGirenAdi ? colors.foreground : colors.muted }}>
-              {talepGirenAdi || 'Kişi seçiniz...'}
-            </Text>
-          </TouchableOpacity>
+          {/* Seçili kişi gösterimi */}
+          {talepGirenAdi ? (
+            <TouchableOpacity
+              style={[styles.selectButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
+              onPress={() => {
+                setTalepGirenId(null);
+                setTalepGirenAdi('');
+                setMemberSearch('');
+                setShowMemberList(false);
+              }}
+            >
+              <Text style={{ color: colors.foreground }}>{talepGirenAdi}</Text>
+              <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>Değiştirmek için dokun</Text>
+            </TouchableOpacity>
+          ) : (
+            <TextInput
+              style={[styles.textInput, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]}
+              placeholder={`En az ${SEARCH_MIN_CHARS} karakter girin...`}
+              placeholderTextColor={colors.muted}
+              value={memberSearch}
+              onChangeText={handleMemberSearchChange}
+              autoCorrect={false}
+              autoComplete="off"
+              autoCapitalize="none"
+            />
+          )}
 
-          {showMemberList && (
+          {/* En az 5 karakter girilince liste açılır */}
+          {showMemberList && !talepGirenAdi && (
             <View style={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              <TextInput
-                style={[styles.searchInput, { color: colors.foreground, borderColor: colors.border }]}
-                placeholder="İsim veya e-posta ara..."
-                placeholderTextColor={colors.muted}
-                value={memberSearch}
-                onChangeText={setMemberSearch}
-                autoCorrect={false}
-                autoComplete="off"
-              />
               {membersQuery.isLoading ? (
                 <ActivityIndicator style={{ padding: 12 }} color={colors.primary} />
               ) : (
@@ -237,7 +257,7 @@ export default function HtTalepScreen() {
                   data={filteredMembers}
                   keyExtractor={(item) => String(item.id)}
                   keyboardShouldPersistTaps="always"
-                  style={{ maxHeight: 200 }}
+                  style={{ maxHeight: 220 }}
                   renderItem={({ item }) => (
                     <Pressable
                       style={({ pressed }) => [
@@ -264,6 +284,13 @@ export default function HtTalepScreen() {
                 />
               )}
             </View>
+          )}
+
+          {/* Karakter sayısı ipucu */}
+          {!talepGirenAdi && memberSearch.length > 0 && memberSearch.length < SEARCH_MIN_CHARS && (
+            <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>
+              {SEARCH_MIN_CHARS - memberSearch.length} karakter daha girin...
+            </Text>
           )}
         </View>
 
