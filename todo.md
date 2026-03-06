@@ -428,3 +428,11 @@
 
 - [x] Acente Adı alanını arama yapılabilir dropdown'a çevir (diğer formlarla aynı pattern)
 - [x] Levha No alanını acente seçimine bağla (acente seçilince otomatik dolsun)
+
+## HT Talep Formu - Acente Adı Arama Bug
+
+- [x] Acente Adı arama çalışmıyor (ANK GROUP gibi yazınca tepki vermiyor) - Veri tutarsızlığı düzeltildi, 19452 acente upsert ile import edildi
+
+## Acente Arama - Büyük/Küçük Harf Duyarsızlığı
+
+- [x] Acente aramasında büyük/küçük harf duyarsız arama (nazmiye → NAZMİYE eşleşsin)

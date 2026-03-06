@@ -129,7 +129,36 @@ export async function getUserById(id: number) {
 // ============================================
 
 import { agencies, Agency, InsertAgency } from "../drizzle/schema";
-import { like, or, ilike } from "drizzle-orm";
+import { like, or, ilike, sql as drizzleSql } from "drizzle-orm";
+
+/**
+ * Türkçe büyük/küçük harf duyarsız arama için metin normalize eder.
+ * i→i, İ→i, ı→i, I→i, ş→s, Ş→s, ğ→g, Ğ→g, ü→u, Ü→u, ö→o, Ö→o, ç→c, Ç→c
+ */
+function normalizeTurkish(text: string): string {
+  // Önce Türkçe özel karakterleri ASCII'ye çevir, sonra lowercase yap
+  return text
+    .replace(/İ/g, 'I')  // İ → I (sonra toLowerCase ile i olur)
+    .replace(/ı/g, 'i')  // ı → i
+    .replace(/Ş/g, 'S').replace(/ş/g, 's')
+    .replace(/Ğ/g, 'G').replace(/ğ/g, 'g')
+    .replace(/Ü/g, 'U').replace(/ü/g, 'u')
+    .replace(/Ö/g, 'O').replace(/ö/g, 'o')
+    .replace(/Ç/g, 'C').replace(/ç/g, 'c')
+    .replace(/â/g, 'a').replace(/Â/g, 'A')
+    .toLowerCase();
+}
+
+/**
+ * MySQL'de Türkçe karakter duyarsız arama için SQL expression üretir.
+ * LOWER(REPLACE(REPLACE(..., 'İ','i'), 'I','i'), ...) LIKE '%normalized%'
+ */
+function turkishLike(column: any, normalizedSearch: string) {
+  const s = `%${normalizedSearch}%`;
+  // MySQL LOWER + REPLACE zinciri ile Türkçe karakterleri normalize et
+  const normalized = drizzleSql`LOWER(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(REPLACE(${column},'İ','i'),'I','i'),'ı','i'),'Ş','s'),'ş','s'),'Ğ','g'),'ğ','g'),'Ü','u'),'ü','u'),'Ö','o'),'ö','o'),'Ç','c'),'ç','c'),'â','a'))`;
+  return drizzleSql`${normalized} LIKE ${s}`;
+}
 
 /**
  * Find agency by levha number (case-insensitive)
@@ -166,10 +195,11 @@ export async function findAgencyByName(name: string): Promise<Agency | null> {
   }
 
   try {
+    const normalized = normalizeTurkish(name);
     const result = await db
       .select()
       .from(agencies)
-      .where(ilike(agencies.acenteUnvani, `%${name}%`))
+      .where(turkishLike(agencies.acenteUnvani, normalized))
       .limit(1);
 
     return result.length > 0 ? result[0] : null;
@@ -190,18 +220,19 @@ export async function searchAgencies(query: string): Promise<Agency[]> {
   }
 
   try {
+    const normalized = normalizeTurkish(query);
     const result = await db
       .select()
       .from(agencies)
       .where(
         or(
           ilike(agencies.levhaNo, `%${query}%`),
-          ilike(agencies.acenteUnvani, `%${query}%`),
-          ilike(agencies.il, `%${query}%`),
-          ilike(agencies.ilce, `%${query}%`)
+          turkishLike(agencies.acenteUnvani, normalized),
+          turkishLike(agencies.il, normalized),
+          turkishLike(agencies.ilce, normalized)
         )
       )
-      .limit(100); // Limit to 100 results for performance
+      .limit(100);
 
     return result;
   } catch (error) {
@@ -333,12 +364,12 @@ export async function getAgenciesPaginated(
     let countQuery: any;
 
     if (search && search.trim()) {
-      const s = `%${search.trim()}%`;
+      const normalized = normalizeTurkish(search.trim());
       const whereClause = or(
-        ilike(agencies.levhaNo, s),
-        ilike(agencies.acenteUnvani, s),
-        ilike(agencies.il, s),
-        ilike(agencies.ilce, s)
+        ilike(agencies.levhaNo, `%${search.trim()}%`),
+        turkishLike(agencies.acenteUnvani, normalized),
+        turkishLike(agencies.il, normalized),
+        turkishLike(agencies.ilce, normalized)
       );
       query = db.select().from(agencies).where(whereClause).orderBy(asc(agencies.acenteUnvani)).limit(limit).offset(offset);
       countQuery = db.select({ count: count() }).from(agencies).where(whereClause);
