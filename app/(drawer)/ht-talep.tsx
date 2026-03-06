@@ -209,8 +209,8 @@ export default function HtTalepScreen() {
   return (
     <ScreenContainer>
       <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={styles.scrollContent}
+        style={{ flex: 1, backgroundColor: colors.background }}
+        contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.background }]}
         keyboardShouldPersistTaps="handled"
       >
         <Text style={[styles.pageTitle, { color: colors.foreground }]}>HT Talep Formu</Text>

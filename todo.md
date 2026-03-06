@@ -405,3 +405,7 @@
 ## HT Talep Formu - Arama İyileştirmesi
 
 - [x] Talebi Giren arama: 5 karakter girilince liste görünsün, daha az karakterde liste gizlensin
+
+## HT Talep Formu - Karanlık Tema Düzeltmesi
+
+- [x] ScrollView ve sayfa arka planı beyaz kalıyor, colors.background ile düzelt
