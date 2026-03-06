@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 import {
   ScrollView,
   Text,
@@ -17,10 +17,12 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import { trpc } from '@/lib/trpc';
+import type { Agency } from '@/lib/types/agency';
 
 /**
  * HT Talep Formu Ekranı
  * ClickUp'taki ilgili listeye yeni görev oluşturur.
+ * Acente Adı ve Levha No alanları tüm acente datasından arama ile seçilebilir.
  */
 export default function HtTalepScreen() {
   const colors = useColors();
@@ -33,6 +35,18 @@ export default function HtTalepScreen() {
 
   const [acenteAdi, setAcenteAdi] = useState('');
   const [levhaNo, setLevhaNo] = useState('');
+  const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null);
+  const [isAgencyAutoFilled, setIsAgencyAutoFilled] = useState(false);
+
+  // Acente adı arama state
+  const [acenteSuggestions, setAcenteSuggestions] = useState<Agency[]>([]);
+  const [showAcenteSuggestions, setShowAcenteSuggestions] = useState(false);
+  const [isSearchingName, setIsSearchingName] = useState(false);
+  const acenteSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Levha no arama state
+  const [isSearchingLevha, setIsSearchingLevha] = useState(false);
+
   const [acenteKullaniciSayisi, setAcenteKullaniciSayisi] = useState('');
   const [hizliTeklifSayisi, setHizliTeklifSayisi] = useState('');
   const [smsOtorizasyon, setSmsOtorizasyon] = useState<'Evet' | 'Hayir' | null>(null);
@@ -80,6 +94,76 @@ export default function HtTalepScreen() {
     }
   };
 
+  // Levha no değiştiğinde otomatik acente arama (3+ karakter)
+  useEffect(() => {
+    if (isAgencyAutoFilled) return; // Acente zaten seçildiyse tetikleme
+    const searchTimeout = setTimeout(async () => {
+      if (levhaNo.trim().length >= 3) {
+        await searchByLevhaNo(levhaNo.trim());
+      }
+    }, 300);
+    return () => clearTimeout(searchTimeout);
+  }, [levhaNo]);
+
+  const searchByLevhaNo = async (searchLevhaNo: string) => {
+    setIsSearchingLevha(true);
+    try {
+      const { findAgencyByLevhaNo } = await import('@/lib/services/agency-service');
+      const agency = await findAgencyByLevhaNo(searchLevhaNo);
+      if (agency) {
+        setAcenteAdi(agency.acenteUnvani);
+        setSelectedAgency(agency);
+        setIsAgencyAutoFilled(true);
+        if (Platform.OS !== 'web') {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+      } else {
+        setIsAgencyAutoFilled(false);
+      }
+    } catch (error) {
+      console.error('Levha no arama hatası:', error);
+    } finally {
+      setIsSearchingLevha(false);
+    }
+  };
+
+  // Acente adı değiştiğinde öneri listesi (5+ karakter, 600ms debounce)
+  const handleAcenteAdiChange = (text: string) => {
+    setAcenteAdi(text);
+    setIsAgencyAutoFilled(false);
+    setSelectedAgency(null);
+    setShowAcenteSuggestions(false);
+    setAcenteSuggestions([]);
+    if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
+    if (text.trim().length < 5) return;
+    acenteSearchTimer.current = setTimeout(async () => {
+      setIsSearchingName(true);
+      try {
+        const { getAllAgencies } = await import('@/lib/services/agency-service');
+        const result = await getAllAgencies(1, 8, text.trim());
+        setAcenteSuggestions(result.agencies);
+        setShowAcenteSuggestions(result.agencies.length > 0);
+      } catch (error) {
+        console.error('Acente adı arama hatası:', error);
+      } finally {
+        setIsSearchingName(false);
+      }
+    }, 600);
+  };
+
+  // Öneriden acente seç
+  const handleSelectAgency = (agency: Agency) => {
+    setAcenteAdi(agency.acenteUnvani);
+    setLevhaNo(agency.levhaNo);
+    setSelectedAgency(agency);
+    setIsAgencyAutoFilled(true);
+    setShowAcenteSuggestions(false);
+    setAcenteSuggestions([]);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    }
+  };
+
   // Dosya seç ve base64'e çevir
   const pickFile = useCallback(async (
     setAdi: (v: string) => void,
@@ -96,7 +180,7 @@ export default function HtTalepScreen() {
       const asset = result.assets[0];
       setAdi(asset.name);
       setMime(asset.mimeType || 'application/octet-stream');
-      setUrl(''); // sıfırla, yeni yükleme bekliyor
+      setUrl('');
       if (Platform.OS !== 'web') {
         const base64 = await FileSystem.readAsStringAsync(asset.uri, {
           encoding: FileSystem.EncodingType.Base64,
@@ -152,7 +236,6 @@ export default function HtTalepScreen() {
     }
 
     try {
-      // Dosyaları yükle
       let finalAcentechUrl = acentechUrl;
       let finalSigortaUrl = sigortaUrl;
 
@@ -163,7 +246,6 @@ export default function HtTalepScreen() {
         finalSigortaUrl = (await uploadFile(sigortaDosyaAdi, sigortaDosyaBase64, sigortaDosyaMime, setSigortaUrl)) || '';
       }
 
-      // ClickUp görevi oluştur
       await createTaskMutation.mutateAsync({
         talepGirenClickUpId: talepGirenId!,
         acenteAdi: acenteAdi.trim(),
@@ -186,6 +268,8 @@ export default function HtTalepScreen() {
       setMemberSearch('');
       setAcenteAdi('');
       setLevhaNo('');
+      setSelectedAgency(null);
+      setIsAgencyAutoFilled(false);
       setAcenteKullaniciSayisi('');
       setHizliTeklifSayisi('');
       setSmsOtorizasyon(null);
@@ -220,7 +304,6 @@ export default function HtTalepScreen() {
           <Text style={[styles.label, { color: colors.foreground }]}>
             Talebi Giren <Text style={{ color: colors.error }}>*</Text>
           </Text>
-          {/* Seçili kişi gösterimi */}
           {talepGirenAdi ? (
             <TouchableOpacity
               style={[styles.selectButton, { backgroundColor: colors.surface, borderColor: colors.primary }]}
@@ -247,7 +330,6 @@ export default function HtTalepScreen() {
             />
           )}
 
-          {/* En az 5 karakter girilince liste açılır */}
           {showMemberList && !talepGirenAdi && (
             <View style={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
               {membersQuery.isLoading ? (
@@ -279,14 +361,13 @@ export default function HtTalepScreen() {
                     </Pressable>
                   )}
                   ListEmptyComponent={
-                    <Text style={[styles.emptyText, { color: colors.muted }]}>Sonuç bulunamadı</Text>
+                    <Text style={[styles.emptyText, { color: colors.muted }]}>Eşleşen üye bulunamadı</Text>
                   }
                 />
               )}
             </View>
           )}
 
-          {/* Karakter sayısı ipucu */}
           {!talepGirenAdi && memberSearch.length > 0 && memberSearch.length < SEARCH_MIN_CHARS && (
             <Text style={{ color: colors.muted, fontSize: 12, marginTop: 4 }}>
               {SEARCH_MIN_CHARS - memberSearch.length} karakter daha girin...
@@ -294,34 +375,91 @@ export default function HtTalepScreen() {
           )}
         </View>
 
-        {/* Acente Adı */}
+        {/* Acente Adı — arama yapılabilir */}
         <View style={styles.fieldGroup}>
           <Text style={[styles.label, { color: colors.foreground }]}>
             Acente Adını Giriniz <Text style={{ color: colors.error }}>*</Text>
           </Text>
-          <TextInput
-            style={[styles.textInput, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]}
-            placeholder="Acente adı..."
-            placeholderTextColor={colors.muted}
-            value={acenteAdi}
-            onChangeText={setAcenteAdi}
-            autoCorrect={false}
-            autoComplete="off"
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TextInput
+              style={[styles.textInput, { flex: 1, color: colors.foreground, backgroundColor: colors.surface, borderColor: isAgencyAutoFilled ? colors.primary : colors.border }]}
+              placeholder="Acente ünvanı (en az 5 harf)"
+              placeholderTextColor={colors.muted}
+              value={acenteAdi}
+              onChangeText={handleAcenteAdiChange}
+              onBlur={() => {
+                setTimeout(() => setShowAcenteSuggestions(false), 200);
+              }}
+              autoCorrect={false}
+              autoComplete="off"
+              spellCheck={false}
+            />
+            {isSearchingName && (
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />
+            )}
+          </View>
+
+          {/* Öneri listesi */}
+          {showAcenteSuggestions && acenteSuggestions.length > 0 && (
+            <View style={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
+              <FlatList
+                data={acenteSuggestions}
+                keyExtractor={(item) => item.levhaNo}
+                keyboardShouldPersistTaps="always"
+                style={{ maxHeight: 200 }}
+                scrollEnabled={acenteSuggestions.length > 4}
+                renderItem={({ item: agency }) => (
+                  <Pressable
+                    onPress={() => handleSelectAgency(agency)}
+                    style={({ pressed }) => ({
+                      padding: 12,
+                      borderBottomWidth: StyleSheet.hairlineWidth,
+                      borderBottomColor: colors.border,
+                      backgroundColor: pressed ? colors.border : 'transparent',
+                    })}
+                  >
+                    <Text style={{ color: colors.foreground, fontSize: 14, fontWeight: '500' }}>{agency.acenteUnvani}</Text>
+                    <Text style={{ color: colors.muted, fontSize: 12, marginTop: 2 }}>{agency.levhaNo} • {agency.il}</Text>
+                  </Pressable>
+                )}
+              />
+            </View>
+          )}
+
+          {isAgencyAutoFilled && selectedAgency && (
+            <Text style={{ color: colors.success, fontSize: 12, marginTop: 4 }}>
+              ✓ Acente seçildi: {selectedAgency.levhaNo}
+            </Text>
+          )}
         </View>
 
-        {/* Levha No */}
+        {/* Levha No — girilince otomatik acente arama */}
         <View style={styles.fieldGroup}>
           <Text style={[styles.label, { color: colors.foreground }]}>Levha No</Text>
-          <TextInput
-            style={[styles.textInput, { color: colors.foreground, backgroundColor: colors.surface, borderColor: colors.border }]}
-            placeholder="Levha numarası..."
-            placeholderTextColor={colors.muted}
-            value={levhaNo}
-            onChangeText={setLevhaNo}
-            autoCorrect={false}
-            autoComplete="off"
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <TextInput
+              style={[styles.textInput, { flex: 1, color: colors.foreground, backgroundColor: colors.surface, borderColor: isAgencyAutoFilled ? colors.primary : colors.border }]}
+              placeholder="Levha numarası..."
+              placeholderTextColor={colors.muted}
+              value={levhaNo}
+              onChangeText={(text) => {
+                setLevhaNo(text);
+                if (!text.trim()) {
+                  setIsAgencyAutoFilled(false);
+                  setSelectedAgency(null);
+                }
+              }}
+              autoCorrect={false}
+              autoComplete="off"
+              autoCapitalize="characters"
+            />
+            {isSearchingLevha && (
+              <ActivityIndicator size="small" color={colors.primary} style={{ marginLeft: 8 }} />
+            )}
+          </View>
+          <Text style={{ color: colors.muted, fontSize: 11, marginTop: 3 }}>
+            3+ karakter girilince acente adı otomatik dolar
+          </Text>
         </View>
 
         {/* Acente Kullanıcı Sayısı */}
@@ -486,12 +624,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     marginTop: 4,
     overflow: 'hidden',
-  },
-  searchInput: {
-    borderBottomWidth: 1,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    fontSize: 14,
   },
   memberItem: {
     paddingHorizontal: 12,

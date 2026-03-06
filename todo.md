@@ -423,3 +423,8 @@
 ## Web Ön İzleme - Font Timeout Düzeltmesi
 
 - [x] _layout.tsx'e useFonts ile MaterialIcons/Ionicons ön yükleme ekle (fontfaceobserver 6000ms timeout hatası)
+
+## HT Talep Formu - Acente Arama
+
+- [x] Acente Adı alanını arama yapılabilir dropdown'a çevir (diğer formlarla aynı pattern)
+- [x] Levha No alanını acente seçimine bağla (acente seçilince otomatik dolsun)
