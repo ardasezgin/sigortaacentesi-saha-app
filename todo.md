@@ -419,3 +419,7 @@
 - [x] agency-karne.tsx - ScrollView arka planı düzelt
 - [x] data-upload.tsx - ScrollView arka planı düzelt
 - [x] GitHub'a push et
+
+## Web Ön İzleme - Font Timeout Düzeltmesi
+
+- [x] _layout.tsx'e useFonts ile MaterialIcons/Ionicons ön yükleme ekle (fontfaceobserver 6000ms timeout hatası)
