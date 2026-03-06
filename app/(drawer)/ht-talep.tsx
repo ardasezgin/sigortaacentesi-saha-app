@@ -17,12 +17,17 @@ import * as FileSystem from 'expo-file-system/legacy';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
 import { trpc } from '@/lib/trpc';
+import { getClickUpMembers, createClickUpTask } from '@/lib/services/clickup';
 import type { Agency } from '@/lib/types/agency';
+
+// HT Talep ClickUp List ID
+const HT_TALEP_LIST_ID = '90188646643';
 
 /**
  * HT Talep Formu Ekranı
  * ClickUp'taki ilgili listeye yeni görev oluşturur.
  * Acente Adı ve Levha No alanları tüm acente datasından arama ile seçilebilir.
+ * ClickUp API çağrıları doğrudan client-side'dan yapılır.
  */
 export default function HtTalepScreen() {
   const colors = useColors();
@@ -32,6 +37,11 @@ export default function HtTalepScreen() {
   const [talepGirenAdi, setTalepGirenAdi] = useState('');
   const [memberSearch, setMemberSearch] = useState('');
   const [showMemberList, setShowMemberList] = useState(false);
+
+  // ClickUp üyeleri state (client-side)
+  const [members, setMembers] = useState<Array<{ id: number; username: string; email: string }>>([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersLoaded, setMembersLoaded] = useState(false);
 
   const [acenteAdi, setAcenteAdi] = useState('');
   const [levhaNo, setLevhaNo] = useState('');
@@ -63,19 +73,31 @@ export default function HtTalepScreen() {
 
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // tRPC hooks
-  const membersQuery = trpc.htTalep.getMembers.useQuery(undefined, {
-    staleTime: 5 * 60 * 1000,
-  });
+  // S3 dosya yükleme için tRPC (sunucu üzerinden S3'e yükleme devam ediyor)
   const uploadFileMutation = trpc.htTalep.uploadFile.useMutation();
-  const createTaskMutation = trpc.htTalep.createTask.useMutation();
 
   const SEARCH_MIN_CHARS = 5;
 
-  // Üye arama filtresi — en az 5 karakter girilince çalışır
+  // ClickUp üyelerini yükle (5+ karakter girilince)
+  const loadMembers = useCallback(async () => {
+    if (membersLoaded || membersLoading) return;
+    setMembersLoading(true);
+    try {
+      const data = await getClickUpMembers();
+      setMembers(data);
+      setMembersLoaded(true);
+    } catch (error) {
+      console.error('Üye listesi yükleme hatası:', error);
+    } finally {
+      setMembersLoading(false);
+    }
+  }, [membersLoaded, membersLoading]);
+
+  // Üye arama filtresi
   const filteredMembers = memberSearch.trim().length >= SEARCH_MIN_CHARS
-    ? (membersQuery.data || []).filter((m) => {
+    ? members.filter((m) => {
         const q = memberSearch.toLowerCase();
         return (
           m.username.toLowerCase().includes(q) ||
@@ -89,6 +111,7 @@ export default function HtTalepScreen() {
     setMemberSearch(text);
     if (text.trim().length >= SEARCH_MIN_CHARS) {
       setShowMemberList(true);
+      loadMembers();
     } else {
       setShowMemberList(false);
     }
@@ -96,7 +119,7 @@ export default function HtTalepScreen() {
 
   // Levha no değiştiğinde otomatik acente arama (3+ karakter)
   useEffect(() => {
-    if (isAgencyAutoFilled) return; // Acente zaten seçildiyse tetikleme
+    if (isAgencyAutoFilled) return;
     const searchTimeout = setTimeout(async () => {
       if (levhaNo.trim().length >= 3) {
         await searchByLevhaNo(levhaNo.trim());
@@ -192,7 +215,7 @@ export default function HtTalepScreen() {
     }
   }, []);
 
-  // Dosya yükle (S3)
+  // Dosya yükle (S3 - sunucu üzerinden)
   const uploadFile = useCallback(async (
     dosyaAdi: string,
     dosyaBase64: string,
@@ -235,7 +258,9 @@ export default function HtTalepScreen() {
       return;
     }
 
+    setIsSubmitting(true);
     try {
+      // Dosyaları S3'e yükle
       let finalAcentechUrl = acentechUrl;
       let finalSigortaUrl = sigortaUrl;
 
@@ -246,16 +271,27 @@ export default function HtTalepScreen() {
         finalSigortaUrl = (await uploadFile(sigortaDosyaAdi, sigortaDosyaBase64, sigortaDosyaMime, setSigortaUrl)) || '';
       }
 
-      await createTaskMutation.mutateAsync({
-        talepGirenClickUpId: talepGirenId!,
-        acenteAdi: acenteAdi.trim(),
-        levhaNo: levhaNo.trim() || undefined,
-        acenteKullaniciSayisi: acenteKullaniciSayisi ? parseInt(acenteKullaniciSayisi) : undefined,
-        hizliTeklifSayisi: hizliTeklifSayisi ? parseInt(hizliTeklifSayisi) : undefined,
-        smsOtorizasyon: smsOtorizasyon!,
-        acentechTabloUrl: finalAcentechUrl || undefined,
-        sigortaSirketleriTabloUrl: finalSigortaUrl || undefined,
+      // ClickUp'a doğrudan görev oluştur
+      const descLines: string[] = [
+        `Acente Adı: ${acenteAdi.trim()}`,
+        `Levha No: ${levhaNo.trim() || '-'}`,
+        `Acente Kullanıcı Sayısı: ${acenteKullaniciSayisi || '-'}`,
+        `Hızlı Teklif Talep Eden Kullanıcı Sayısı: ${hizliTeklifSayisi || '-'}`,
+        `SMS Otorizasyonu Kuruldu Mu: ${smsOtorizasyon}`,
+        `Acentech Kullanıcı Oluşturma Tablosu: ${finalAcentechUrl || 'Yüklenmedi'}`,
+        `Sigorta Şirketleri Kullanıcı Adı - Şifre Tablosu: ${finalSigortaUrl || 'Yüklenmedi'}`,
+      ];
+
+      const task = await createClickUpTask({
+        name: `HT Talep - ${acenteAdi.trim()}`,
+        description: descLines.join('\n'),
+        assigneeIds: talepGirenId ? [talepGirenId] : undefined,
+        listId: HT_TALEP_LIST_ID,
       });
+
+      if (!task) {
+        throw new Error('ClickUp görevi oluşturulamadı');
+      }
 
       setSuccessMsg('HT Talep başarıyla oluşturuldu ve ClickUp\'a gönderildi ✅');
       if (Platform.OS !== 'web') {
@@ -285,10 +321,12 @@ export default function HtTalepScreen() {
       if (Platform.OS !== 'web') {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const isLoading = createTaskMutation.isPending || uploadFileMutation.isPending;
+  const isLoading = isSubmitting || uploadFileMutation.isPending;
 
   return (
     <ScreenContainer>
@@ -332,7 +370,7 @@ export default function HtTalepScreen() {
 
           {showMemberList && !talepGirenAdi && (
             <View style={[styles.dropdownContainer, { backgroundColor: colors.surface, borderColor: colors.border }]}>
-              {membersQuery.isLoading ? (
+              {membersLoading ? (
                 <ActivityIndicator style={{ padding: 12 }} color={colors.primary} />
               ) : (
                 <FlatList

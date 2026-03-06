@@ -23,7 +23,7 @@ import type { Agency } from '@/lib/types/agency';
 import { saveAgency } from '@/lib/services/storage';
 import { findAgencyByLevhaNo, findAgencyByName } from '@/lib/services/agency-service';
 import { addVisit, getRecentVisits } from '@/lib/services/visit-storage';
-import { getConfig } from '@/lib/services/clickup';
+import { createClickUpTask } from '@/lib/services/clickup';
 import { cn } from '@/lib/utils';
 
 /**
@@ -32,8 +32,6 @@ import { cn } from '@/lib/utils';
 export default function VisitScreen() {
   const colors = useColors();
   const { user } = useAuth();
-  const createTaskMutation = trpc.clickup.createTask.useMutation();
-  
   // Form state
   const [iletisimTuru, setIletisimTuru] = useState<CommunicationType>('Ziyaret');
   const [isOrtagi, setIsOrtagi] = useState<PartnerType>('Mevcut Acente');
@@ -247,13 +245,10 @@ export default function VisitScreen() {
       let clickupError: any = null;
       
       try {
-        const config = getConfig();
-        const result = await createTaskMutation.mutateAsync({
-          listId: config.listId,
+        const result = await createClickUpTask({
           name: `[Ziyaret] ${acenteAdi} - ${gundem}`,
           description: `**İletişim Türü:** ${iletisimTuru}\n**İş Ortağı:** ${isOrtagi}\n**Levha No:** ${levhaNo}\n**Kimle Görüşüldü:** ${kimleGorusuldu}\n**Tarih:** ${tarih}\n**Gündem:** ${gundem}\n\n**Detay:**\n${detayAciklama}`,
           tags: ['Ziyaret', iletisimTuru, isOrtagi, gundem],
-          assigneeEmail: user?.email || undefined, // Giriş yapan kullanıcının emaili (otomatik ClickUp'a assign edilecek)
         });
         console.log('[Form] ClickUp task created successfully:', result);
         clickupSuccess = true;

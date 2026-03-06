@@ -1,5 +1,8 @@
 /**
- * ClickUp API Servisi
+ * ClickUp API Servisi (Client-Side)
+ * 
+ * Sunucu üzerinden değil, doğrudan mobil uygulamadan ClickUp API'ye erişir.
+ * Şirket içi kullanım için güvenlidir.
  */
 
 import Constants from 'expo-constants';
@@ -13,23 +16,27 @@ import type {
 
 const API_BASE_URL = 'https://api.clickup.com/api/v2';
 
+// Yeni ClickUp Personal API Token
+const DEFAULT_TOKEN = 'pk_101455294_I0CMPMS7GQXBH4AX4IXU5NNJ5CDU4SBH';
+
 /**
  * ClickUp yapılandırmasını al
  */
 export function getConfig(): ClickUpConfig {
-  // Geliştirme için hardcoded değerler
-  // Üretim ortamında environment variable kullanılmalı
-  const apiToken = Constants.expoConfig?.extra?.CLICKUP_API_TOKEN || 
-                   process.env.CLICKUP_API_TOKEN || 
-                   'pk_101455294_LF8RIU4OD9UNUSPP3P1B8R0S2X4HMPG4';
-  
-  const workspaceId = Constants.expoConfig?.extra?.CLICKUP_WORKSPACE_ID || 
-                      process.env.CLICKUP_WORKSPACE_ID || 
-                      '90181713490';
-  
-  const listId = Constants.expoConfig?.extra?.CLICKUP_LIST_ID || 
-                 process.env.CLICKUP_LIST_ID || 
-                 '901814074449';
+  const apiToken =
+    Constants.expoConfig?.extra?.CLICKUP_API_TOKEN ||
+    process.env.CLICKUP_API_TOKEN ||
+    DEFAULT_TOKEN;
+
+  const workspaceId =
+    Constants.expoConfig?.extra?.CLICKUP_WORKSPACE_ID ||
+    process.env.CLICKUP_WORKSPACE_ID ||
+    '90210697489';
+
+  const listId =
+    Constants.expoConfig?.extra?.CLICKUP_LIST_ID ||
+    process.env.CLICKUP_LIST_ID ||
+    '901203118843';
 
   if (!apiToken || !workspaceId || !listId) {
     throw new Error('ClickUp configuration is missing');
@@ -46,11 +53,11 @@ async function makeRequest<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const config = getConfig();
-  
+
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     ...options,
     headers: {
-      'Authorization': config.apiToken,
+      Authorization: config.apiToken,
       'Content-Type': 'application/json',
       ...options.headers,
     },
@@ -65,12 +72,43 @@ async function makeRequest<T>(
 }
 
 /**
+ * Workspace üyelerini getir (Talebi Giren dropdown için)
+ */
+export async function getClickUpMembers(): Promise<
+  Array<{ id: number; username: string; email: string }>
+> {
+  const { teams } = await makeRequest<{
+    teams: Array<{
+      id: string;
+      members: Array<{ user: { id: number; username: string; email: string } }>;
+    }>;
+  }>('/team');
+
+  const usersMap = new Map<number, { id: number; username: string; email: string }>();
+  for (const team of teams) {
+    for (const member of team.members) {
+      const u = member.user;
+      if (u && u.id && !usersMap.has(u.id)) {
+        usersMap.set(u.id, {
+          id: u.id,
+          username: u.username || u.email || String(u.id),
+          email: u.email,
+        });
+      }
+    }
+  }
+
+  return Array.from(usersMap.values())
+    .filter((u) => u.username)
+    .sort((a, b) => a.username.localeCompare(b.username, 'tr'));
+}
+
+/**
  * ClickUp bağlantısını test et
  */
 export async function testClickUpConnection(): Promise<boolean> {
   try {
-    const config = getConfig();
-    await makeRequest(`/list/${config.listId}`, { method: 'GET' });
+    await makeRequest('/user');
     return true;
   } catch (error) {
     console.error('ClickUp connection test failed:', error);
@@ -79,43 +117,36 @@ export async function testClickUpConnection(): Promise<boolean> {
 }
 
 /**
- * ClickUp'ta yeni task oluştur (backend API üzerinden)
+ * ClickUp'ta yeni task oluştur (doğrudan API)
  */
 export async function createClickUpTask(
-  payload: CreateTaskPayload & { assigneeEmail?: string }
+  payload: CreateTaskPayload & {
+    assigneeEmail?: string;
+    assigneeIds?: number[];
+    listId?: string;
+  }
 ): Promise<ClickUpTask | null> {
   try {
     const config = getConfig();
-    
-    // Backend API'ye gönder (otomatik assignee ataması için)
-    const apiBaseUrl = Constants.expoConfig?.extra?.EXPO_PUBLIC_API_BASE_URL || 
-                       process.env.EXPO_PUBLIC_API_BASE_URL;
-    
-    if (!apiBaseUrl) {
-      throw new Error('API base URL not configured');
-    }
+    const targetListId = payload.listId || config.listId;
 
-    const response = await fetch(`${apiBaseUrl}/api/clickup/createTask`, {
+    const body: Record<string, unknown> = {
+      name: payload.name,
+    };
+
+    if (payload.description) body.description = payload.description;
+    if (payload.assigneeIds && payload.assigneeIds.length > 0) {
+      body.assignees = payload.assigneeIds;
+    }
+    if (payload.priority) body.priority = payload.priority;
+    if (payload.tags && payload.tags.length > 0) body.tags = payload.tags;
+
+    const task = await makeRequest<ClickUpTask>(`/list/${targetListId}/task`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        listId: config.listId,
-        name: payload.name,
-        description: payload.description,
-        assigneeEmail: payload.assigneeEmail,
-        priority: payload.priority,
-        tags: payload.tags,
-      }),
+      body: JSON.stringify(body),
     });
 
-    if (!response.ok) {
-      throw new Error(`Backend API error: ${response.statusText}`);
-    }
-
-    const result = await response.json();
-    return result.task;
+    return task;
   } catch (error) {
     console.error('Failed to create ClickUp task:', error);
     return null;
@@ -130,14 +161,10 @@ export async function updateClickUpTask(
   payload: UpdateTaskPayload
 ): Promise<ClickUpTask | null> {
   try {
-    const response = await makeRequest<ClickUpTask>(
-      `/task/${taskId}`,
-      {
-        method: 'PUT',
-        body: JSON.stringify(payload),
-      }
-    );
-
+    const response = await makeRequest<ClickUpTask>(`/task/${taskId}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
     return response;
   } catch (error) {
     console.error('Failed to update ClickUp task:', error);
@@ -151,12 +178,10 @@ export async function updateClickUpTask(
 export async function getClickUpTasks(): Promise<ClickUpTask[]> {
   try {
     const config = getConfig();
-    
     const response = await makeRequest<{ tasks: ClickUpTask[] }>(
       `/list/${config.listId}/task`,
       { method: 'GET' }
     );
-
     return response.tasks || [];
   } catch (error) {
     console.error('Failed to get ClickUp tasks:', error);
@@ -168,22 +193,22 @@ export async function getClickUpTasks(): Promise<ClickUpTask[]> {
  * Öncelik seviyesini ClickUp priority'ye dönüştür
  */
 export function mapPriorityToClickUp(priority: 'Düşük' | 'Orta' | 'Yüksek'): 1 | 2 | 3 | 4 {
-  const mapping = {
-    'Yüksek': 2, // high
-    'Orta': 3,   // normal
-    'Düşük': 4,  // low
+  const mapping: Record<string, 1 | 2 | 3 | 4> = {
+    Yüksek: 2,
+    Orta: 3,
+    Düşük: 4,
   };
-  return mapping[priority] as 1 | 2 | 3 | 4;
+  return mapping[priority] ?? 3;
 }
 
 /**
  * Talep durumunu ClickUp status'e dönüştür
  */
 export function mapStatusToClickUp(status: 'Açık' | 'Devam Ediyor' | 'Çözüldü'): string {
-  const mapping = {
-    'Açık': 'to do',
+  const mapping: Record<string, string> = {
+    Açık: 'to do',
     'Devam Ediyor': 'in progress',
-    'Çözüldü': 'complete',
+    Çözüldü: 'complete',
   };
   return mapping[status] || 'to do';
 }

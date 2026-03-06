@@ -21,7 +21,7 @@ import type { Request, RequestType, RequestStatus, Priority } from '@/lib/types/
 import type { Agency } from '@/lib/types/agency';
 import { findAgencyByLevhaNo, findAgencyByName } from '@/lib/services/agency-service';
 import { addRequest, getAllRequests, updateRequest } from '@/lib/services/visit-storage';
-import { getConfig, mapPriorityToClickUp, mapStatusToClickUp } from '@/lib/services/clickup';
+import { createClickUpTask, mapPriorityToClickUp, mapStatusToClickUp } from '@/lib/services/clickup';
 
 /**
  * Talep/İstek/Şikayet Ekranı
@@ -29,8 +29,6 @@ import { getConfig, mapPriorityToClickUp, mapStatusToClickUp } from '@/lib/servi
 export default function RequestsScreen() {
   const colors = useColors();
   const { user } = useAuth();
-  const createTaskMutation = trpc.clickup.createTask.useMutation();
-  
   // Form state
   const [kimden, setKimden] = useState<'Acente' | 'Diğer'>('Acente');
   const [levhaNo, setLevhaNo] = useState('');
@@ -203,16 +201,13 @@ export default function RequestsScreen() {
       let clickupSuccess = false;
       
       try {
-        const config = getConfig();
-        const result = await createTaskMutation.mutateAsync({
-          listId: config.listId,
+        const result = await createClickUpTask({
           name: `[${requestType}] ${subject.trim()}`,
           description: kimden === 'Acente' && selectedAgency
             ? `**Acente:** ${selectedAgency.acenteUnvani} (${selectedAgency.levhaNo})\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** ${user?.name || user?.email || 'Saha Personeli'}`
             : `**Kimden:** Diğer\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** ${user?.name || user?.email || 'Saha Personeli'}`,
           priority: mapPriorityToClickUp(priority),
           tags: ['Talep', requestType, ...(kimden === 'Acente' && selectedAgency ? [selectedAgency.il || 'Bilinmeyen'] : ['Diğer'])],
-          assigneeEmail: user?.email || undefined, // Giriş yapan kullanıcının emaili (otomatik ClickUp'a assign edilecek)
         });
         console.log('[requests] ClickUp task created successfully:', result);
         clickupSuccess = true;
