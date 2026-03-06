@@ -5,6 +5,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { publicProcedure, router } from "./_core/trpc";
 import * as db from "./db";
 import { getClickUpClient } from "./services/clickup";
+import { storagePut } from "./storage";
 import { importAgenciesFromExcel } from "./excel-import";
 import bcrypt from "bcryptjs";
 
@@ -451,6 +452,96 @@ export const appRouter = router({
           success: true,
           task,
         };
+      }),
+  }),
+
+  // HT Talep Formu
+  htTalep: router({
+    // ClickUp workspace üyelerini getir (Talebi Giren dropdown için)
+    getMembers: publicProcedure.query(async () => {
+      const client = getClickUpClient();
+      if (!client) {
+        throw new Error("ClickUp API token not configured");
+      }
+      const { teams } = await client.getTeams();
+      const usersMap = new Map<number, { id: number; username: string; email: string }>();
+      for (const team of teams) {
+        for (const member of team.members) {
+          const u = member.user;
+          if (u && u.id && !usersMap.has(u.id)) {
+            usersMap.set(u.id, {
+              id: u.id,
+              username: u.username || u.email || String(u.id),
+              email: u.email,
+            });
+          }
+        }
+      }
+      const users = Array.from(usersMap.values())
+        .filter(u => u.username)
+        .sort((a, b) => a.username.localeCompare(b.username, 'tr'));
+      return users;
+    }),
+
+    // Dosya yükle (S3'e) ve URL döndür
+    uploadFile: publicProcedure
+      .input(
+        z.object({
+          fileName: z.string(),
+          fileBase64: z.string(),
+          mimeType: z.string(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const buffer = Buffer.from(input.fileBase64, 'base64');
+        const suffix = Date.now().toString(36);
+        const fileKey = `ht-talep/${suffix}-${input.fileName}`;
+        const { url } = await storagePut(fileKey, buffer, input.mimeType);
+        return { url };
+      }),
+
+    // HT Talep oluştur ve ClickUp'a gönder
+    createTask: publicProcedure
+      .input(
+        z.object({
+          talepGirenClickUpId: z.number().optional(),
+          acenteAdi: z.string(),
+          levhaNo: z.string().optional(),
+          acenteKullaniciSayisi: z.number().optional(),
+          hizliTeklifSayisi: z.number().optional(),
+          smsOtorizasyon: z.enum(['Evet', 'Hayir']),
+          acentechTabloUrl: z.string().optional(),
+          sigortaSirketleriTabloUrl: z.string().optional(),
+        })
+      )
+      .mutation(async ({ input }) => {
+        const client = getClickUpClient();
+        if (!client) {
+          throw new Error("ClickUp API token not configured");
+        }
+
+        const LIST_ID = '90188646643';
+
+        const descLines: string[] = [
+          `Acente Adı: ${input.acenteAdi}`,
+          `Levha No: ${input.levhaNo || '-'}`,
+          `Acente Kullanıcı Sayısı: ${input.acenteKullaniciSayisi ?? '-'}`,
+          `Hızlı Teklif Talep Eden Kullanıcı Sayısı: ${input.hizliTeklifSayisi ?? '-'}`,
+          `SMS Otorizasyonu Kuruldu Mu: ${input.smsOtorizasyon}`,
+          `Acentech Kullanıcı Oluşturma Tablosu: ${input.acentechTabloUrl || 'Yüklenmedi'}`,
+          `Sigorta Şirketleri Kullanıcı Adı - Şifre Tablosu: ${input.sigortaSirketleriTabloUrl || 'Yüklenmedi'}`,
+        ];
+
+        const assignees = input.talepGirenClickUpId ? [input.talepGirenClickUpId] : undefined;
+
+        const task = await client.createTask({
+          listId: LIST_ID,
+          name: `HT Talep - ${input.acenteAdi}`,
+          description: descLines.join('\n'),
+          assignees,
+        });
+
+        return { success: true, task };
       }),
   }),
 

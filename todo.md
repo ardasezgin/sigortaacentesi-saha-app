@@ -392,3 +392,12 @@
 ## Talep/İstek/Şikayet Kayıt Hatası
 
 - [ ] "Kayıt sırasında bir hata oluştu" - Talep formu kaydedilemiyor, API hatası tespit et ve düzelt
+
+## HT Talep Formu (Yeni)
+
+- [x] ClickUp API token’ı yeni token ile güncelle (pk_101455294_XCCFOLJBLQ0S1FAS6RJXGJ2YL36TV5N6)
+- [x] Backend'e ClickUp üye listesi endpoint'i ekle (getClickUpMembers)
+- [x] Backend'e HT Talep Formu için createHtTask router'ı ekle (dosya yükleme + ClickUp)
+- [x] HT Talep Formu sayfası oluştur (app/(drawer)/ht-talep.tsx)
+- [x] Drawer navigasyona HT Talep Formu ekle
+- [ ] GitHub'a push et

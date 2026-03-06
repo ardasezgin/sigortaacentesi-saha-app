@@ -27,6 +27,7 @@ const MAPPING = {
   "calendar.badge.plus": "event",
   "arrow.up.doc.fill": "upload-file",
   "arrow.right.square.fill": "logout",
+  "doc.text.fill": "description",
 } as IconMapping;
 
 /**

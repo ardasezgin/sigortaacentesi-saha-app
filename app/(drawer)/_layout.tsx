@@ -70,6 +70,16 @@ export default function DrawerLayout() {
           ),
         }}
       />
+      <Drawer.Screen
+        name="ht-talep"
+        options={{
+          title: 'HT Talep Formu',
+          drawerLabel: 'HT Talep Formu',
+          drawerIcon: ({ color, size }) => (
+            <IconSymbol name="doc.text.fill" color={color} size={size} />
+          ),
+        }}
+      />
       
       {/* Data Upload - menüde gizli */}
       <Drawer.Screen
