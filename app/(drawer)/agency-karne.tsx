@@ -335,7 +335,7 @@ export default function AgencyKarneScreen() {
 
   if (isLoading) {
     return (
-      <ScreenContainer>
+      <ScreenContainer className="bg-background">
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={colors.primary} />
           <Text style={[styles.loadingText, { color: colors.muted }]}>Karne yükleniyor...</Text>
@@ -346,7 +346,7 @@ export default function AgencyKarneScreen() {
 
   if (!karne) {
     return (
-      <ScreenContainer>
+      <ScreenContainer className="bg-background">
         <View style={styles.centered}>
           <Text style={[styles.errorText, { color: colors.error }]}>Karne verisi bulunamadı.</Text>
         </View>
@@ -355,8 +355,9 @@ export default function AgencyKarneScreen() {
   }
 
   return (
-    <ScreenContainer>
+    <ScreenContainer className="bg-background">
       <ScrollView
+        className="bg-background"
         contentContainerStyle={styles.scrollContent}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"

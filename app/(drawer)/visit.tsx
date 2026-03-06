@@ -352,7 +352,7 @@ export default function VisitScreen() {
 
   return (
     <ScreenContainer className="p-4">
-      <ScrollView showsVerticalScrollIndicator={false}>
+      <ScrollView showsVerticalScrollIndicator={false} className="bg-background">
         <View className="gap-6">
           {/* Başlık */}
           <View>

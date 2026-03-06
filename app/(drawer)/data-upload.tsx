@@ -94,7 +94,7 @@ export default function DataUploadScreen() {
 
   return (
     <ScreenContainer className="bg-background">
-      <ScrollView className="flex-1 px-4">
+      <ScrollView className="flex-1 px-4 bg-background">
         <View className="py-6 gap-6">
           {/* Başlık */}
           <View className="gap-2">

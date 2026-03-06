@@ -130,7 +130,7 @@ export default function DashboardScreen() {
   return (
     <ScreenContainer className="bg-background">
       <ScrollView
-        className="flex-1 px-4"
+        className="flex-1 px-4 bg-background"
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}

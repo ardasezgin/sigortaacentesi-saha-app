@@ -278,7 +278,7 @@ export default function RequestsScreen() {
 
   return (
     <ScreenContainer className="bg-background">
-      <ScrollView className="flex-1 px-4" keyboardShouldPersistTaps="handled">
+      <ScrollView className="flex-1 px-4 bg-background" keyboardShouldPersistTaps="handled">
         <View className="py-6 gap-6">
           {/* Başlık */}
           <View className="gap-2">

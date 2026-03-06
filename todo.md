@@ -409,3 +409,13 @@
 ## HT Talep Formu - Karanlık Tema Düzeltmesi
 
 - [x] ScrollView ve sayfa arka planı beyaz kalıyor, colors.background ile düzelt
+
+## Tüm Sayfalarda Karanlık Tema Düzeltmesi
+
+- [x] dashboard.tsx - ScrollView arka planı düzelt
+- [x] visit.tsx - ScrollView arka planı düzelt
+- [x] requests.tsx - ScrollView arka planı düzelt
+- [x] agencies.tsx - ScrollView arka planı düzelt (ScreenContainer zaten bg-background, FlatList kullanıyor)
+- [x] agency-karne.tsx - ScrollView arka planı düzelt
+- [x] data-upload.tsx - ScrollView arka planı düzelt
+- [x] GitHub'a push et
