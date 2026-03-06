@@ -436,3 +436,15 @@
 ## Acente Arama - Büyük/Küçük Harf Duyarsızlığı
 
 - [x] Acente aramasında büyük/küçük harf duyarsız arama (nazmiye → NAZMİYE eşleşsin)
+
+## ClickUp Client-Side Migration (Sunucu IP Engeli Çözümü)
+
+- [x] Sunucu IP'sinin ClickUp tarafından engellendiği tespit edildi
+- [x] lib/services/clickup.ts: Yeni token, getClickUpMembers() eklendi, doğrudan API çağrıları
+- [x] app/(drawer)/ht-talep.tsx: tRPC yerine doğrudan client-side ClickUp API kullanıyor
+- [x] app/(drawer)/requests.tsx: tRPC yerine doğrudan client-side ClickUp API kullanıyor
+- [x] app/(drawer)/visit.tsx: tRPC yerine doğrudan client-side ClickUp API kullanıyor
+- [x] GitHub'a push edildi (ace70ec)
+- [x] Sunucuya deploy edildi (pnpm build + pm2 restart)
+- [ ] iOS build al (Apple UIBackgroundModes audio reddi düzeltmesi dahil)
+- [ ] TestFlight'a yükle ve test et
