@@ -21,7 +21,7 @@ import { getClickUpMembers, createClickUpTask } from '@/lib/services/clickup';
 import type { Agency } from '@/lib/types/agency';
 
 // HT Talep ClickUp List ID
-const HT_TALEP_LIST_ID = '90188646643';
+const HT_TALEP_LIST_ID = '901816410790'; // Acentech HT Talep Formu listesi
 
 /**
  * HT Talep Formu Ekranı

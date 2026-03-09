@@ -36,7 +36,7 @@ export function getConfig(): ClickUpConfig {
   const listId =
     Constants.expoConfig?.extra?.CLICKUP_LIST_ID ||
     process.env.CLICKUP_LIST_ID ||
-    '901203118843';
+    '901814074449'; // SahaAPP listesi
 
   if (!apiToken || !workspaceId || !listId) {
     throw new Error('ClickUp configuration is missing');
