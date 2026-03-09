@@ -17,7 +17,7 @@ import type {
 const API_BASE_URL = 'https://api.clickup.com/api/v2';
 
 // Yeni ClickUp Personal API Token
-const DEFAULT_TOKEN = 'pk_101455294_I0CMPMS7GQXBH4AX4IXU5NNJ5CDU4SBH';
+const DEFAULT_TOKEN = 'pk_101455294_EFVLZ8AR7IZZ5SN7EWQDR3OCG71O2TS5';
 
 /**
  * ClickUp yapılandırmasını al
