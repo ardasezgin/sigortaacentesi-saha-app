@@ -27,6 +27,25 @@ function getQueryParam(req: Request, key: string): string | undefined {
 // ClickUp OAuth app: Settings → Apps → Sigorta Acentesi Saha App → Redirect URL
 const PRODUCTION_REDIRECT_URI = "https://aksiyonsaha.duckdns.org/api/clickup/callback";
 
+// Production frontend URL for redirects after OAuth
+const PRODUCTION_FRONTEND_URL = "https://aksiyonsaha.duckdns.org";
+
+/**
+ * Get the frontend URL for redirects.
+ * In production, always use the production domain.
+ * In development, fall back to EXPO env vars or localhost.
+ */
+function getFrontendUrl(_req: Request): string {
+  if (process.env.NODE_ENV === "production") {
+    return PRODUCTION_FRONTEND_URL;
+  }
+  return (
+    process.env.EXPO_WEB_PREVIEW_URL ||
+    process.env.EXPO_PACKAGER_PROXY_URL ||
+    "http://localhost:8081"
+  );
+}
+
 /**
  * Get the ClickUp OAuth redirect URI.
  * Always uses the production URL so it matches the registered redirect URI in ClickUp.
@@ -118,10 +137,7 @@ export function registerClickUpOAuthRoutes(app: Express) {
 
     if (error) {
       console.error("[ClickUp OAuth] Authorization error:", error);
-      const frontendUrl =
-        process.env.EXPO_WEB_PREVIEW_URL ||
-        process.env.EXPO_PACKAGER_PROXY_URL ||
-        "http://localhost:8081";
+      const frontendUrl = getFrontendUrl(req);
       res.redirect(302, `${frontendUrl}/login?error=${encodeURIComponent(error)}`);
       return;
     }
@@ -234,10 +250,7 @@ export function registerClickUpOAuthRoutes(app: Express) {
 </html>`);
     } catch (err) {
       console.error("[ClickUp OAuth] Callback failed:", err);
-      const frontendUrl =
-        process.env.EXPO_WEB_PREVIEW_URL ||
-        process.env.EXPO_PACKAGER_PROXY_URL ||
-        "http://localhost:8081";
+      const frontendUrl = getFrontendUrl(req);
       res.redirect(302, `${frontendUrl}/login?error=oauth_failed`);
     }
   });

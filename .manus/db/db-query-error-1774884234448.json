@@ -1,0 +1,8 @@
+{
+  "query": "\nSELECT constraint_name, constraint_type, column_name\nFROM information_schema.table_constraints tc\nJOIN information_schema.constraint_column_usage ccu USING (constraint_name, table_name)\nWHERE tc.table_name = 'users';\n",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute \nSELECT constraint_name, constraint_type, column_name\nFROM information_schema.table_constraints tc\nJOIN information_schema.constraint_column_usage ccu USING (constraint_name, table_name)\nWHERE tc.table_name = 'users';\n",
+  "returncode": 1,
+  "logs": [
+    "ERROR 1146 (42S02) at line 2: Table 'information_schema.constraint_column_usage' doesn't exist"
+  ]
+}
