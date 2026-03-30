@@ -1,0 +1,16 @@
+{
+  "query": "SELECT id, name, email, role FROM users WHERE LOWER(name) LIKE '%melisa%' OR LOWER(email) LIKE '%melisa%';",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT id, name, email, role FROM users WHERE LOWER(name) LIKE '%melisa%' OR LOWER(email) LIKE '%melisa%';",
+  "rows": [
+    {
+      "id": "30150",
+      "name": "Melisa sürmelioğlu",
+      "email": "melisa.surmelioglu@sigortaacentesi.com",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n30150\tMelisa sürmelioğlu\tmelisa.surmelioglu@sigortaacentesi.com\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 3044
+}

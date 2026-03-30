@@ -448,3 +448,10 @@
 - [x] Sunucuya deploy edildi (pnpm build + pm2 restart)
 - [ ] iOS build al (Apple UIBackgroundModes audio reddi düzeltmesi dahil)
 - [ ] TestFlight'a yükle ve test et
+
+## Authentication Standardization - ClickUp OAuth Only
+
+- [x] Login ekranından email/şifre formunu kaldır
+- [x] Sadece "ClickUp ile Giriş Yap" butonu bırak
+- [x] Önizlemede test et (buton görünüyor, akış çalışıyor)
+- [ ] Checkpoint kaydet

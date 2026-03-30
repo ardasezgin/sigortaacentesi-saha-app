@@ -1,0 +1,10 @@
+{
+  "query": "SELECT COUNT(*) as total_agencies FROM agencies;\nSELECT COUNT(*) as active_agencies FROM agencies WHERE status = 'active' OR status = 'aktif';\nSELECT COUNT(*) as total_visits FROM visits;\nSELECT DISTINCT status FROM agencies LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT COUNT(*) as total_agencies FROM agencies;\nSELECT COUNT(*) as active_agencies FROM agencies WHERE status = 'active' OR status = 'aktif';\nSELECT COUNT(*) as total_visits FROM visits;\nSELECT DISTINCT status FROM agencies LIMIT 10;",
+  "returncode": 1,
+  "logs": [
+    "total_agencies",
+    "19452",
+    "ERROR 1054 (42S22) at line 2: Unknown column 'status' in 'where clause'"
+  ]
+}

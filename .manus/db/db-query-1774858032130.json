@@ -1,0 +1,22 @@
+{
+  "query": "SELECT id, name, email, role FROM users WHERE LOWER(name) LIKE '%test%' OR LOWER(email) LIKE '%test%' ORDER BY id DESC LIMIT 10;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT id, name, email, role FROM users WHERE LOWER(name) LIKE '%test%' OR LOWER(email) LIKE '%test%' ORDER BY id DESC LIMIT 10;",
+  "rows": [
+    {
+      "id": "150001",
+      "name": "Test Demo",
+      "email": "test@demo.com",
+      "role": "user"
+    },
+    {
+      "id": "90001",
+      "name": "Demo Kullanıcı",
+      "email": "test@demo.com",
+      "role": "user"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\n150001\tTest Demo\ttest@demo.com\tuser\n90001\tDemo Kullanıcı\ttest@demo.com\tuser\n",
+  "stderr": "",
+  "execution_time_ms": 1537
+}

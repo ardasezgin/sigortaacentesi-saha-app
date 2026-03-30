@@ -1,0 +1,136 @@
+{
+  "query": "SELECT id, name, email, role, loginMethod FROM users ORDER BY id ASC;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway02.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 2F7PbphhvT7XAX7.726163821de6 --database GsScqzULQm6vPRB4rk2w2s --execute SELECT id, name, email, role, loginMethod FROM users ORDER BY id ASC;",
+  "rows": [
+    {
+      "id": "30024",
+      "name": "Kubra Oren",
+      "email": "kubra.oren@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "password"
+    },
+    {
+      "id": "30025",
+      "name": "Ezgi Özdemir",
+      "email": "ezgi.ozdemir@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "password"
+    },
+    {
+      "id": "30026",
+      "name": "okkan.nurikadioglu@sigortaacentesi.com",
+      "email": "okkan.nurikadioglu@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30027",
+      "name": "Bo",
+      "email": "bogac.yurt@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30099",
+      "name": "Tamar Bilgisu",
+      "email": "tamar.bilgisu@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30149",
+      "name": "HAKAN YAVUZTÜRK",
+      "email": "hakan.yavuzturk@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30150",
+      "name": "Melisa sürmelioğlu",
+      "email": "melisa.surmelioglu@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30151",
+      "name": "FİLİZ BİRDAL",
+      "email": "filiz.birdal@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30152",
+      "name": "Sena Tellioğlu",
+      "email": "senatellioglu@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30153",
+      "name": "Büşra Bulut",
+      "email": "busra.bulut@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30171",
+      "name": "meryemnur pehlivan",
+      "email": "meryempehlivan@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "email"
+    },
+    {
+      "id": "30249",
+      "name": "Tuğçe ALAGAŞ",
+      "email": "tugce.alagas@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "password"
+    },
+    {
+      "id": "30250",
+      "name": "gokhan.genc@sigortaacentesi.com",
+      "email": "gokhan.genc@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "password"
+    },
+    {
+      "id": "30280",
+      "name": "Aybeniz APO",
+      "email": "aybeniz.apo@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "password"
+    },
+    {
+      "id": "60001",
+      "name": "Ahmet Genç",
+      "email": "ahmet.genc@sigortaacentesi.com",
+      "role": "user",
+      "loginMethod": "password"
+    },
+    {
+      "id": "90001",
+      "name": "Demo Kullanıcı",
+      "email": "test@demo.com",
+      "role": "user",
+      "loginMethod": "password"
+    },
+    {
+      "id": "120001",
+      "name": "Arda Sezgin",
+      "email": "ardasezgin@rsotomotivgrubu.com",
+      "role": "user",
+      "loginMethod": "password"
+    },
+    {
+      "id": "150001",
+      "name": "Test Demo",
+      "email": "test@demo.com",
+      "role": "user",
+      "loginMethod": "email"
+    }
+  ],
+  "messages": [],
+  "stdout": "id\tname\temail\trole\tloginMethod\n30024\tKubra Oren\tkubra.oren@sigortaacentesi.com\tuser\tpassword\n30025\tEzgi Özdemir\tezgi.ozdemir@sigortaacentesi.com\tuser\tpassword\n30026\tokkan.nurikadioglu@sigortaacentesi.com\tokkan.nurikadioglu@sigortaacentesi.com\tuser\temail\n30027\tBo\tbogac.yurt@sigortaacentesi.com\tuser\temail\n30099\tTamar Bilgisu\ttamar.bilgisu@sigortaacentesi.com\tuser\temail\n30149\tHAKAN YAVUZTÜRK\thakan.yavuzturk@sigortaacentesi.com\tuser\temail\n30150\tMelisa sürmelioğlu\tmelisa.surmelioglu@sigortaacentesi.com\tuser\temail\n30151\tFİLİZ BİRDAL\tfiliz.birdal@sigortaacentesi.com\tuser\temail\n30152\tSena Tellioğlu\tsenatellioglu@sigortaacentesi.com\tuser\temail\n30153\tBüşra Bulut\tbusra.bulut@sigortaacentesi.com\tuser\temail\n30171\tmeryemnur pehlivan\tmeryempehlivan@sigortaacentesi.com\tuser\temail\n30249\tTuğçe ALAGAŞ\ttugce.alagas@sigortaacentesi.com\tuser\tpassword\n30250\tgokhan.genc@sigortaacentesi.com\tgokhan.genc@sigortaacentesi.com\tuser\tpassword\n30280\tAybeniz APO\taybeniz.apo@sigortaacentesi.com\tuser\tpassword\n60001\tAhmet Genç\tahmet.genc@sigortaacentesi.com\tuser\tpassword\n90001\tDemo Kullanıcı\ttest@demo.com\tuser\tpassword\n120001\tArda Sezgin\tardasezgin@rsotomotivgrubu.com\tuser\tpassword\n150001\tTest Demo\ttest@demo.com\tuser\temail\n",
+  "stderr": "",
+  "execution_time_ms": 1734
+}
