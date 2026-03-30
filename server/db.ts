@@ -89,9 +89,37 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       updateSet.lastSignedIn = new Date();
     }
 
-    await db.insert(users).values(values).onDuplicateKeyUpdate({
-      set: updateSet,
-    });
+    const dbUrl = process.env.DATABASE_URL ?? "";
+    const isPostgres = dbUrl.startsWith("postgres://") || dbUrl.startsWith("postgresql://");
+
+    if (isPostgres) {
+      // PostgreSQL: Try upsert by openId first.
+      // If email already exists with a different openId (legacy password user),
+      // update that existing row to link it with the ClickUp openId.
+      try {
+        await db.insert(users).values(values).onConflictDoUpdate({
+          target: users.openId,
+          set: updateSet,
+        });
+      } catch (pgErr: unknown) {
+        // email unique constraint violation: legacy user exists, update their openId
+        const errCode = (pgErr as { cause?: { code?: string } })?.cause?.code;
+        if (errCode === "23505" && user.email) {
+          console.log("[Database] Email exists, linking ClickUp openId to existing user:", user.email);
+          await db
+            .update(users)
+            .set({ openId: user.openId, loginMethod: user.loginMethod, lastSignedIn: values.lastSignedIn ?? new Date() })
+            .where(eq(users.email, user.email));
+        } else {
+          throw pgErr;
+        }
+      }
+    } else {
+      // MySQL / TiDB
+      await db.insert(users).values(values).onDuplicateKeyUpdate({
+        set: updateSet,
+      });
+    }
   } catch (error) {
     console.error("[Database] Failed to upsert user:", error);
     throw error;

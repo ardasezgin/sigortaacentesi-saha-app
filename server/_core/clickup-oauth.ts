@@ -191,10 +191,7 @@ export function registerClickUpOAuthRoutes(app: Express) {
       const userBase64 = Buffer.from(JSON.stringify(userData)).toString("base64");
 
       // Determine frontend URL
-      const frontendUrl =
-        process.env.EXPO_WEB_PREVIEW_URL ||
-        process.env.EXPO_PACKAGER_PROXY_URL ||
-        "http://localhost:8081";
+      const frontendUrl = getFrontendUrl(req);
 
       // Return HTML page that:
       // 1. Sends token via postMessage to opener window (iframe preview scenario)
