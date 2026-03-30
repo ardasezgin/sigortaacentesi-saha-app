@@ -461,3 +461,10 @@
 - [x] OAuth akışında web yönlendirme sorununu analiz et
 - [x] Web önizlemesinde iframe içinde OAuth yönlendirme sorununu düzelt (yeni sekmede aç + postMessage ile token ilet)
 - [ ] Test et ve checkpoint kaydet
+
+## Bug: OAuth Manus Açıyor, ClickUp Olmalı + Callback Uygulamaça Dönmüyor
+
+- [x] ClickUp OAuth app credentials'ı yapılandır (client_id, client_secret) - mevcut
+- [x] OAuth akışını Manus'tan ClickUp'a çevir (/api/clickup/auth endpoint'i)
+- [x] Callback sonrası uygulamaya doğru dönüşü sağla (postMessage + sekme kapanıyor)
+- [ ] Test et ve checkpoint kaydet
