@@ -794,44 +794,37 @@ export async function updateRequest(id: number, data: Partial<InsertRequest>): P
  * Get dashboard metrics (active/passive agencies, visits, requests)
  */
 export async function getDashboardMetrics() {
-  // Always use a direct postgres-js connection to bypass Drizzle ORM schema issues.
-  // Production PostgreSQL has camelCase columns ("isActive", "createdAt") in agencies table
-  // but snake_case (created_at) in visits/requests tables.
-  const directClient = postgres({
-    host: '127.0.0.1',
-    port: 5432,
-    database: 'sigorta_db',
-    username: 'sigorta_user',
-    password: 'SigortaDB2026!',
-    max: 1,
-    connect_timeout: 10,
-  });
+  // Use MySQL2 direct connection (same as main DB)
+  const mysql2 = await import('mysql2/promise');
+  const dbUrl = process.env.DATABASE_URL || '';
 
+  // Parse MySQL URL: mysql://user:pass@host:port/dbname
+  let connection: any = null;
   try {
+    connection = await mysql2.createConnection(dbUrl);
+
     const now = new Date();
     const startOfWeek = new Date(now);
     startOfWeek.setDate(now.getDate() - now.getDay());
     startOfWeek.setHours(0, 0, 0, 0);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
-    // Run each query independently so one failure doesn't block others
     const [agencyResult, visitsWeekResult, visitsMonthResult, newAgenciesResult, openRequestsResult] = await Promise.allSettled([
-      directClient`SELECT COUNT(*) as totalcount, SUM(CASE WHEN "isActive" = 1 THEN 1 ELSE 0 END) as activecount FROM agencies`,
-      directClient`SELECT COUNT(*) as cnt FROM visits WHERE created_at >= ${startOfWeek}`,
-      directClient`SELECT COUNT(*) as cnt FROM visits WHERE created_at >= ${startOfMonth}`,
-      directClient`SELECT COUNT(*) as cnt FROM agencies WHERE "createdAt" >= ${startOfMonth}`,
-      directClient`SELECT COUNT(*) as cnt FROM requests WHERE status = 'A\u00e7\u0131k'`,
+      connection.execute('SELECT COUNT(*) as totalcount, SUM(CASE WHEN isActive = 1 THEN 1 ELSE 0 END) as activecount FROM agencies'),
+      connection.execute('SELECT COUNT(*) as cnt FROM visits WHERE createdAt >= ?', [startOfWeek]),
+      connection.execute('SELECT COUNT(*) as cnt FROM visits WHERE createdAt >= ?', [startOfMonth]),
+      connection.execute('SELECT COUNT(*) as cnt FROM agencies WHERE createdAt >= ?', [startOfMonth]),
+      connection.execute("SELECT COUNT(*) as cnt FROM requests WHERE status = 'Açık'"),
     ]);
 
-    const agencyRows = agencyResult.status === 'fulfilled' ? agencyResult.value : [];
-    const visitsWeekRows = visitsWeekResult.status === 'fulfilled' ? visitsWeekResult.value : [];
-    const visitsMonthRows = visitsMonthResult.status === 'fulfilled' ? visitsMonthResult.value : [];
-    const newAgenciesRows = newAgenciesResult.status === 'fulfilled' ? newAgenciesResult.value : [];
-    const openRequestsRows = openRequestsResult.status === 'fulfilled' ? openRequestsResult.value : [];
-
-    // Log any failures for debugging
     if (agencyResult.status === 'rejected') console.error('[getDashboardMetrics] agencyRows failed:', agencyResult.reason?.message);
     if (visitsWeekResult.status === 'rejected') console.error('[getDashboardMetrics] visitsWeek failed:', visitsWeekResult.reason?.message);
+
+    const agencyRows = agencyResult.status === 'fulfilled' ? (agencyResult.value as any)[0] : [];
+    const visitsWeekRows = visitsWeekResult.status === 'fulfilled' ? (visitsWeekResult.value as any)[0] : [];
+    const visitsMonthRows = visitsMonthResult.status === 'fulfilled' ? (visitsMonthResult.value as any)[0] : [];
+    const newAgenciesRows = newAgenciesResult.status === 'fulfilled' ? (newAgenciesResult.value as any)[0] : [];
+    const openRequestsRows = openRequestsResult.status === 'fulfilled' ? (openRequestsResult.value as any)[0] : [];
 
     const totalAgencies = Number(agencyRows[0]?.totalcount) || 0;
     const activeAgencies = Number(agencyRows[0]?.activecount) || 0;
@@ -853,7 +846,7 @@ export async function getDashboardMetrics() {
       openRequests,
     };
   } catch (error) {
-    console.error("[Database] Failed to get dashboard metrics:", error);
+    console.error('[Database] Failed to get dashboard metrics:', error);
     return {
       totalAgencies: 0,
       activeAgencies: 0,
@@ -864,7 +857,7 @@ export async function getDashboardMetrics() {
       openRequests: 0,
     };
   } finally {
-    try { await directClient.end(); } catch (_) {}
+    if (connection) try { await connection.end(); } catch (_) {}
   }
 }
 
