@@ -23,24 +23,17 @@ function getQueryParam(req: Request, key: string): string | undefined {
   return typeof value === "string" ? value : undefined;
 }
 
+// Production redirect URI - must be registered in ClickUp OAuth app settings
+// ClickUp OAuth app: Settings → Apps → Sigorta Acentesi Saha App → Redirect URL
+const PRODUCTION_REDIRECT_URI = "https://aksiyonsaha.duckdns.org/api/clickup/callback";
+
 /**
- * Get the ClickUp OAuth redirect URI based on the current request host.
- * Always points to the backend server (3000 port).
+ * Get the ClickUp OAuth redirect URI.
+ * Always uses the production URL so it matches the registered redirect URI in ClickUp.
+ * This is required because ClickUp OAuth only accepts pre-registered redirect URIs.
  */
-function getClickUpRedirectUri(req: Request): string {
-  // Production server
-  if (process.env.NODE_ENV === "production") {
-    const productionUrl = process.env.PRODUCTION_URL ?? "https://aksiyonsaha.duckdns.org";
-    return `${productionUrl}/api/clickup/callback`;
-  }
-
-  // Sandbox: derive from request host, replace 8081 with 3000 if needed
-  const host = req.headers.host ?? "";
-  const proto = req.headers["x-forwarded-proto"] ?? "https";
-
-  // If request comes from 8081 frontend, switch to 3000 backend
-  const apiHost = host.replace(/^8081-/, "3000-");
-  return `${proto}://${apiHost}/api/clickup/callback`;
+function getClickUpRedirectUri(_req: Request): string {
+  return PRODUCTION_REDIRECT_URI;
 }
 
 /**

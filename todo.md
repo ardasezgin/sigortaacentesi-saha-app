@@ -468,3 +468,9 @@
 - [x] OAuth akışını Manus'tan ClickUp'a çevir (/api/clickup/auth endpoint'i)
 - [x] Callback sonrası uygulamaya doğru dönüşü sağla (postMessage + sekme kapanıyor)
 - [ ] Test et ve checkpoint kaydet
+
+## Bug: ClickUp OAuth "Unable to authorize your teams" Hatası
+
+- [x] ClickUp OAuth app redirect URI ayarını kontrol et ve düzelt (production URL'e sabitlendi)
+- [ ] ClickUp app ayarlarında redirect URI eklenmesi (kullanıcı yapacak)
+- [ ] Test et ve checkpoint kaydet
