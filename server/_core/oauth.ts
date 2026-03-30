@@ -83,13 +83,70 @@ export function registerOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Redirect to the frontend URL (Expo web on port 8081)
-      // Cookie is set with parent domain so it works across both 3000 and 8081 subdomains
+      // Build user data for postMessage
+      const user = await getUserByOpenId(userInfo.openId!);
+      const userData = buildUserResponse(user ?? {
+        openId: userInfo.openId!,
+        name: userInfo.name,
+        email: userInfo.email,
+        loginMethod: userInfo.loginMethod ?? null,
+        lastSignedIn: new Date(),
+      });
+      const userBase64 = Buffer.from(JSON.stringify(userData)).toString('base64');
+
+      // Determine frontend URL for redirect
       const frontendUrl =
         process.env.EXPO_WEB_PREVIEW_URL ||
         process.env.EXPO_PACKAGER_PROXY_URL ||
         "http://localhost:8081";
-      res.redirect(302, frontendUrl);
+
+      // Return an HTML page that:
+      // 1. Sends token via postMessage to opener window (if opened in new tab from iframe)
+      // 2. Falls back to redirect if no opener
+      res.send(`<!DOCTYPE html>
+<html>
+<head><title>Giriş Yapılıyor...</title>
+<style>body{font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5;}
+.box{text-align:center;padding:2rem;background:white;border-radius:12px;box-shadow:0 2px 12px rgba(0,0,0,0.1);}
+h2{color:#333;margin-bottom:0.5rem;}p{color:#666;}</style>
+</head>
+<body>
+<div class="box">
+  <h2>✅ Giriş Başarılı</h2>
+  <p>Uygulama yükleniyor...</p>
+</div>
+<script>
+(function() {
+  var token = ${JSON.stringify(sessionToken)};
+  var user = ${JSON.stringify(userBase64)};
+  var frontendUrl = ${JSON.stringify(frontendUrl)};
+
+  function tryPostMessage() {
+    // Try to send to opener (new tab scenario from iframe)
+    if (window.opener) {
+      try {
+        window.opener.postMessage({
+          type: 'OAuthCallback',
+          sessionToken: token,
+          user: user
+        }, '*');
+        setTimeout(function() { window.close(); }, 500);
+        return true;
+      } catch(e) {
+        console.error('postMessage failed:', e);
+      }
+    }
+    return false;
+  }
+
+  if (!tryPostMessage()) {
+    // No opener - direct redirect (normal browser flow)
+    window.location.href = frontendUrl + '/oauth/callback?sessionToken=' + encodeURIComponent(token) + '&user=' + encodeURIComponent(user);
+  }
+})();
+</script>
+</body>
+</html>`);
     } catch (error) {
       console.error("[OAuth] Callback failed", error);
       res.status(500).json({ error: "OAuth callback failed" });

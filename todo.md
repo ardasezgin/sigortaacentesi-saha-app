@@ -455,3 +455,9 @@
 - [x] Sadece "ClickUp ile Giriş Yap" butonu bırak
 - [x] Önizlemede test et (buton görünüyor, akış çalışıyor)
 - [ ] Checkpoint kaydet
+
+## Bug: Web Önizlemesinde ClickUp OAuth Siyah Ekran
+
+- [x] OAuth akışında web yönlendirme sorununu analiz et
+- [x] Web önizlemesinde iframe içinde OAuth yönlendirme sorununu düzelt (yeni sekmede aç + postMessage ile token ilet)
+- [ ] Test et ve checkpoint kaydet

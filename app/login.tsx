@@ -12,6 +12,8 @@ import {
 } from "react-native";
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
+import * as Auth from "@/lib/_core/auth";
+import { establishSession } from "@/lib/_core/api";
 
 export default function LoginScreen() {
   const colors = useColors();
@@ -25,6 +27,56 @@ export default function LoginScreen() {
       router.replace("/(drawer)");
     }
   }, [isAuthenticated, loading]);
+
+  // Listen for OAuth callback postMessage from popup window (web preview iframe scenario)
+  useEffect(() => {
+    if (Platform.OS !== "web") return;
+
+    const handleMessage = async (event: MessageEvent) => {
+      if (!event.data || event.data.type !== "OAuthCallback") return;
+
+      const { sessionToken, user: userBase64 } = event.data;
+      if (!sessionToken) return;
+
+      try {
+        setIsLoggingIn(true);
+
+        // Establish session cookie on the backend (3000-xxx domain)
+        await establishSession(sessionToken);
+
+        // Store user info if available
+        if (userBase64) {
+          try {
+            const userJson = atob(userBase64);
+            const userData = JSON.parse(userJson);
+            await Auth.setUserInfo({
+              id: userData.id,
+              openId: userData.openId,
+              name: userData.name,
+              email: userData.email,
+              loginMethod: userData.loginMethod,
+              lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
+            });
+          } catch (e) {
+            console.error("[Login] Failed to parse user data from postMessage:", e);
+          }
+        }
+
+        if (Platform.OS !== "web") {
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }
+
+        router.replace("/(drawer)");
+      } catch (err) {
+        console.error("[Login] postMessage auth failed:", err);
+        setError("Giriş tamamlanamadı, lütfen tekrar deneyin.");
+        setIsLoggingIn(false);
+      }
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => window.removeEventListener("message", handleMessage);
+  }, []);
 
   const handleClickUpLogin = async () => {
     try {

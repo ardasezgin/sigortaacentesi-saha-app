@@ -104,9 +104,15 @@ export async function startOAuthLogin(): Promise<string | null> {
   const loginUrl = getLoginUrl();
 
   if (ReactNative.Platform.OS === "web") {
-    // On web, just redirect
     if (typeof window !== "undefined") {
-      window.location.href = loginUrl;
+      // Check if we're inside an iframe (Manus preview panel)
+      // If so, open in a new tab to avoid the iframe black screen issue
+      const isInIframe = window.self !== window.top;
+      if (isInIframe) {
+        window.open(loginUrl, "_blank");
+      } else {
+        window.location.href = loginUrl;
+      }
     }
     return null;
   }
