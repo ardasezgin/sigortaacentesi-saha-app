@@ -30,6 +30,9 @@ const PRODUCTION_REDIRECT_URI = "https://aksiyonsaha.duckdns.org/api/clickup/cal
 // Production frontend URL for redirects after OAuth
 const PRODUCTION_FRONTEND_URL = "https://aksiyonsaha.duckdns.org";
 
+// Mobile deep link scheme for the app
+const MOBILE_DEEP_LINK_SCHEME = "manus20260204062206";
+
 /**
  * Get the frontend URL for redirects.
  * In production, always use the production domain.
@@ -238,8 +241,14 @@ export function registerClickUpOAuthRoutes(app: Express) {
   }
 
   if (!tryPostMessage()) {
-    // No opener - direct redirect (normal browser or mobile flow)
-    window.location.href = frontendUrl + '/oauth/callback?sessionToken=' + encodeURIComponent(token) + '&user=' + encodeURIComponent(user);
+    // No opener - try deep link first (mobile app), then fallback to web
+    var deepLink = ${JSON.stringify(MOBILE_DEEP_LINK_SCHEME)} + '://oauth/callback?sessionToken=' + encodeURIComponent(token) + '&user=' + encodeURIComponent(user);
+    // Try to open mobile app via deep link
+    window.location.href = deepLink;
+    // Fallback: after 2s if still here (web browser), close the window
+    setTimeout(function() {
+      window.close();
+    }, 2000);
   }
 })();
 </script>
