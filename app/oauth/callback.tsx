@@ -62,8 +62,8 @@ export default function OAuthCallback() {
           setStatus("success");
           console.log("[OAuth] Web authentication successful, redirecting to home...");
           setTimeout(() => {
-            router.replace("/(tabs)");
-          }, 1000);
+            router.replace("/(drawer)");
+          }, 500);
           return;
         }
 
@@ -159,8 +159,8 @@ export default function OAuthCallback() {
           setStatus("success");
           console.log("[OAuth] Redirecting to home...");
           setTimeout(() => {
-            router.replace("/(tabs)");
-          }, 1000);
+            router.replace("/(drawer)");
+          }, 500);
           return;
         }
 
@@ -215,8 +215,8 @@ export default function OAuthCallback() {
           // Redirect to home after a short delay
           setTimeout(() => {
             console.log("[OAuth] Executing redirect...");
-            router.replace("/(tabs)");
-          }, 1000);
+            router.replace("/(drawer)");
+          }, 500);
         } else {
           console.error("[OAuth] No session token in result:", result);
           setStatus("error");

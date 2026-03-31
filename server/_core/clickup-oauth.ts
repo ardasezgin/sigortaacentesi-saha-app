@@ -182,7 +182,7 @@ export function registerClickUpOAuthRoutes(app: Express) {
       const cookieOptions = getSessionCookieOptions(req);
       res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
 
-      // Build user data for postMessage
+      // Build user data for postMessage / deep link
       const userData = {
         id: null,
         openId,
@@ -196,9 +196,17 @@ export function registerClickUpOAuthRoutes(app: Express) {
       // Determine frontend URL
       const frontendUrl = getFrontendUrl(req);
 
+      // Mobile deep link URL - used when opened from native app browser
+      const deepLink = `${MOBILE_DEEP_LINK_SCHEME}://oauth/callback?sessionToken=${encodeURIComponent(sessionToken)}&user=${encodeURIComponent(userBase64)}`;
+
+      // Web redirect URL - used when opened in regular browser
+      // Redirect to the Expo web app's oauth/callback route with the session token
+      const webRedirectUrl = `${frontendUrl}/oauth/callback?sessionToken=${encodeURIComponent(sessionToken)}&user=${encodeURIComponent(userBase64)}`;
+
       // Return HTML page that:
       // 1. Sends token via postMessage to opener window (iframe preview scenario)
-      // 2. Falls back to redirect if no opener (normal browser flow)
+      // 2. Tries deep link redirect (mobile app scenario)
+      // 3. Falls back to web redirect (normal browser scenario)
       res.send(`<!DOCTYPE html>
 <html>
 <head><title>Giriş Yapılıyor...</title>
@@ -215,40 +223,49 @@ export function registerClickUpOAuthRoutes(app: Express) {
 <div class="box">
   <div class="icon">✅</div>
   <h2>Giriş Başarılı</h2>
-  <p>Uygulama yükleniyor...</p>
+  <p id="msg">Uygulama açılıyor...</p>
 </div>
 <script>
 (function() {
   var token = ${JSON.stringify(sessionToken)};
   var user = ${JSON.stringify(userBase64)};
-  var frontendUrl = ${JSON.stringify(frontendUrl)};
+  var deepLink = ${JSON.stringify(deepLink)};
+  var webRedirect = ${JSON.stringify(webRedirectUrl)};
 
-  function tryPostMessage() {
-    if (window.opener) {
-      try {
-        window.opener.postMessage({
-          type: 'OAuthCallback',
-          sessionToken: token,
-          user: user
-        }, '*');
-        setTimeout(function() { window.close(); }, 800);
-        return true;
-      } catch(e) {
-        console.error('postMessage failed:', e);
-      }
+  // Scenario 1: postMessage to opener (Manus preview iframe scenario)
+  if (window.opener) {
+    try {
+      window.opener.postMessage({
+        type: 'OAuthCallback',
+        sessionToken: token,
+        user: user
+      }, '*');
+      document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
+      setTimeout(function() { window.close(); }, 800);
+      return;
+    } catch(e) {
+      console.error('postMessage failed:', e);
     }
-    return false;
   }
 
-  if (!tryPostMessage()) {
-    // No opener - try deep link first (mobile app), then fallback to web
-    var deepLink = ${JSON.stringify(MOBILE_DEEP_LINK_SCHEME)} + '://oauth/callback?sessionToken=' + encodeURIComponent(token) + '&user=' + encodeURIComponent(user);
-    // Try to open mobile app via deep link
+  // Scenario 2: Detect if opened from mobile app (user agent check)
+  // Mobile app opens system browser which then redirects here
+  // Try deep link first, then fall back to web redirect
+  var userAgent = navigator.userAgent || '';
+  var isMobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
+
+  if (isMobile) {
+    // Try to open the mobile app via deep link
+    document.getElementById('msg').textContent = 'Uygulama açılıyor...';
     window.location.href = deepLink;
-    // Fallback: after 2s if still here (web browser), close the window
+    // If deep link doesn't work after 3s, show manual instruction
     setTimeout(function() {
-      window.close();
-    }, 2000);
+      document.getElementById('msg').textContent = 'Uygulamaya dönebilirsiniz.';
+    }, 3000);
+  } else {
+    // Desktop browser: redirect to web app
+    document.getElementById('msg').textContent = 'Yönlendiriliyor...';
+    window.location.href = webRedirect;
   }
 })();
 </script>
