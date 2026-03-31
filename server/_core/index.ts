@@ -59,6 +59,69 @@ async function startServer() {
   registerOAuthRoutes(app);
   registerClickUpOAuthRoutes(app);
 
+  // OAuth callback page - handles redirect from ClickUp OAuth flow
+  // This serves an HTML page that stores the token and redirects to the app
+  app.get("/oauth/callback", (req, res) => {
+    const sessionToken = typeof req.query.sessionToken === "string" ? req.query.sessionToken : "";
+    const user = typeof req.query.user === "string" ? req.query.user : "";
+    const error = typeof req.query.error === "string" ? req.query.error : "";
+
+    if (error) {
+      res.send(`<!DOCTYPE html><html><head><meta charset="utf-8"><title>Giriş Hatası</title></head>
+<body style="font-family:sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5">
+<div style="text-align:center;padding:2rem;background:white;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.1)">
+<div style="font-size:3rem">❌</div><h2 style="color:#ef4444">Giriş Başarısız</h2>
+<p style="color:#666">${error}</p>
+<a href="/" style="color:#7B68EE">Tekrar dene</a>
+</div></body></html>`);
+      return;
+    }
+
+    res.send(`<!DOCTYPE html>
+<html>
+<head><title>Giriş Yapılıyor...</title><meta charset="utf-8">
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#f5f5f5;}
+  .box{text-align:center;padding:2.5rem 3rem;background:white;border-radius:16px;box-shadow:0 4px 24px rgba(0,0,0,0.1);max-width:320px;}
+  .icon{font-size:3rem;margin-bottom:1rem;}
+  h2{color:#1a1a1a;margin:0 0 0.5rem;font-size:1.25rem;}
+  p{color:#666;margin:0;font-size:0.9rem;}
+</style>
+</head>
+<body>
+<div class="box">
+  <div class="icon">✅</div>
+  <h2>Giriş Başarılı</h2>
+  <p id="msg">Uygulama açılıyor...</p>
+</div>
+<script>
+(function() {
+  var token = ${JSON.stringify(sessionToken)};
+  var user = ${JSON.stringify(user)};
+  var msg = { type: 'OAuthCallback', sessionToken: token, user: user };
+
+  // Store in localStorage for this domain
+  try { localStorage.setItem('app_session_token', token); } catch(e) {}
+
+  // Send postMessage to all possible parent/opener windows
+  function sendMsg(target) {
+    try { if (target) target.postMessage(msg, '*'); } catch(e) {}
+  }
+  sendMsg(window.opener);
+  sendMsg(window.opener && window.opener.parent);
+  sendMsg(window.opener && window.opener.top);
+  sendMsg(window.parent);
+  sendMsg(window.top);
+
+  document.getElementById('msg').textContent = 'Giriş tamamlandı, yönlendiriliyor...';
+  // Close this tab/window after sending messages
+  setTimeout(function() { window.close(); }, 1500);
+})();
+</script>
+</body>
+</html>`);
+  });
+
   app.get("/api/health", (_req, res) => {
     res.json({ ok: true, timestamp: Date.now() });
   });
