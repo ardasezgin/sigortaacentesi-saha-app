@@ -50,11 +50,13 @@ export function getClickUpLoginUrl(): string {
 /**
  * Start ClickUp OAuth login flow.
  *
- * - Web (iframe preview): opens in a new tab, postMessage returns token to iframe
+ * - Web (iframe preview): opens popup, polls for token via /api/auth/me after popup closes
  * - Web (normal browser): redirects directly
  * - Native (iOS/Android): opens system browser, deep link returns to app
  */
-export async function startOAuthLogin(): Promise<string | null> {
+export async function startOAuthLogin(
+  onSuccess?: (token: string, user: any) => void,
+): Promise<string | null> {
   const loginUrl = getClickUpLoginUrl();
 
   console.log("[OAuth] Starting ClickUp OAuth login:", loginUrl);
@@ -62,10 +64,31 @@ export async function startOAuthLogin(): Promise<string | null> {
   if (ReactNative.Platform.OS === "web") {
     if (typeof window !== "undefined") {
       // Check if we're inside an iframe (Manus preview panel)
-      // If so, open in a new tab to avoid the iframe black screen issue
       const isInIframe = window.self !== window.top;
       if (isInIframe) {
-        window.open(loginUrl, "_blank");
+        // Open popup and poll for completion
+        const popup = window.open(
+          loginUrl,
+          "clickup_oauth",
+          "width=600,height=700,scrollbars=yes,resizable=yes",
+        );
+        if (popup && onSuccess) {
+          // Poll until popup closes, then check if we got a token via postMessage
+          // The postMessage listener in login.tsx handles the token
+          // This just monitors popup state
+          const pollInterval = setInterval(() => {
+            try {
+              if (popup.closed) {
+                clearInterval(pollInterval);
+                console.log("[OAuth] Popup closed");
+                // Signal that popup closed (login.tsx will check localStorage)
+                onSuccess("", null);
+              }
+            } catch (e) {
+              clearInterval(pollInterval);
+            }
+          }, 500);
+        }
       } else {
         window.location.href = loginUrl;
       }

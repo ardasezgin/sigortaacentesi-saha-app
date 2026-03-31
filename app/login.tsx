@@ -1,8 +1,8 @@
 import { ScreenContainer } from "@/components/screen-container";
 import { useAuth } from "@/hooks/use-auth";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
-import { startOAuthLogin } from "@/constants/oauth";
+import { useEffect, useRef, useState } from "react";
+import { startOAuthLogin, getApiBaseUrl } from "@/constants/oauth";
 import {
   View,
   Text,
@@ -13,13 +13,13 @@ import {
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
 import * as Auth from "@/lib/_core/auth";
-import { establishSession } from "@/lib/_core/api";
 
 export default function LoginScreen() {
   const colors = useColors();
-  const { isAuthenticated, loading } = useAuth({ autoFetch: true });
+  const { isAuthenticated, loading, refresh } = useAuth({ autoFetch: true });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState("");
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Redirect to home if already authenticated
   useEffect(() => {
@@ -28,66 +28,136 @@ export default function LoginScreen() {
     }
   }, [isAuthenticated, loading]);
 
-  // Listen for OAuth callback postMessage from popup window (web preview iframe scenario)
+  // Listen for OAuth callback postMessage from popup window
   useEffect(() => {
     if (Platform.OS !== "web") return;
 
     const handleMessage = async (event: MessageEvent) => {
-      if (!event.data || event.data.type !== 'OAuthCallback') return;
+      if (!event.data || event.data.type !== "OAuthCallback") return;
 
       const { sessionToken, user: userBase64 } = event.data;
       if (!sessionToken) return;
 
-      console.log('[Login] OAuthCallback postMessage received, token present:', !!sessionToken);
-
-      try {
-        setIsLoggingIn(true);
-
-        // Store session token in localStorage for web (cookie approach has cross-domain issues)
-        try {
-          window.localStorage.setItem('app_session_token', sessionToken);
-          console.log('[Login] Session token stored in localStorage');
-        } catch (e) {
-          console.error('[Login] Failed to store token in localStorage:', e);
-        }
-
-        // Also try to establish session cookie on the backend (best effort)
-        try {
-          await establishSession(sessionToken);
-        } catch (e) {
-          console.warn('[Login] establishSession failed (non-fatal):', e);
-        }
-
-        // Store user info if available
-        if (userBase64) {
-          try {
-            const userJson = atob(userBase64);
-            const userData = JSON.parse(userJson);
-            await Auth.setUserInfo({
-              id: userData.id,
-              openId: userData.openId,
-              name: userData.name,
-              email: userData.email,
-              loginMethod: userData.loginMethod,
-              lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
-            });
-            console.log('[Login] User info stored:', userData.email);
-          } catch (e) {
-            console.error('[Login] Failed to parse user data from postMessage:', e);
-          }
-        }
-
-        router.replace('/(drawer)');
-      } catch (err) {
-        console.error('[Login] postMessage auth failed:', err);
-        setError('Giriş tamamlanamadı, lütfen tekrar deneyin.');
-        setIsLoggingIn(false);
-      }
+      console.log("[Login] OAuthCallback postMessage received");
+      await handleTokenReceived(sessionToken, userBase64);
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
+
+  // Cleanup polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, []);
+
+  const handleTokenReceived = async (sessionToken: string, userBase64?: string) => {
+    try {
+      setIsLoggingIn(true);
+
+      // Store token in localStorage
+      try {
+        window.localStorage.setItem("app_session_token", sessionToken);
+        console.log("[Login] Token stored in localStorage");
+      } catch (e) {
+        console.error("[Login] localStorage write failed:", e);
+      }
+
+      // Store user info if available
+      if (userBase64) {
+        try {
+          const userJson = atob(userBase64);
+          const userData = JSON.parse(userJson);
+          await Auth.setUserInfo({
+            id: userData.id,
+            openId: userData.openId,
+            name: userData.name,
+            email: userData.email,
+            loginMethod: userData.loginMethod,
+            lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
+          });
+          console.log("[Login] User info stored:", userData.email);
+        } catch (e) {
+          console.error("[Login] Failed to parse user data:", e);
+        }
+      }
+
+      router.replace("/(drawer)");
+    } catch (err) {
+      console.error("[Login] handleTokenReceived failed:", err);
+      setError("Giriş tamamlanamadı, lütfen tekrar deneyin.");
+      setIsLoggingIn(false);
+    }
+  };
+
+  /**
+   * After popup closes, poll /api/auth/me with the token from localStorage.
+   * This handles the case where postMessage didn't reach the iframe.
+   */
+  const startPollingAfterPopupClose = () => {
+    if (pollingRef.current) clearInterval(pollingRef.current);
+
+    let attempts = 0;
+    const maxAttempts = 10; // 5 seconds total
+
+    pollingRef.current = setInterval(async () => {
+      attempts++;
+      console.log(`[Login] Polling attempt ${attempts}/${maxAttempts}`);
+
+      try {
+        // Check if token was stored in localStorage by the callback page
+        const storedToken = window.localStorage.getItem("app_session_token");
+        if (storedToken) {
+          console.log("[Login] Token found in localStorage after popup close");
+          clearInterval(pollingRef.current!);
+          pollingRef.current = null;
+
+          // Try to get user info from the callback page's stored data
+          const storedUser = window.localStorage.getItem("oauth_callback_user");
+          if (storedUser) {
+            window.localStorage.removeItem("oauth_callback_user");
+          }
+
+          // Fetch user from API using the token
+          const apiBase = getApiBaseUrl();
+          const response = await fetch(`${apiBase}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${storedToken}` },
+            credentials: "include",
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            if (data.user) {
+              await Auth.setUserInfo({
+                id: data.user.id,
+                openId: data.user.openId,
+                name: data.user.name,
+                email: data.user.email,
+                loginMethod: data.user.loginMethod,
+                lastSignedIn: new Date(data.user.lastSignedIn || Date.now()),
+              });
+              console.log("[Login] User fetched from API:", data.user.email);
+            }
+          }
+
+          router.replace("/(drawer)");
+          return;
+        }
+      } catch (e) {
+        console.error("[Login] Polling error:", e);
+      }
+
+      if (attempts >= maxAttempts) {
+        clearInterval(pollingRef.current!);
+        pollingRef.current = null;
+        console.log("[Login] Polling exhausted, no token found");
+        setError("Giriş tamamlanamadı. Lütfen tekrar deneyin.");
+        setIsLoggingIn(false);
+      }
+    }, 500);
+  };
 
   const handleClickUpLogin = async () => {
     try {
@@ -98,10 +168,28 @@ export default function LoginScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
 
-      await startOAuthLogin();
+      // Clear any stale token before starting
+      if (Platform.OS === "web") {
+        try { window.localStorage.removeItem("app_session_token"); } catch (e) {}
+      }
+
+      await startOAuthLogin((token, _user) => {
+        // Called when popup closes
+        if (Platform.OS === "web") {
+          if (token) {
+            // Got token directly from postMessage
+            handleTokenReceived(token, _user);
+          } else {
+            // Popup closed, check localStorage (set by callback page)
+            startPollingAfterPopupClose();
+          }
+        }
+      });
 
       // Native: browser açıldı, deep link ile geri dönecek
-      // Web: yönlendirme yapıldı
+      if (Platform.OS !== "web") {
+        setTimeout(() => setIsLoggingIn(false), 2000);
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Giriş başlatılırken bir hata oluştu";
@@ -109,11 +197,7 @@ export default function LoginScreen() {
       if (Platform.OS !== "web") {
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
       }
-    } finally {
-      // Native'de browser açık olduğu için loading'i sıfırla
-      if (Platform.OS !== "web") {
-        setTimeout(() => setIsLoggingIn(false), 2000);
-      }
+      setIsLoggingIn(false);
     }
   };
 
