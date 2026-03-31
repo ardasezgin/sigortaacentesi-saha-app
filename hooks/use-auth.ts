@@ -89,6 +89,10 @@ export function useAuth(options?: UseAuthOptions) {
     } finally {
       await Auth.removeSessionToken();
       await Auth.clearUserInfo();
+      // Also clear web localStorage token
+      if (Platform.OS === "web") {
+        try { window.localStorage.removeItem('app_session_token'); } catch (e) {}
+      }
       setUser(null);
       setError(null);
     }

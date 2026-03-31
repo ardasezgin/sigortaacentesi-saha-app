@@ -33,16 +33,30 @@ export default function LoginScreen() {
     if (Platform.OS !== "web") return;
 
     const handleMessage = async (event: MessageEvent) => {
-      if (!event.data || event.data.type !== "OAuthCallback") return;
+      if (!event.data || event.data.type !== 'OAuthCallback') return;
 
       const { sessionToken, user: userBase64 } = event.data;
       if (!sessionToken) return;
 
+      console.log('[Login] OAuthCallback postMessage received, token present:', !!sessionToken);
+
       try {
         setIsLoggingIn(true);
 
-        // Establish session cookie on the backend (3000-xxx domain)
-        await establishSession(sessionToken);
+        // Store session token in localStorage for web (cookie approach has cross-domain issues)
+        try {
+          window.localStorage.setItem('app_session_token', sessionToken);
+          console.log('[Login] Session token stored in localStorage');
+        } catch (e) {
+          console.error('[Login] Failed to store token in localStorage:', e);
+        }
+
+        // Also try to establish session cookie on the backend (best effort)
+        try {
+          await establishSession(sessionToken);
+        } catch (e) {
+          console.warn('[Login] establishSession failed (non-fatal):', e);
+        }
 
         // Store user info if available
         if (userBase64) {
@@ -57,19 +71,16 @@ export default function LoginScreen() {
               loginMethod: userData.loginMethod,
               lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
             });
+            console.log('[Login] User info stored:', userData.email);
           } catch (e) {
-            console.error("[Login] Failed to parse user data from postMessage:", e);
+            console.error('[Login] Failed to parse user data from postMessage:', e);
           }
         }
 
-        if (Platform.OS !== "web") {
-          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-        }
-
-        router.replace("/(drawer)");
+        router.replace('/(drawer)');
       } catch (err) {
-        console.error("[Login] postMessage auth failed:", err);
-        setError("Giriş tamamlanamadı, lütfen tekrar deneyin.");
+        console.error('[Login] postMessage auth failed:', err);
+        setError('Giriş tamamlanamadı, lütfen tekrar deneyin.');
         setIsLoggingIn(false);
       }
     };

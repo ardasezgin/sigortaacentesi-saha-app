@@ -233,19 +233,15 @@ export function registerClickUpOAuthRoutes(app: Express) {
   var webRedirect = ${JSON.stringify(webRedirectUrl)};
 
   // Scenario 1: postMessage to opener (Manus preview iframe scenario)
+  // The app runs inside an iframe, so we need to send to both opener and opener.parent
   if (window.opener) {
-    try {
-      window.opener.postMessage({
-        type: 'OAuthCallback',
-        sessionToken: token,
-        user: user
-      }, '*');
-      document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
-      setTimeout(function() { window.close(); }, 800);
-      return;
-    } catch(e) {
-      console.error('postMessage failed:', e);
-    }
+    var msg = { type: 'OAuthCallback', sessionToken: token, user: user };
+    try { window.opener.postMessage(msg, '*'); } catch(e) { console.error('opener postMessage failed:', e); }
+    try { if (window.opener.parent) window.opener.parent.postMessage(msg, '*'); } catch(e) { console.error('opener.parent postMessage failed:', e); }
+    try { if (window.opener.top) window.opener.top.postMessage(msg, '*'); } catch(e) { console.error('opener.top postMessage failed:', e); }
+    document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
+    setTimeout(function() { window.close(); }, 1200);
+    return;
   }
 
   // Scenario 2: Detect if opened from mobile app (user agent check)
