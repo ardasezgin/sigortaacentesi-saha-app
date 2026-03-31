@@ -4,7 +4,7 @@ import { createServer } from "http";
 import net from "net";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { registerOAuthRoutes } from "./oauth";
-import { registerClickUpOAuthRoutes } from "./clickup-oauth";
+import { registerClickUpOAuthRoutes, pendingOAuthTokens } from "./clickup-oauth";
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { getPgClient } from "../db";
@@ -77,6 +77,11 @@ async function startServer() {
       return;
     }
 
+    // Store token server-side so the opener can poll for it
+    const nonce = Math.random().toString(36).slice(2) + Date.now().toString(36);
+    pendingOAuthTokens.set(nonce, { token: sessionToken, user, createdAt: Date.now() });
+    console.log(`[OAuth/callback] Stored pending token nonce=${nonce}`);
+
     res.send(`<!DOCTYPE html>
 <html>
 <head><title>Giriş Yapılıyor...</title><meta charset="utf-8">
@@ -98,10 +103,11 @@ async function startServer() {
 (function() {
   var token = ${JSON.stringify(sessionToken)};
   var user = ${JSON.stringify(user)};
-  var msg = { type: 'OAuthCallback', sessionToken: token, user: user };
+  var nonce = ${JSON.stringify(nonce)};
+  var msg = { type: 'OAuthCallback', sessionToken: token, user: user, nonce: nonce };
 
-  // Store in localStorage for this domain
-  try { localStorage.setItem('app_session_token', token); } catch(e) {}
+  // Store nonce in sessionStorage so opener can poll
+  try { sessionStorage.setItem('oauth_nonce', nonce); } catch(e) {}
 
   // Send postMessage to all possible parent/opener windows
   function sendMsg(target) {
@@ -113,13 +119,32 @@ async function startServer() {
   sendMsg(window.parent);
   sendMsg(window.top);
 
-  document.getElementById('msg').textContent = 'Giriş tamamlandı, yönlendiriliyor...';
-  // Close this tab/window after sending messages
-  setTimeout(function() { window.close(); }, 1500);
+  document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
+  // Close this popup after sending messages
+  setTimeout(function() { window.close(); }, 1200);
 })();
 </script>
 </body>
 </html>`);
+  });
+
+  // Polling endpoint: opener checks this after popup closes
+  // Returns the pending token once, then deletes it (one-time use)
+  app.get("/api/auth/pending-token", (req, res) => {
+    const nonce = typeof req.query.nonce === "string" ? req.query.nonce : "";
+    if (!nonce) {
+      res.status(400).json({ error: "nonce required" });
+      return;
+    }
+    const entry = pendingOAuthTokens.get(nonce);
+    if (!entry) {
+      res.status(404).json({ error: "not found" });
+      return;
+    }
+    // One-time use: delete after retrieval
+    pendingOAuthTokens.delete(nonce);
+    console.log(`[OAuth/pending-token] Token consumed for nonce=${nonce}`);
+    res.json({ sessionToken: entry.token, user: entry.user });
   });
 
   app.get("/api/health", (_req, res) => {

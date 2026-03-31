@@ -14,9 +14,14 @@ import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
 import * as Auth from "@/lib/_core/auth";
 
+/** Generate a random nonce string */
+function generateNonce(): string {
+  return Math.random().toString(36).slice(2) + Date.now().toString(36);
+}
+
 export default function LoginScreen() {
   const colors = useColors();
-  const { isAuthenticated, loading, refresh } = useAuth({ autoFetch: true });
+  const { isAuthenticated, loading } = useAuth({ autoFetch: true });
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [error, setError] = useState("");
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -28,17 +33,21 @@ export default function LoginScreen() {
     }
   }, [isAuthenticated, loading]);
 
-  // Listen for OAuth callback postMessage from popup window
+  // Listen for OAuth callback postMessage (may work in some browser configs)
   useEffect(() => {
     if (Platform.OS !== "web") return;
 
     const handleMessage = async (event: MessageEvent) => {
       if (!event.data || event.data.type !== "OAuthCallback") return;
-
       const { sessionToken, user: userBase64 } = event.data;
       if (!sessionToken) return;
 
-      console.log("[Login] OAuthCallback postMessage received");
+      console.log("[Login] postMessage received, token present:", !!sessionToken);
+      // Stop polling since we got token via postMessage
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
       await handleTokenReceived(sessionToken, userBase64);
     };
 
@@ -57,30 +66,46 @@ export default function LoginScreen() {
     try {
       setIsLoggingIn(true);
 
-      // Store token in localStorage
-      try {
-        window.localStorage.setItem("app_session_token", sessionToken);
-        console.log("[Login] Token stored in localStorage");
-      } catch (e) {
-        console.error("[Login] localStorage write failed:", e);
+      // Store token in localStorage (web only)
+      if (Platform.OS === "web") {
+        try { window.localStorage.setItem("app_session_token", sessionToken); } catch (e) {}
       }
 
-      // Store user info if available
-      if (userBase64) {
-        try {
-          const userJson = atob(userBase64);
-          const userData = JSON.parse(userJson);
-          await Auth.setUserInfo({
-            id: userData.id,
-            openId: userData.openId,
-            name: userData.name,
-            email: userData.email,
-            loginMethod: userData.loginMethod,
-            lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
-          });
-          console.log("[Login] User info stored:", userData.email);
-        } catch (e) {
-          console.error("[Login] Failed to parse user data:", e);
+      // Fetch user info from API
+      const apiBase = getApiBaseUrl();
+      try {
+        const response = await fetch(`${apiBase}/api/auth/me`, {
+          headers: { Authorization: `Bearer ${sessionToken}` },
+          credentials: "include",
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data.user) {
+            await Auth.setUserInfo({
+              id: data.user.id,
+              openId: data.user.openId,
+              name: data.user.name,
+              email: data.user.email,
+              loginMethod: data.user.loginMethod,
+              lastSignedIn: new Date(data.user.lastSignedIn || Date.now()),
+            });
+            console.log("[Login] User fetched from API:", data.user.email);
+          }
+        }
+      } catch (e) {
+        // Fallback: parse user from base64 payload
+        if (userBase64) {
+          try {
+            const userData = JSON.parse(atob(userBase64));
+            await Auth.setUserInfo({
+              id: userData.id,
+              openId: userData.openId,
+              name: userData.name,
+              email: userData.email,
+              loginMethod: userData.loginMethod,
+              lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
+            });
+          } catch (_) {}
         }
       }
 
@@ -93,66 +118,47 @@ export default function LoginScreen() {
   };
 
   /**
-   * After popup closes, poll /api/auth/me with the token from localStorage.
-   * This handles the case where postMessage didn't reach the iframe.
+   * Poll the server for the pending token using the nonce.
+   * The nonce was embedded in the OAuth URL before the popup was opened,
+   * so the server stores the token under this nonce when the callback completes.
+   * This works regardless of cross-domain localStorage/postMessage restrictions.
    */
-  const startPollingAfterPopupClose = () => {
+  const startServerPolling = (nonce: string) => {
     if (pollingRef.current) clearInterval(pollingRef.current);
 
     let attempts = 0;
-    const maxAttempts = 10; // 5 seconds total
+    const maxAttempts = 24; // 12 seconds total (500ms interval)
+    const apiBase = getApiBaseUrl();
+
+    console.log(`[Login] Starting server polling for nonce=${nonce}`);
 
     pollingRef.current = setInterval(async () => {
       attempts++;
-      console.log(`[Login] Polling attempt ${attempts}/${maxAttempts}`);
-
       try {
-        // Check if token was stored in localStorage by the callback page
-        const storedToken = window.localStorage.getItem("app_session_token");
-        if (storedToken) {
-          console.log("[Login] Token found in localStorage after popup close");
-          clearInterval(pollingRef.current!);
-          pollingRef.current = null;
+        const response = await fetch(
+          `${apiBase}/api/auth/pending-token?nonce=${encodeURIComponent(nonce)}`,
+          { credentials: "include" },
+        );
 
-          // Try to get user info from the callback page's stored data
-          const storedUser = window.localStorage.getItem("oauth_callback_user");
-          if (storedUser) {
-            window.localStorage.removeItem("oauth_callback_user");
+        if (response.ok) {
+          const data = await response.json();
+          if (data.sessionToken) {
+            clearInterval(pollingRef.current!);
+            pollingRef.current = null;
+            console.log("[Login] Server polling: token found on attempt", attempts);
+            await handleTokenReceived(data.sessionToken, data.user);
+            return;
           }
-
-          // Fetch user from API using the token
-          const apiBase = getApiBaseUrl();
-          const response = await fetch(`${apiBase}/api/auth/me`, {
-            headers: { Authorization: `Bearer ${storedToken}` },
-            credentials: "include",
-          });
-
-          if (response.ok) {
-            const data = await response.json();
-            if (data.user) {
-              await Auth.setUserInfo({
-                id: data.user.id,
-                openId: data.user.openId,
-                name: data.user.name,
-                email: data.user.email,
-                loginMethod: data.user.loginMethod,
-                lastSignedIn: new Date(data.user.lastSignedIn || Date.now()),
-              });
-              console.log("[Login] User fetched from API:", data.user.email);
-            }
-          }
-
-          router.replace("/(drawer)");
-          return;
         }
+        // 404 = not yet available, keep polling
       } catch (e) {
-        console.error("[Login] Polling error:", e);
+        console.error("[Login] Server polling error:", e);
       }
 
       if (attempts >= maxAttempts) {
         clearInterval(pollingRef.current!);
         pollingRef.current = null;
-        console.log("[Login] Polling exhausted, no token found");
+        console.log("[Login] Server polling exhausted after", attempts, "attempts");
         setError("Giriş tamamlanamadı. Lütfen tekrar deneyin.");
         setIsLoggingIn(false);
       }
@@ -168,26 +174,23 @@ export default function LoginScreen() {
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       }
 
-      // Clear any stale token before starting
       if (Platform.OS === "web") {
-        try { window.localStorage.removeItem("app_session_token"); } catch (e) {}
-      }
+        // Generate nonce BEFORE opening popup - embed in URL so server can store token under it
+        const nonce = generateNonce();
+        console.log("[Login] Generated nonce:", nonce);
 
-      await startOAuthLogin((token, _user) => {
-        // Called when popup closes
-        if (Platform.OS === "web") {
-          if (token) {
-            // Got token directly from postMessage
-            handleTokenReceived(token, _user);
-          } else {
-            // Popup closed, check localStorage (set by callback page)
-            startPollingAfterPopupClose();
-          }
-        }
-      });
-
-      // Native: browser açıldı, deep link ile geri dönecek
-      if (Platform.OS !== "web") {
+        await startOAuthLogin(
+          (_token, _user) => {
+            // Called when popup closes
+            // Start server polling - the server stored the token under our nonce
+            console.log("[Login] Popup closed, starting server polling");
+            startServerPolling(nonce);
+          },
+          nonce,
+        );
+      } else {
+        // Native: open system browser, deep link returns to app
+        await startOAuthLogin();
         setTimeout(() => setIsLoggingIn(false), 2000);
       }
     } catch (err) {

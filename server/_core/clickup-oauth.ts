@@ -18,6 +18,18 @@ const CLICKUP_CLIENT_SECRET = process.env.CLICKUP_CLIENT_SECRET ?? "";
 const CLICKUP_TOKEN_URL = "https://api.clickup.com/api/v2/oauth/token";
 const CLICKUP_USER_URL = "https://api.clickup.com/api/v2/user";
 
+// In-memory store for pending OAuth tokens (keyed by nonce, TTL 5 min)
+// Used by Manus preview iframe scenario: login.tsx polls /api/auth/pending-token
+export const pendingOAuthTokens = new Map<string, { token: string; user: string; createdAt: number }>();
+
+// Cleanup expired tokens every minute
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, val] of pendingOAuthTokens.entries()) {
+    if (now - val.createdAt > 5 * 60 * 1000) pendingOAuthTokens.delete(key);
+  }
+}, 60_000);
+
 function getQueryParam(req: Request, key: string): string | undefined {
   const value = req.query[key];
   return typeof value === "string" ? value : undefined;
@@ -119,14 +131,17 @@ export function registerClickUpOAuthRoutes(app: Express) {
     }
 
     const redirectUri = getClickUpRedirectUri(req);
-    const state = Buffer.from(redirectUri).toString("base64");
+    // Embed nonce in state so we can pass it through the OAuth flow
+    const nonce = getQueryParam(req, "nonce") ?? "";
+    const statePayload = JSON.stringify({ redirectUri, nonce });
+    const state = Buffer.from(statePayload).toString("base64");
 
     const authUrl = new URL("https://app.clickup.com/api");
     authUrl.searchParams.set("client_id", CLICKUP_CLIENT_ID);
     authUrl.searchParams.set("redirect_uri", redirectUri);
     authUrl.searchParams.set("state", state);
 
-    console.log("[ClickUp OAuth] Redirecting to ClickUp auth:", authUrl.toString());
+    console.log("[ClickUp OAuth] Redirecting to ClickUp auth, nonce:", nonce || "(none)");
     res.redirect(302, authUrl.toString());
   });
 
@@ -149,6 +164,17 @@ export function registerClickUpOAuthRoutes(app: Express) {
       res.status(400).json({ error: "Authorization code is required" });
       return;
     }
+
+    // Extract nonce from state parameter
+    let nonce = "";
+    try {
+      const stateParam = getQueryParam(req, "state") ?? "";
+      if (stateParam) {
+        const decoded = JSON.parse(Buffer.from(stateParam, "base64").toString("utf8"));
+        nonce = decoded.nonce ?? "";
+      }
+    } catch (_) {}
+    console.log("[ClickUp OAuth] Callback received, nonce:", nonce || "(none)");
 
     try {
       const redirectUri = getClickUpRedirectUri(req);
@@ -203,6 +229,13 @@ export function registerClickUpOAuthRoutes(app: Express) {
       // Redirect to the Expo web app's oauth/callback route with the session token
       const webRedirectUrl = `${frontendUrl}/oauth/callback?sessionToken=${encodeURIComponent(sessionToken)}&user=${encodeURIComponent(userBase64)}`;
 
+      // If nonce is present, store token server-side for polling
+      // This is the primary mechanism for Manus preview iframe scenario
+      if (nonce) {
+        pendingOAuthTokens.set(nonce, { token: sessionToken, user: userBase64, createdAt: Date.now() });
+        console.log(`[ClickUp OAuth] Stored pending token for nonce=${nonce}`);
+      }
+
       // Return HTML page that:
       // 1. Sends token via postMessage to opener window (iframe preview scenario)
       // 2. Tries deep link redirect (mobile app scenario)
@@ -229,37 +262,38 @@ export function registerClickUpOAuthRoutes(app: Express) {
 (function() {
   var token = ${JSON.stringify(sessionToken)};
   var user = ${JSON.stringify(userBase64)};
+  var nonce = ${JSON.stringify(nonce)};
   var deepLink = ${JSON.stringify(deepLink)};
   var webRedirect = ${JSON.stringify(webRedirectUrl)};
+  var msg = { type: 'OAuthCallback', sessionToken: token, user: user, nonce: nonce };
 
-  // Scenario 1: postMessage to opener (Manus preview iframe scenario)
-  // The app runs inside an iframe, so we need to send to both opener and opener.parent
-  if (window.opener) {
-    var msg = { type: 'OAuthCallback', sessionToken: token, user: user };
-    try { window.opener.postMessage(msg, '*'); } catch(e) { console.error('opener postMessage failed:', e); }
-    try { if (window.opener.parent) window.opener.parent.postMessage(msg, '*'); } catch(e) { console.error('opener.parent postMessage failed:', e); }
-    try { if (window.opener.top) window.opener.top.postMessage(msg, '*'); } catch(e) { console.error('opener.top postMessage failed:', e); }
-    document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
-    setTimeout(function() { window.close(); }, 1200);
-    return;
+  // Always try postMessage first (may work in some iframe configs)
+  function sendMsg(target) {
+    try { if (target) target.postMessage(msg, '*'); } catch(e) {}
   }
+  sendMsg(window.opener);
+  sendMsg(window.opener && window.opener.parent);
+  sendMsg(window.opener && window.opener.top);
+  sendMsg(window.parent);
+  sendMsg(window.top);
 
-  // Scenario 2: Detect if opened from mobile app (user agent check)
-  // Mobile app opens system browser which then redirects here
-  // Try deep link first, then fall back to web redirect
+  // Detect scenario
+  var hasOpener = !!window.opener;
   var userAgent = navigator.userAgent || '';
   var isMobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
 
-  if (isMobile) {
-    // Try to open the mobile app via deep link
+  if (hasOpener) {
+    // Popup scenario (Manus preview): close after sending postMessage
+    // The opener will poll /api/auth/pending-token using the nonce
+    document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
+    setTimeout(function() { window.close(); }, 1200);
+  } else if (isMobile) {
     document.getElementById('msg').textContent = 'Uygulama açılıyor...';
     window.location.href = deepLink;
-    // If deep link doesn't work after 3s, show manual instruction
     setTimeout(function() {
       document.getElementById('msg').textContent = 'Uygulamaya dönebilirsiniz.';
     }, 3000);
   } else {
-    // Desktop browser: redirect to web app
     document.getElementById('msg').textContent = 'Yönlendiriliyor...';
     window.location.href = webRedirect;
   }

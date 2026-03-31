@@ -41,10 +41,13 @@ export function getApiBaseUrl(): string {
 /**
  * Get the ClickUp OAuth authorization URL.
  * Routes through our backend /api/clickup/auth which handles the redirect.
+ * @param nonce Optional nonce for server-side token polling
  */
-export function getClickUpLoginUrl(): string {
+export function getClickUpLoginUrl(nonce?: string): string {
   const apiBase = getApiBaseUrl();
-  return `${apiBase}/api/clickup/auth`;
+  const base = `${apiBase}/api/clickup/auth`;
+  if (nonce) return `${base}?nonce=${encodeURIComponent(nonce)}`;
+  return base;
 }
 
 /**
@@ -56,8 +59,9 @@ export function getClickUpLoginUrl(): string {
  */
 export async function startOAuthLogin(
   onSuccess?: (token: string, user: any) => void,
+  nonce?: string,
 ): Promise<string | null> {
-  const loginUrl = getClickUpLoginUrl();
+  const loginUrl = getClickUpLoginUrl(nonce);
 
   console.log("[OAuth] Starting ClickUp OAuth login:", loginUrl);
 
