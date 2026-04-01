@@ -820,16 +820,23 @@ export async function updateRequest(id: number, data: Partial<InsertRequest>): P
 
 /**
  * Get dashboard metrics (active/passive agencies, visits, requests)
+ * Uses getPgClient() for PostgreSQL compatibility
  */
 export async function getDashboardMetrics() {
-  // Use MySQL2 direct connection (same as main DB)
-  const mysql2 = await import('mysql2/promise');
-  const dbUrl = process.env.DATABASE_URL || '';
-
-  // Parse MySQL URL: mysql://user:pass@host:port/dbname
-  let connection: any = null;
   try {
-    connection = await mysql2.createConnection(dbUrl);
+    const sql = await getPgClient();
+    if (!sql) {
+      console.warn('[getDashboardMetrics] No database client available');
+      return {
+        totalAgencies: 0,
+        activeAgencies: 0,
+        passiveAgencies: 0,
+        totalVisitsThisWeek: 0,
+        totalVisitsThisMonth: 0,
+        newAgenciesThisMonth: 0,
+        openRequests: 0,
+      };
+    }
 
     const now = new Date();
     const startOfWeek = new Date(now);
@@ -838,29 +845,29 @@ export async function getDashboardMetrics() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
     const [agencyResult, visitsWeekResult, visitsMonthResult, newAgenciesResult, openRequestsResult] = await Promise.allSettled([
-      connection.execute('SELECT COUNT(*) as totalcount, SUM(CASE WHEN isActive = 1 THEN 1 ELSE 0 END) as activecount FROM agencies'),
-      connection.execute('SELECT COUNT(*) as cnt FROM visits WHERE createdAt >= ?', [startOfWeek]),
-      connection.execute('SELECT COUNT(*) as cnt FROM visits WHERE createdAt >= ?', [startOfMonth]),
-      connection.execute('SELECT COUNT(*) as cnt FROM agencies WHERE createdAt >= ?', [startOfMonth]),
-      connection.execute("SELECT COUNT(*) as cnt FROM requests WHERE status = 'Açık'"),
+      sql`SELECT COUNT(*)::int as totalcount, SUM(CASE WHEN "isActive" = 1 THEN 1 ELSE 0 END)::int as activecount FROM agencies`,
+      sql`SELECT COUNT(*)::int as cnt FROM visits WHERE "createdAt" >= ${startOfWeek}`,
+      sql`SELECT COUNT(*)::int as cnt FROM visits WHERE "createdAt" >= ${startOfMonth}`,
+      sql`SELECT COUNT(*)::int as cnt FROM agencies WHERE "createdAt" >= ${startOfMonth}`,
+      sql`SELECT COUNT(*)::int as cnt FROM requests WHERE status = 'Açık'`,
     ]);
 
     if (agencyResult.status === 'rejected') console.error('[getDashboardMetrics] agencyRows failed:', agencyResult.reason?.message);
     if (visitsWeekResult.status === 'rejected') console.error('[getDashboardMetrics] visitsWeek failed:', visitsWeekResult.reason?.message);
 
-    const agencyRows = agencyResult.status === 'fulfilled' ? (agencyResult.value as any)[0] : [];
-    const visitsWeekRows = visitsWeekResult.status === 'fulfilled' ? (visitsWeekResult.value as any)[0] : [];
-    const visitsMonthRows = visitsMonthResult.status === 'fulfilled' ? (visitsMonthResult.value as any)[0] : [];
-    const newAgenciesRows = newAgenciesResult.status === 'fulfilled' ? (newAgenciesResult.value as any)[0] : [];
-    const openRequestsRows = openRequestsResult.status === 'fulfilled' ? (openRequestsResult.value as any)[0] : [];
+    const agencyRows = agencyResult.status === 'fulfilled' ? agencyResult.value : [];
+    const visitsWeekRows = visitsWeekResult.status === 'fulfilled' ? visitsWeekResult.value : [];
+    const visitsMonthRows = visitsMonthResult.status === 'fulfilled' ? visitsMonthResult.value : [];
+    const newAgenciesRows = newAgenciesResult.status === 'fulfilled' ? newAgenciesResult.value : [];
+    const openRequestsRows = openRequestsResult.status === 'fulfilled' ? openRequestsResult.value : [];
 
-    const totalAgencies = Number(agencyRows[0]?.totalcount) || 0;
-    const activeAgencies = Number(agencyRows[0]?.activecount) || 0;
+    const totalAgencies = Number((agencyRows as any)[0]?.totalcount) || 0;
+    const activeAgencies = Number((agencyRows as any)[0]?.activecount) || 0;
     const passiveAgencies = totalAgencies - activeAgencies;
-    const totalVisitsThisWeek = Number(visitsWeekRows[0]?.cnt) || 0;
-    const totalVisitsThisMonth = Number(visitsMonthRows[0]?.cnt) || 0;
-    const newAgenciesThisMonth = Number(newAgenciesRows[0]?.cnt) || 0;
-    const openRequests = Number(openRequestsRows[0]?.cnt) || 0;
+    const totalVisitsThisWeek = Number((visitsWeekRows as any)[0]?.cnt) || 0;
+    const totalVisitsThisMonth = Number((visitsMonthRows as any)[0]?.cnt) || 0;
+    const newAgenciesThisMonth = Number((newAgenciesRows as any)[0]?.cnt) || 0;
+    const openRequests = Number((openRequestsRows as any)[0]?.cnt) || 0;
 
     console.log('[getDashboardMetrics] totalAgencies:', totalAgencies, 'activeAgencies:', activeAgencies);
 
@@ -884,8 +891,6 @@ export async function getDashboardMetrics() {
       newAgenciesThisMonth: 0,
       openRequests: 0,
     };
-  } finally {
-    if (connection) try { await connection.end(); } catch (_) {}
   }
 }
 
