@@ -1,4 +1,5 @@
 import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import * as ReactNative from "react-native";
 
 // Extract scheme from bundle ID (last segment timestamp, prefixed with "manus")
@@ -100,17 +101,30 @@ export async function startOAuthLogin(
     return null;
   }
 
-  // Native: open in system browser, deep link callback will handle the rest
-  const supported = await Linking.canOpenURL(loginUrl);
-  if (!supported) {
-    console.warn("[OAuth] Cannot open login URL: URL scheme not supported");
-    return null;
-  }
-
+  // Native: open in-app auth session (ASWebAuthenticationSession on iOS)
+  // This bypasses MDM/Mosyle restrictions by keeping auth within the app process
   try {
-    await Linking.openURL(loginUrl);
+    const result = await WebBrowser.openAuthSessionAsync(
+      loginUrl,
+      env.deepLinkScheme + "://"
+    );
+
+    if (result.type === "success" && result.url) {
+      // Parse token from deep link URL
+      const url = new URL(result.url);
+      const sessionToken = url.searchParams.get("sessionToken");
+      const userBase64 = url.searchParams.get("user");
+      
+      if (sessionToken && onSuccess) {
+        console.log("[OAuth] Auth session success, token received");
+        onSuccess(sessionToken, userBase64);
+        return sessionToken;
+      }
+    } else if (result.type === "cancel") {
+      console.log("[OAuth] Auth session cancelled by user");
+    }
   } catch (error) {
-    console.error("[OAuth] Failed to open login URL:", error);
+    console.error("[OAuth] Auth session failed:", error);
   }
 
   return null;

@@ -189,9 +189,18 @@ export default function LoginScreen() {
           nonce,
         );
       } else {
-        // Native: open system browser, deep link returns to app
-        await startOAuthLogin();
-        setTimeout(() => setIsLoggingIn(false), 2000);
+        // Native: ASWebAuthenticationSession (in-app auth sheet)
+        // Token is returned directly via onSuccess callback when auth completes
+        const result = await startOAuthLogin(
+          async (token, userBase64) => {
+            // Auth session completed successfully, process token
+            await handleTokenReceived(token, userBase64 ?? undefined);
+          },
+        );
+        // If result is null and we're still logging in, user cancelled
+        if (!result) {
+          setIsLoggingIn(false);
+        }
       }
     } catch (err) {
       const errorMessage =

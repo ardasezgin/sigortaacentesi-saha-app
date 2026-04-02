@@ -474,3 +474,4 @@
 - [x] ClickUp OAuth app redirect URI ayarını kontrol et ve düzelt (production URL'e sabitlendi)
 - [ ] ClickUp app ayarlarında redirect URI eklenmesi (kullanıcı yapacak)
 - [ ] Test et ve checkpoint kaydet
+- [ ] Mobil OAuth akışını expo-auth-session ile değiştir (MDM/Mosyle kısıtlaması aşmak için)
