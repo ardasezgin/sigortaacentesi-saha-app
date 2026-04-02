@@ -59,7 +59,7 @@ export function getClickUpLoginUrl(nonce?: string): string {
  * - Native (iOS/Android): opens system browser, deep link returns to app
  */
 export async function startOAuthLogin(
-  onSuccess?: (token: string, user: any) => void,
+  onSuccess?: (token: string, user: any) => Promise<void> | void,
   nonce?: string,
 ): Promise<string | null> {
   const loginUrl = getClickUpLoginUrl(nonce);
@@ -117,7 +117,8 @@ export async function startOAuthLogin(
       
       if (sessionToken && onSuccess) {
         console.log("[OAuth] Auth session success, token received");
-        onSuccess(sessionToken, userBase64);
+        // Await the callback so token processing completes before returning
+        await onSuccess(sessionToken, userBase64);
         return sessionToken;
       }
     } else if (result.type === "cancel") {
