@@ -236,6 +236,25 @@ export function registerClickUpOAuthRoutes(app: Express) {
         console.log(`[ClickUp OAuth] Stored pending token for nonce=${nonce}`);
       }
 
+      // Detect if request comes from native app (ASWebAuthenticationSession)
+      // Native apps send the nonce in state but NOT as a popup (no window.opener)
+      // ASWebAuthenticationSession only intercepts HTTP 302 redirects, not JS redirects
+      // So for native: redirect directly to deep link via 302
+      // For web popup (Manus preview): send HTML with postMessage + window.close()
+      // For web browser: redirect to web app
+
+      const userAgent = req.headers['user-agent'] ?? '';
+      const isMobileUA = /iPhone|iPad|iPod|Android/i.test(userAgent);
+
+      // If nonce exists but no popup scenario detected, it's likely native ASWebAuthenticationSession
+      // Native: redirect directly to deep link (302 is intercepted by ASWebAuthenticationSession)
+      if (isMobileUA && !req.headers['sec-fetch-dest']) {
+        // Direct 302 redirect to deep link - ASWebAuthenticationSession intercepts this
+        console.log('[ClickUp OAuth] Native detected, redirecting to deep link:', deepLink);
+        res.redirect(302, deepLink);
+        return;
+      }
+
       // Return HTML page that:
       // 1. Sends token via postMessage to opener window (iframe preview scenario)
       // 2. Tries deep link redirect (mobile app scenario)
@@ -288,6 +307,7 @@ export function registerClickUpOAuthRoutes(app: Express) {
     document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
     setTimeout(function() { window.close(); }, 1200);
   } else if (isMobile) {
+    // Try deep link via JS (fallback for non-ASWebAuthenticationSession mobile browsers)
     document.getElementById('msg').textContent = 'Uygulama açılıyor...';
     window.location.href = deepLink;
     setTimeout(function() {
