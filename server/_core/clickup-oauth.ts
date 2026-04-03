@@ -245,12 +245,13 @@ export function registerClickUpOAuthRoutes(app: Express) {
 
       const userAgent = req.headers['user-agent'] ?? '';
       const isMobileUA = /iPhone|iPad|iPod|Android/i.test(userAgent);
-
-      // If nonce exists but no popup scenario detected, it's likely native ASWebAuthenticationSession
-      // Native: redirect directly to deep link (302 is intercepted by ASWebAuthenticationSession)
-      if (isMobileUA && !req.headers['sec-fetch-dest']) {
+      // WebBrowser.openAuthSessionAsync (ASWebAuthenticationSession) sends mobile UA
+      // It intercepts HTTP 302 redirects to the registered deep link scheme
+      // We detect native by checking mobile UA - sec-fetch-dest check removed because
+      // iOS WebKit/Safari sends this header even in ASWebAuthenticationSession
+      if (isMobileUA) {
         // Direct 302 redirect to deep link - ASWebAuthenticationSession intercepts this
-        console.log('[ClickUp OAuth] Native detected, redirecting to deep link:', deepLink);
+        console.log('[ClickUp OAuth] Native iOS detected, redirecting to deep link:', deepLink);
         res.redirect(302, deepLink);
         return;
       }
