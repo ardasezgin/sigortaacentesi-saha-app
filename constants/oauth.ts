@@ -101,32 +101,52 @@ export async function startOAuthLogin(
     return null;
   }
 
-  // Native: open in-app auth session (ASWebAuthenticationSession on iOS)
-  // This bypasses MDM/Mosyle restrictions by keeping auth within the app process
-  try {
-    const result = await WebBrowser.openAuthSessionAsync(
-      loginUrl,
-      env.deepLinkScheme + "://"
-    );
+  // Native: use Linking.addEventListener to catch deep link + openBrowserAsync
+  // openAuthSessionAsync can sometimes fail to intercept deep links in complex redirect chains
+  // This approach is more reliable: browser opens, user logs in, deep link fires, Linking catches it
+  return new Promise<string | null>((resolve) => {
+    let settled = false;
+    let subscription: ReturnType<typeof Linking.addEventListener> | null = null;
 
-    if (result.type === "success" && result.url) {
-      // Parse token from deep link URL
-      const url = new URL(result.url);
-      const sessionToken = url.searchParams.get("sessionToken");
-      const userBase64 = url.searchParams.get("user");
-      
-      if (sessionToken && onSuccess) {
-        console.log("[OAuth] Auth session success, token received");
-        // Await the callback so token processing completes before returning
-        await onSuccess(sessionToken, userBase64);
-        return sessionToken;
+    const settle = async (token: string | null, userBase64: string | null) => {
+      if (settled) return;
+      settled = true;
+      subscription?.remove();
+      WebBrowser.dismissBrowser();
+      if (token && onSuccess) {
+        console.log("[OAuth] Deep link received, token present");
+        await onSuccess(token, userBase64);
       }
-    } else if (result.type === "cancel") {
-      console.log("[OAuth] Auth session cancelled by user");
-    }
-  } catch (error) {
-    console.error("[OAuth] Auth session failed:", error);
-  }
+      resolve(token);
+    };
 
-  return null;
+    // Listen for deep link before opening browser
+    subscription = Linking.addEventListener("url", async (event) => {
+      const url = event.url;
+      console.log("[OAuth] Linking event received:", url);
+      if (url.startsWith(env.deepLinkScheme + "://")) {
+        try {
+          const parsed = new URL(url);
+          const sessionToken = parsed.searchParams.get("sessionToken");
+          const userBase64 = parsed.searchParams.get("user");
+          await settle(sessionToken, userBase64);
+        } catch (e) {
+          console.error("[OAuth] Failed to parse deep link URL:", e);
+          await settle(null, null);
+        }
+      }
+    });
+
+    // Open browser
+    WebBrowser.openBrowserAsync(loginUrl).then((result) => {
+      console.log("[OAuth] Browser closed with result:", result.type);
+      // If browser was dismissed without deep link, settle as cancelled
+      if (!settled) {
+        settle(null, null);
+      }
+    }).catch((error) => {
+      console.error("[OAuth] openBrowserAsync failed:", error);
+      if (!settled) settle(null, null);
+    });
+  });
 }
