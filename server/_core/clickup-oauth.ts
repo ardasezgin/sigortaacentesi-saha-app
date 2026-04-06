@@ -295,27 +295,31 @@ export function registerClickUpOAuthRoutes(app: Express) {
   sendMsg(window.parent);
   sendMsg(window.top);
 
+  // IMPORTANT: iPadOS 13+ sends desktop user-agent (Mac), so we cannot rely on UA for iPad detection.
+  // Instead, always try the deep link first. If the app is installed, iOS/iPadOS will intercept it.
+  // If not (e.g. Manus preview browser), it will fail silently and we fall back to window.close() or web redirect.
   var userAgent = navigator.userAgent || '';
-  var isMobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
+  var isLikelyMobile = /iPhone|iPod|Android/i.test(userAgent) || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
 
-  if (isMobile) {
-    // Mobile: always try deep link first (works for both iPhone and iPad)
-    // openBrowserAsync (SFSafariViewController) will pass the deep link to iOS
-    // which fires Linking event in the app
-    document.getElementById('msg').textContent = 'Uygulama açılıyor...';
-    window.location.href = deepLink;
-    setTimeout(function() {
-      // If deep link didn't close the browser, show a message
+  // Always try deep link - works for both iPhone and iPad (even with desktop UA)
+  // The deep link will be intercepted by iOS if the app is installed
+  document.getElementById('msg').textContent = 'Uygulama açılıyor...';
+  window.location.href = deepLink;
+
+  setTimeout(function() {
+    // If we're still here after 1.5s, deep link wasn't intercepted
+    // This means we're in a browser (not the app's in-app browser)
+    if (window.opener) {
+      // Manus preview popup scenario
+      document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
+      window.close();
+    } else if (isLikelyMobile) {
       document.getElementById('msg').textContent = 'Uygulamaya dönebilirsiniz.';
-    }, 3000);
-  } else if (window.opener) {
-    // Popup scenario (Manus preview): close after sending postMessage
-    document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
-    setTimeout(function() { window.close(); }, 1200);
-  } else {
-    document.getElementById('msg').textContent = 'Yönlendiriliyor...';
-    window.location.href = webRedirect;
-  }
+    } else {
+      document.getElementById('msg').textContent = 'Yönlendiriliyor...';
+      window.location.href = webRedirect;
+    }
+  }, 1500);
 })();
 </script>
 </body>
