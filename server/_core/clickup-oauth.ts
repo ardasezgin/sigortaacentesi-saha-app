@@ -245,21 +245,19 @@ export function registerClickUpOAuthRoutes(app: Express) {
 
       const userAgent = req.headers['user-agent'] ?? '';
       const isMobileUA = /iPhone|iPad|iPod|Android/i.test(userAgent);
-      // WebBrowser.openAuthSessionAsync (ASWebAuthenticationSession) sends mobile UA
-      // It intercepts HTTP 302 redirects to the registered deep link scheme
-      // We detect native by checking mobile UA - sec-fetch-dest check removed because
-      // iOS WebKit/Safari sends this header even in ASWebAuthenticationSession
-      if (isMobileUA) {
-        // Direct 302 redirect to deep link - ASWebAuthenticationSession intercepts this
-        console.log('[ClickUp OAuth] Native iOS detected, redirecting to deep link:', deepLink);
-        res.redirect(302, deepLink);
-        return;
-      }
 
-      // Return HTML page that:
-      // 1. Sends token via postMessage to opener window (iframe preview scenario)
-      // 2. Tries deep link redirect (mobile app scenario)
-      // 3. Falls back to web redirect (normal browser scenario)
+      console.log('[ClickUp OAuth] User-Agent:', userAgent.substring(0, 80));
+      console.log('[ClickUp OAuth] isMobileUA:', isMobileUA);
+
+      // Return HTML page for all scenarios.
+      // For mobile (openBrowserAsync + Linking.addEventListener approach):
+      //   - JS triggers window.location.href = deepLink
+      //   - iOS intercepts the deep link and fires Linking event in the app
+      //   - Linking.addEventListener catches it and processes the token
+      // For Manus preview iframe:
+      //   - postMessage + window.close()
+      // For regular browser:
+      //   - redirect to web app
       res.send(`<!DOCTYPE html>
 <html>
 <head><title>Giriş Yapılıyor...</title>
@@ -297,23 +295,23 @@ export function registerClickUpOAuthRoutes(app: Express) {
   sendMsg(window.parent);
   sendMsg(window.top);
 
-  // Detect scenario
-  var hasOpener = !!window.opener;
   var userAgent = navigator.userAgent || '';
   var isMobile = /iPhone|iPad|iPod|Android/i.test(userAgent);
 
-  if (hasOpener) {
-    // Popup scenario (Manus preview): close after sending postMessage
-    // The opener will poll /api/auth/pending-token using the nonce
-    document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
-    setTimeout(function() { window.close(); }, 1200);
-  } else if (isMobile) {
-    // Try deep link via JS (fallback for non-ASWebAuthenticationSession mobile browsers)
+  if (isMobile) {
+    // Mobile: always try deep link first (works for both iPhone and iPad)
+    // openBrowserAsync (SFSafariViewController) will pass the deep link to iOS
+    // which fires Linking event in the app
     document.getElementById('msg').textContent = 'Uygulama açılıyor...';
     window.location.href = deepLink;
     setTimeout(function() {
+      // If deep link didn't close the browser, show a message
       document.getElementById('msg').textContent = 'Uygulamaya dönebilirsiniz.';
     }, 3000);
+  } else if (window.opener) {
+    // Popup scenario (Manus preview): close after sending postMessage
+    document.getElementById('msg').textContent = 'Giriş tamamlandı, pencere kapanıyor...';
+    setTimeout(function() { window.close(); }, 1200);
   } else {
     document.getElementById('msg').textContent = 'Yönlendiriliyor...';
     window.location.href = webRedirect;
