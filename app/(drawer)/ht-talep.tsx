@@ -157,6 +157,7 @@ export default function HtTalepScreen() {
     setSelectedAgency(null);
     setShowAcenteSuggestions(false);
     setAcenteSuggestions([]);
+    if (!text.trim()) setLevhaNo('');
     if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
     if (text.trim().length < 5) return;
     acenteSearchTimer.current = setTimeout(async () => {

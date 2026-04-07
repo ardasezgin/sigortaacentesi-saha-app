@@ -538,6 +538,7 @@ export default function VisitScreen() {
                     setSelectedAgency(null);
                     setShowSuggestions(false);
                     setAcenteSuggestions([]);
+                    if (!text.trim()) setLevhaNo('');
 
                     if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
 

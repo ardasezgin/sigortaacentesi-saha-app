@@ -457,6 +457,7 @@ export default function RequestsScreen() {
                       setIsAutoFilled(false);
                       setSelectedAgency(null);
                       setShowSuggestions(false);
+                      if (!text.trim()) setLevhaNo('');
                       setAcenteSuggestions([]);
                       if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
                       if (text.trim().length < 5) return;
