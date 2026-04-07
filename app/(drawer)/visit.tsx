@@ -102,12 +102,14 @@ export default function VisitScreen() {
     setIsSearchingLevha(true);
     try {
       const agency = await findAgencyByLevhaNo(searchLevhaNo);
-      
+
       if (agency) {
+        isSelectingFromDropdown.current = true;
         setAcenteAdi(agency.acenteUnvani);
         setSelectedAgency(agency);
         setIsAutoFilled(true);
-        
+        setTimeout(() => { isSelectingFromDropdown.current = false; }, 1000);
+
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
@@ -125,12 +127,14 @@ export default function VisitScreen() {
     setIsSearchingName(true);
     try {
       const agency = await findAgencyByName(searchName);
-      
+
       if (agency) {
+        isSelectingFromDropdown.current = true;
         setLevhaNo(agency.levhaNo);
         setSelectedAgency(agency);
         setIsAutoFilled(true);
-        
+        setTimeout(() => { isSelectingFromDropdown.current = false; }, 1000);
+
         if (Platform.OS !== 'web') {
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
         }
