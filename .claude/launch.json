@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Backend API Server",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev:server"],
+      "port": 3000
+    },
+    {
+      "name": "Expo Metro (Web)",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev:metro"],
+      "port": 8081
+    }
+  ]
+}
