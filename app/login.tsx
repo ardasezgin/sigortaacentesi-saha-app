@@ -13,6 +13,7 @@ import {
 import * as Haptics from "expo-haptics";
 import { useColors } from "@/hooks/use-colors";
 import * as Auth from "@/lib/_core/auth";
+import Constants from "expo-constants";
 
 /** Generate a random nonce string */
 function generateNonce(): string {
@@ -221,6 +222,8 @@ export default function LoginScreen() {
     );
   }
 
+  const version = Constants.expoConfig?.version ?? "";
+
   return (
     <ScreenContainer className="bg-background">
       <View className="flex-1 px-6 justify-center">
@@ -278,6 +281,20 @@ export default function LoginScreen() {
           </Text>
         </View>
       </View>
+      {version ? (
+        <Text
+          style={{
+            position: "absolute",
+            bottom: 16,
+            right: 16,
+            fontSize: 11,
+            opacity: 0.35,
+          }}
+          className="text-foreground"
+        >
+          v{version}
+        </Text>
+      ) : null}
     </ScreenContainer>
   );
 }
