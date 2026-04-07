@@ -333,7 +333,7 @@ export default function HtTalepScreen() {
       <ScrollView
         style={{ flex: 1, backgroundColor: colors.background }}
         contentContainerStyle={[styles.scrollContent, { backgroundColor: colors.background }]}
-        keyboardShouldPersistTaps="handled"
+        keyboardShouldPersistTaps="always"
       >
         <Text style={[styles.pageTitle, { color: colors.foreground }]}>HT Talep Formu</Text>
 
@@ -448,7 +448,7 @@ export default function HtTalepScreen() {
                 scrollEnabled={acenteSuggestions.length > 4}
                 renderItem={({ item: agency }) => (
                   <Pressable
-                    onPress={() => handleSelectAgency(agency)}
+                    onPressIn={() => handleSelectAgency(agency)}
                     style={({ pressed }) => ({
                       padding: 12,
                       borderBottomWidth: StyleSheet.hairlineWidth,

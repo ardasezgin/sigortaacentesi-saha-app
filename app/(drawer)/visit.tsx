@@ -347,7 +347,7 @@ export default function VisitScreen() {
 
   return (
     <ScreenContainer className="p-4">
-      <ScrollView showsVerticalScrollIndicator={false} className="bg-background">
+      <ScrollView showsVerticalScrollIndicator={false} className="bg-background" keyboardShouldPersistTaps="always">
         <View className="gap-6">
           {/* Başlık */}
           <View>
@@ -583,7 +583,7 @@ export default function VisitScreen() {
                     scrollEnabled={acenteSuggestions.length > 4}
                     renderItem={({ item: agency }) => (
                       <Pressable
-                        onPress={() => {
+                        onPressIn={() => {
                           setAcenteAdi(agency.acenteUnvani);
                           setLevhaNo(agency.levhaNo);
                           setSelectedAgency(agency);

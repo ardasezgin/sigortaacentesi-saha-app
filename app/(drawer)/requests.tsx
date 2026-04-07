@@ -273,7 +273,7 @@ export default function RequestsScreen() {
 
   return (
     <ScreenContainer className="bg-background">
-      <ScrollView className="flex-1 px-4 bg-background" keyboardShouldPersistTaps="handled">
+      <ScrollView className="flex-1 px-4 bg-background" keyboardShouldPersistTaps="always">
         <View className="py-6 gap-6">
           {/* Başlık */}
           <View className="gap-2">
@@ -489,7 +489,7 @@ export default function RequestsScreen() {
                       scrollEnabled={acenteSuggestions.length > 4}
                       renderItem={({ item: agency }) => (
                         <Pressable
-                          onPress={() => {
+                          onPressIn={() => {
                             setAcenteAdi(agency.acenteUnvani);
                             setLevhaNo(agency.levhaNo);
                             setSelectedAgency(agency);
