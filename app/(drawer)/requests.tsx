@@ -40,6 +40,7 @@ export default function RequestsScreen() {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const acenteSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSelectingFromDropdown = useRef(false);
   const [acenteSuggestions, setAcenteSuggestions] = useState<Agency[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   
@@ -59,22 +60,26 @@ export default function RequestsScreen() {
 
   // Levha no değiştiğinde otomatik arama
   useEffect(() => {
+    if (isSelectingFromDropdown.current) return;
     const searchTimeout = setTimeout(async () => {
+      if (isSelectingFromDropdown.current) return;
       if (levhaNo.trim().length >= 3) {
         await searchByLevhaNo(levhaNo.trim());
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(searchTimeout);
   }, [levhaNo]);
 
   // Acente adı değiştiğinde otomatik arama
   useEffect(() => {
+    if (isSelectingFromDropdown.current) return;
     const searchTimeout = setTimeout(async () => {
+      if (isSelectingFromDropdown.current) return;
       if (acenteAdi.trim().length >= 5) {
         await searchByName(acenteAdi.trim());
       }
-    }, 300); // 300ms debounce
+    }, 300);
 
     return () => clearTimeout(searchTimeout);
   }, [acenteAdi]);
@@ -490,6 +495,8 @@ export default function RequestsScreen() {
                       renderItem={({ item: agency }) => (
                         <Pressable
                           onPressIn={() => {
+                            isSelectingFromDropdown.current = true;
+                            if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
                             setAcenteAdi(agency.acenteUnvani);
                             setLevhaNo(agency.levhaNo);
                             setSelectedAgency(agency);
@@ -499,6 +506,7 @@ export default function RequestsScreen() {
                             if (Platform.OS !== 'web') {
                               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                             }
+                            setTimeout(() => { isSelectingFromDropdown.current = false; }, 1000);
                           }}
                           style={({ pressed }) => ({
                             padding: 12,

@@ -176,6 +176,7 @@ export default function HtTalepScreen() {
 
   // Öneriden acente seç
   const handleSelectAgency = (agency: Agency) => {
+    if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
     setAcenteAdi(agency.acenteUnvani);
     setLevhaNo(agency.levhaNo);
     setSelectedAgency(agency);

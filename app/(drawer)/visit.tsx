@@ -61,6 +61,7 @@ export default function VisitScreen() {
   const [acenteSuggestions, setAcenteSuggestions] = useState<Agency[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const acenteSearchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isSelectingFromDropdown = useRef(false);
 
   // Dropdown visibility
   const [showIletisimTuruDropdown, setShowIletisimTuruDropdown] = useState(false);
@@ -73,7 +74,9 @@ export default function VisitScreen() {
 
   // Levha no değiştiğinde otomatik arama
   useEffect(() => {
+    if (isSelectingFromDropdown.current) return;
     const searchTimeout = setTimeout(async () => {
+      if (isSelectingFromDropdown.current) return;
       if (levhaNo.trim().length >= 3) {
         await searchByLevhaNo(levhaNo.trim());
       }
@@ -84,7 +87,9 @@ export default function VisitScreen() {
 
   // Acente adı değiştiğinde otomatik arama
   useEffect(() => {
+    if (isSelectingFromDropdown.current) return;
     const searchTimeout = setTimeout(async () => {
+      if (isSelectingFromDropdown.current) return;
       if (acenteAdi.trim().length >= 5) {
         await searchByName(acenteAdi.trim());
       }
@@ -584,6 +589,8 @@ export default function VisitScreen() {
                     renderItem={({ item: agency }) => (
                       <Pressable
                         onPressIn={() => {
+                          isSelectingFromDropdown.current = true;
+                          if (acenteSearchTimer.current) clearTimeout(acenteSearchTimer.current);
                           setAcenteAdi(agency.acenteUnvani);
                           setLevhaNo(agency.levhaNo);
                           setSelectedAgency(agency);
@@ -593,6 +600,7 @@ export default function VisitScreen() {
                           if (Platform.OS !== 'web') {
                             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
                           }
+                          setTimeout(() => { isSelectingFromDropdown.current = false; }, 1000);
                         }}
                         style={({ pressed }) => ({
                           padding: 12,
