@@ -241,24 +241,7 @@ class SDKServer {
 
     const cookies = this.parseCookies(req.headers.cookie);
     const sessionCookie = token || cookies.get(COOKIE_NAME);
-    
-    // Handle real user session tokens (format: session-{userId}-{timestamp})
-    if (sessionCookie && sessionCookie.startsWith("session-")) {
-      const parts = sessionCookie.split("-");
-      if (parts.length >= 3) {
-        const userId = parseInt(parts[1]);
-        if (!isNaN(userId)) {
-          // Find user by ID
-          const user = await db.getUserById(userId);
-          if (user) {
-            return user;
-          }
-        }
-      }
-      // Invalid session format
-      throw ForbiddenError("Invalid session cookie");
-    }
-    
+
     const session = await this.verifySession(sessionCookie);
 
     if (!session) {

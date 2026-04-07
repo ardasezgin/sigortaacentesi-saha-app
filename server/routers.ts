@@ -8,6 +8,8 @@ import { getClickUpClient } from "./services/clickup";
 import { storagePut } from "./storage";
 import { importAgenciesFromExcel } from "./excel-import";
 import bcrypt from "bcryptjs";
+import { sdk } from "./_core/sdk";
+import { ENV } from "./_core/env";
 
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
@@ -41,7 +43,11 @@ export const appRouter = router({
         await db.updateUserLastSignedIn(user.id);
 
         // Set session cookie
-        const sessionToken = `session-${user.id}-${Date.now()}`;
+        const sessionToken = await sdk.signSession({
+          openId: user.openId,
+          appId: ENV.appId,
+          name: user.name ?? "",
+        });
         const cookieOptions = getSessionCookieOptions(ctx.req);
         ctx.res.cookie(COOKIE_NAME, sessionToken, cookieOptions);
 

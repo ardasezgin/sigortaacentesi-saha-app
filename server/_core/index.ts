@@ -8,6 +8,7 @@ import { registerClickUpOAuthRoutes, pendingOAuthTokens } from "./clickup-oauth"
 import { appRouter } from "../routers";
 import { createContext } from "./context";
 import { getPgClient } from "../db";
+import { sdk } from "./sdk";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {
@@ -152,7 +153,13 @@ async function startServer() {
   });
 
   // Excel export endpoint - returns all agencies with karne data as CSV
-  app.get("/api/export/agencies", async (_req, res) => {
+  app.get("/api/export/agencies", async (req, res) => {
+    try {
+      await sdk.authenticateRequest(req);
+    } catch {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
     try {
       const pg = await getPgClient();
       if (!pg) {
@@ -231,24 +238,6 @@ async function startServer() {
     } catch (error) {
       console.error("[export] Failed:", error);
       res.status(500).json({ error: "Export failed" });
-    }
-  });
-
-  // Debug endpoint - check table schema in production
-  app.get("/api/debug/schema", async (_req, res) => {
-    try {
-      const pg = await getPgClient();
-      if (!pg) {
-        res.status(503).json({ error: "Database not available" });
-        return;
-      }
-      const [requestsCols, visitsCols] = await Promise.all([
-        pg`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'requests' ORDER BY ordinal_position`,
-        pg`SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'visits' ORDER BY ordinal_position`,
-      ]);
-      res.json({ requests: requestsCols, visits: visitsCols });
-    } catch (error: any) {
-      res.status(500).json({ error: error.message });
     }
   });
 
