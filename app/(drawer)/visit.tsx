@@ -556,7 +556,7 @@ export default function VisitScreen() {
                   }}
                   onBlur={() => {
                     // Kısa gecikme ile kapat (seçim için zaman tanı)
-                    setTimeout(() => setShowSuggestions(false), 200);
+                    setTimeout(() => setShowSuggestions(false), 500);
                   }}
                   placeholder="Acente ünvanı (en az 5 harf)"
                   placeholderTextColor={colors.muted}

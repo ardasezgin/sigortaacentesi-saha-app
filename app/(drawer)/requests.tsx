@@ -469,7 +469,7 @@ export default function RequestsScreen() {
                         }
                       }, 600);
                     }}
-                    onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                    onBlur={() => setTimeout(() => setShowSuggestions(false), 500)}
                     editable={!isSaving}
                   />
                   {isSearchingName && (
