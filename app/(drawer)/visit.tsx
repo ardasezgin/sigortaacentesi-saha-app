@@ -342,6 +342,7 @@ export default function VisitScreen() {
           name: `[Ziyaret] ${acenteAdi} - ${gundem}`,
           tags: ['Ziyaret', iletisimTuru, isOrtagi, gundem],
           custom_fields: visitCustomFields,
+          assigneeIds: user?.clickupUserId ? [parseInt(user.clickupUserId)] : undefined,
         });
         console.log('[Form] ClickUp task created successfully:', result);
         clickupSuccess = true;
@@ -727,7 +728,7 @@ export default function VisitScreen() {
             {/* Tarih */}
             <View>
               <Text className="text-sm font-medium text-foreground mb-2">
-                Tarih *
+                Ziyaret Tarihi *
               </Text>
               <TextInput
                 value={tarih}

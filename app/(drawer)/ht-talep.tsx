@@ -16,6 +16,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import { ScreenContainer } from '@/components/screen-container';
 import { useColors } from '@/hooks/use-colors';
+import { useAuth } from '@/hooks/use-auth';
 import { trpc } from '@/lib/trpc';
 import { getClickUpMembers, createClickUpTask } from '@/lib/services/clickup';
 import type { Agency } from '@/lib/types/agency';
@@ -31,6 +32,7 @@ const HT_TALEP_LIST_ID = '901816410790'; // Acentech HT Talep Formu listesi
  */
 export default function HtTalepScreen() {
   const colors = useColors();
+  const { user } = useAuth();
 
   // Form state
   const [talepGirenId, setTalepGirenId] = useState<number | null>(null);
@@ -315,6 +317,7 @@ export default function HtTalepScreen() {
         description: descLines.length > 0 ? descLines.join('\n') : undefined,
         listId: HT_TALEP_LIST_ID,
         custom_fields: customFields,
+        assigneeIds: user?.clickupUserId ? [parseInt(user.clickupUserId)] : undefined,
       });
 
       if (!task) {

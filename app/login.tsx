@@ -89,6 +89,7 @@ export default function LoginScreen() {
               email: data.user.email,
               loginMethod: data.user.loginMethod,
               lastSignedIn: new Date(data.user.lastSignedIn || Date.now()),
+              clickupUserId: data.user.clickupUserId ?? null,
             });
             console.log("[Login] User fetched from API:", data.user.email);
           }
@@ -105,6 +106,7 @@ export default function LoginScreen() {
               email: userData.email,
               loginMethod: userData.loginMethod,
               lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
+              clickupUserId: userData.clickupUserId ?? null,
             });
           } catch (_) {}
         }

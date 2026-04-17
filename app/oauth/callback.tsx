@@ -51,6 +51,7 @@ export default function OAuthCallback() {
                 email: userData.email,
                 loginMethod: userData.loginMethod,
                 lastSignedIn: new Date(userData.lastSignedIn || Date.now()),
+                clickupUserId: userData.clickupUserId ?? null,
               };
               await Auth.setUserInfo(userInfo);
               console.log("[OAuth] User info stored:", userInfo);
@@ -202,6 +203,7 @@ export default function OAuthCallback() {
               email: result.user.email,
               loginMethod: result.user.loginMethod,
               lastSignedIn: new Date(result.user.lastSignedIn || Date.now()),
+              clickupUserId: result.user.clickupUserId ?? null,
             };
             await Auth.setUserInfo(userInfo);
             console.log("[OAuth] User info stored:", userInfo);
