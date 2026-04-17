@@ -210,6 +210,11 @@ export default function RequestsScreen() {
       let clickupSuccess = false;
       
       try {
+        const requestCustomFields: Array<{ id: string; value: string }> = [];
+        if (kimden === 'Acente' && selectedAgency?.levhaNo) {
+          requestCustomFields.push({ id: '155b2b1c-80ee-43b8-8bc1-42cc32e9b508', value: selectedAgency.levhaNo });
+        }
+
         const result = await createClickUpTask({
           name: `[${requestType}] ${subject.trim()}`,
           description: kimden === 'Acente' && selectedAgency
@@ -217,6 +222,7 @@ export default function RequestsScreen() {
             : `**Kimden:** Diğer\n\n**Açıklama:**\n${description.trim()}\n\n**Oluşturan:** ${user?.name || user?.email || 'Saha Personeli'}`,
           priority: mapPriorityToClickUp(priority),
           tags: ['Talep', requestType, ...(kimden === 'Acente' && selectedAgency ? [selectedAgency.il || 'Bilinmeyen'] : ['Diğer'])],
+          custom_fields: requestCustomFields.length > 0 ? requestCustomFields : undefined,
         });
         console.log('[requests] ClickUp task created successfully:', result);
         clickupSuccess = true;

@@ -140,6 +140,9 @@ export async function createClickUpTask(
     }
     if (payload.priority) body.priority = payload.priority;
     if (payload.tags && payload.tags.length > 0) body.tags = payload.tags;
+    if (payload.custom_fields && payload.custom_fields.length > 0) {
+      body.custom_fields = payload.custom_fields;
+    }
 
     const task = await makeRequest<ClickUpTask>(`/list/${targetListId}/task`, {
       method: 'POST',

@@ -254,10 +254,94 @@ export default function VisitScreen() {
       let clickupError: any = null;
       
       try {
+        // SahaAPP listesi custom field ID'leri
+        const SAHA_FIELDS = {
+          LEVHA_NO: '155b2b1c-80ee-43b8-8bc1-42cc32e9b508',
+          ILETISIM_TURU: '15ac37b6-2ad8-4a09-b6b4-5b913a1058de',
+          IS_ORTAGI: '1d529f91-4013-45f7-b24c-ce3b71e5e90e',
+          KIMLE_GORUSULDU: '27b85be1-a731-41c0-aff8-9156a25210da',
+          DETAY_ACIKLAMA: '388ac137-e8a4-4ae8-a5e6-8b82c6b10757',
+          ZIYARET_TARIHI: '871f911e-fe4c-4ee8-82fb-ad1ce7b357cc',
+          GUNDEM: '9423c508-aa96-4c2d-95a5-2231305da6bc',
+          ADINIZ: '9f55713e-7cd3-4fc2-bbb0-4000da7302bf',
+          HATIRLATMA: 'a8955f99-03ee-4b06-9d7f-41ed9fb753ff',
+          HATIRLATMA_TARIHI: '1ebaea87-6bae-41a2-a584-5ece36887e67',
+        };
+        // İletişim Türü dropdown option ID'leri
+        const ILETISIM_OPTIONS: Record<string, string> = {
+          'Arama': '61b74056-6558-491d-ae41-1623203558f0',
+          'Ziyaret': 'e5cdb717-56e7-4b14-8034-727b419e2fda',
+          'Online Toplantı': '18124ef0-9685-4ec8-b786-e25fc81368e6',
+          'Fuar/Etkinlik': '0a3eccfb-fc10-49aa-9bec-c0b7dc792e55',
+        };
+        // İş Ortağı dropdown option ID'leri
+        const IS_ORTAGI_OPTIONS: Record<string, string> = {
+          'Aday Acente': '46a11581-b068-4c79-9727-6570bd002929',
+          'Mevcut Acente': '705da81d-63f7-4f8d-b04a-6298ee8629d1',
+          'Sigorta Şirketi': '25d00b69-9c33-4bd4-ab7b-e1c9137707cb',
+          'Dernek / Komite': 'c9bacb7f-0591-4d2a-a29c-f302db953eb8',
+          'RS Grup Şirketleri': '05c73ab6-864a-4608-8c95-93c0fb4f0997',
+          'Galeri': '6ffa3f20-1515-4aad-bb46-05448e7cbff8',
+          'Diğer': '9630db3b-906d-4d08-bae1-dcabc46c9f82',
+        };
+        // Gündem dropdown option ID'leri
+        const GUNDEM_OPTIONS: Record<string, string> = {
+          'Yol Yardım Satış': 'fec35fd1-6f33-497c-ab61-537c91958b20',
+          'Yol Yardım Proje': '7f184158-c378-48c0-95b4-1a057f8800c9',
+          'Genel Performans': '2848c944-3fe6-4724-954b-dd2de97c4e93',
+          'Hızlı Teklif Ekranları': 'ae71b626-8b56-48cc-9dc9-25848a826d8b',
+          'Müşteri Yönlendirme Projesi': 'd35ea4c5-e0fb-478d-9a29-c1907122dbc8',
+          'Diğer Teknoloji Konuları': 'e2bdc4d5-a95f-4aff-893f-a350d2701f08',
+          'Acente Segmentasyon Konuları': '63524646-791d-49b4-baa1-c1bc9e0c4fcd',
+          'Aday Görüşmesi': 'd5363705-f07a-4860-8196-5f2f0ceefe96',
+          'Tanışma Toplantısı': 'a02e8fd3-0a57-4f49-884f-7bb066f42ee6',
+          'Dernek / Komite Toplantısı': 'ffd21d7d-db1a-4733-84cc-4f7c28a06b41',
+          'Otokonfor': '5f896c2d-43f9-4551-8a23-b9852fb4dcc4',
+          'GOS': '56d6fb23-0e62-4812-9deb-6129dcc58f61',
+          'RS Oto Ekspertiz': '1f038d6d-00e5-4bfa-95b2-5bf83c594a65',
+          'RS Servis Hasar': 'b14d91a3-2b96-4b8c-a4e4-d649977e57d0',
+          'RS Boyasz Onarım': '35647c61-97c2-4e12-8731-eb753506dc21',
+          'Carshine': '93b464cb-c4db-482d-bee3-4a77955c21f6',
+          'İhale Portal': 'ad883be6-4f39-4f25-8607-87d7cf5ad9b2',
+          'RS Diğer Şirketler': '9ac02534-86b7-446d-8a85-3ffda6aa33b9',
+          'Diğer Gündemler': 'b528d873-e714-4da6-a66e-bf7812d816a5',
+        };
+
+        const visitCustomFields: Array<{ id: string; value: string | number }> = [
+          { id: SAHA_FIELDS.LEVHA_NO, value: levhaNo || '' },
+          { id: SAHA_FIELDS.KIMLE_GORUSULDU, value: kimleGorusuldu || '' },
+          { id: SAHA_FIELDS.DETAY_ACIKLAMA, value: detayAciklama || '' },
+          { id: SAHA_FIELDS.ADINIZ, value: user?.name || user?.email || '' },
+        ];
+
+        // Dropdown field'lar - option ID'si ile gönder
+        if (ILETISIM_OPTIONS[iletisimTuru]) {
+          visitCustomFields.push({ id: SAHA_FIELDS.ILETISIM_TURU, value: ILETISIM_OPTIONS[iletisimTuru] });
+        }
+        if (IS_ORTAGI_OPTIONS[isOrtagi]) {
+          visitCustomFields.push({ id: SAHA_FIELDS.IS_ORTAGI, value: IS_ORTAGI_OPTIONS[isOrtagi] });
+        }
+        if (GUNDEM_OPTIONS[gundem]) {
+          visitCustomFields.push({ id: SAHA_FIELDS.GUNDEM, value: GUNDEM_OPTIONS[gundem] });
+        }
+
+        // Tarih field'ları (Unix timestamp ms)
+        if (tarih) {
+          const ts = new Date(tarih).getTime();
+          if (!isNaN(ts)) visitCustomFields.push({ id: SAHA_FIELDS.ZIYARET_TARIHI, value: ts });
+        }
+        if (hatirlatmaTarihi) {
+          const ts = new Date(hatirlatmaTarihi).getTime();
+          if (!isNaN(ts)) visitCustomFields.push({ id: SAHA_FIELDS.HATIRLATMA_TARIHI, value: ts });
+        }
+        if (hatirlatma) {
+          visitCustomFields.push({ id: SAHA_FIELDS.HATIRLATMA, value: hatirlatma });
+        }
+
         const result = await createClickUpTask({
           name: `[Ziyaret] ${acenteAdi} - ${gundem}`,
-          description: `**İletişim Türü:** ${iletisimTuru}\n**İş Ortağı:** ${isOrtagi}\n**Levha No:** ${levhaNo}\n**Kimle Görüşüldü:** ${kimleGorusuldu}\n**Tarih:** ${tarih}\n**Gündem:** ${gundem}\n\n**Detay:**\n${detayAciklama}`,
           tags: ['Ziyaret', iletisimTuru, isOrtagi, gundem],
+          custom_fields: visitCustomFields,
         });
         console.log('[Form] ClickUp task created successfully:', result);
         clickupSuccess = true;

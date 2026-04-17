@@ -34,6 +34,11 @@ export interface ClickUpCustomField {
   value: string | number | boolean;
 }
 
+export interface CustomFieldValue {
+  id: string;
+  value: string | number | string[] | number[];
+}
+
 export interface CreateTaskPayload {
   name: string;
   description?: string;
@@ -41,6 +46,7 @@ export interface CreateTaskPayload {
   status?: string;
   tags?: string[];
   due_date?: number; // Unix timestamp in milliseconds
+  custom_fields?: CustomFieldValue[];
 }
 
 export interface UpdateTaskPayload {

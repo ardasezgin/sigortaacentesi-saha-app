@@ -273,22 +273,48 @@ export default function HtTalepScreen() {
         finalSigortaUrl = (await uploadFile(sigortaDosyaAdi, sigortaDosyaBase64, sigortaDosyaMime, setSigortaUrl)) || '';
       }
 
-      // ClickUp'a doğrudan görev oluştur
-      const descLines: string[] = [
-        `Acente Adı: ${acenteAdi.trim()}`,
-        `Levha No: ${levhaNo.trim() || '-'}`,
-        `Acente Kullanıcı Sayısı: ${acenteKullaniciSayisi || '-'}`,
-        `Hızlı Teklif Talep Eden Kullanıcı Sayısı: ${hizliTeklifSayisi || '-'}`,
-        `SMS Otorizasyonu Kuruldu Mu: ${smsOtorizasyon}`,
-        `Acentech Kullanıcı Oluşturma Tablosu: ${finalAcentechUrl || 'Yüklenmedi'}`,
-        `Sigorta Şirketleri Kullanıcı Adı - Şifre Tablosu: ${finalSigortaUrl || 'Yüklenmedi'}`,
+      // ClickUp custom field ID'leri (HT Talep Formu listesi: 901816410790)
+      const HT_FIELDS = {
+        ACENTE_ADI: 'fe4ee86d-0532-481d-a353-ee7d830d6de6',
+        LEVHA_NO: '155b2b1c-80ee-43b8-8bc1-42cc32e9b508',
+        ACENTE_KULLANICI_SAYISI: '629afe48-9293-44db-93d5-993dc3919498',
+        HIZLI_TEKLIF_SAYISI: '0ce93030-9706-4e6e-a07a-ef472dd3bdd8',
+        SMS_OTORIZASYON: 'dd524f25-fb09-4290-9613-cfcd279c9b69',
+        TALEP_GIREN: '4df3bb1a-baca-4697-b5cd-ba1b9cf74780',
+      };
+      // SMS Otorizasyon dropdown option ID'leri
+      const SMS_OPTIONS: Record<string, string> = {
+        Evet: '90c6007c-11d0-4e0c-98a1-6486916342b4',
+        Hayir: '5c391199-a033-4cbd-9951-4be676ee47b8',
+      };
+
+      // Description'a dosya URL'lerini ekle (attachment field'ı API'de desteklenmediği için)
+      const descLines: string[] = [];
+      if (finalAcentechUrl) descLines.push(`Acentech Kullanıcı Oluşturma Tablosu: ${finalAcentechUrl}`);
+      if (finalSigortaUrl) descLines.push(`Sigorta Şirketleri Kullanıcı Adı - Şifre Tablosu: ${finalSigortaUrl}`);
+
+      const customFields: Array<{ id: string; value: string | number | number[] }> = [
+        { id: HT_FIELDS.ACENTE_ADI, value: acenteAdi.trim() },
+        { id: HT_FIELDS.LEVHA_NO, value: levhaNo.trim() || '' },
+        { id: HT_FIELDS.ACENTE_KULLANICI_SAYISI, value: acenteKullaniciSayisi || '' },
+        { id: HT_FIELDS.HIZLI_TEKLIF_SAYISI, value: hizliTeklifSayisi || '' },
       ];
+
+      // SMS Otorizasyon dropdown
+      if (smsOtorizasyon && SMS_OPTIONS[smsOtorizasyon]) {
+        customFields.push({ id: HT_FIELDS.SMS_OTORIZASYON, value: SMS_OPTIONS[smsOtorizasyon] });
+      }
+
+      // Talebi Giren users field
+      if (talepGirenId) {
+        customFields.push({ id: HT_FIELDS.TALEP_GIREN, value: [talepGirenId] as number[] });
+      }
 
       const task = await createClickUpTask({
         name: `HT Talep - ${acenteAdi.trim()}`,
-        description: descLines.join('\n'),
-        assigneeIds: talepGirenId ? [talepGirenId] : undefined,
+        description: descLines.length > 0 ? descLines.join('\n') : undefined,
         listId: HT_TALEP_LIST_ID,
+        custom_fields: customFields,
       });
 
       if (!task) {
