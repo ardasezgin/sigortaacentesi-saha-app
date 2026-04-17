@@ -157,6 +157,54 @@ export async function createClickUpTask(
 }
 
 /**
+ * ClickUp task'a dosya ekle (attachment)
+ * @param taskId - ClickUp task ID
+ * @param fileUri - Yerel dosya URI'si (file:// veya content://)
+ * @param fileName - Dosya adı
+ * @param mimeType - MIME tipi (örn. image/jpeg)
+ */
+export async function addClickUpAttachment(
+  taskId: string,
+  fileUri: string,
+  fileName: string,
+  mimeType: string = 'application/octet-stream'
+): Promise<boolean> {
+  try {
+    const config = getConfig();
+
+    // FormData ile multipart/form-data isteği
+    const formData = new FormData();
+    // React Native'de Blob yerine { uri, name, type } objesi kullanılır
+    formData.append('attachment', {
+      uri: fileUri,
+      name: fileName,
+      type: mimeType,
+    } as any);
+
+    const response = await fetch(`${API_BASE_URL}/task/${taskId}/attachment`, {
+      method: 'POST',
+      headers: {
+        Authorization: config.apiToken,
+        // Content-Type'ı manuel set etme - fetch otomatik boundary ekler
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('[ClickUp] Attachment upload failed:', errorText);
+      return false;
+    }
+
+    console.log('[ClickUp] Attachment uploaded successfully:', fileName);
+    return true;
+  } catch (error) {
+    console.error('[ClickUp] Failed to add attachment:', error);
+    return false;
+  }
+}
+
+/**
  * ClickUp task'ı güncelle
  */
 export async function updateClickUpTask(

@@ -23,7 +23,7 @@ import type { Agency } from '@/lib/types/agency';
 import { saveAgency } from '@/lib/services/storage';
 import { findAgencyByLevhaNo, findAgencyByName } from '@/lib/services/agency-service';
 import { addVisit, getRecentVisits } from '@/lib/services/visit-storage';
-import { createClickUpTask } from '@/lib/services/clickup';
+import { createClickUpTask, addClickUpAttachment } from '@/lib/services/clickup';
 import { cn } from '@/lib/utils';
 
 /**
@@ -346,6 +346,27 @@ export default function VisitScreen() {
         });
         console.log('[Form] ClickUp task created successfully:', result);
         clickupSuccess = true;
+
+        // Dosyaları attachment olarak yükle
+        if (result && dosyalar.length > 0) {
+          for (const fileUri of dosyalar) {
+            try {
+              const fileName = fileUri.split('/').pop() || 'dosya';
+              const ext = fileName.split('.').pop()?.toLowerCase() || '';
+              const mimeMap: Record<string, string> = {
+                jpg: 'image/jpeg', jpeg: 'image/jpeg', png: 'image/png',
+                gif: 'image/gif', pdf: 'application/pdf',
+                doc: 'application/msword', docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                xls: 'application/vnd.ms-excel', xlsx: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+              };
+              const mimeType = mimeMap[ext] || 'application/octet-stream';
+              await addClickUpAttachment(result.id, fileUri, fileName, mimeType);
+              console.log('[Form] Attachment uploaded:', fileName);
+            } catch (attachErr) {
+              console.error('[Form] Attachment upload error:', attachErr);
+            }
+          }
+        }
       } catch (error) {
         console.error('[Form] ClickUp gönderimi başarısız:', error);
         clickupError = error;

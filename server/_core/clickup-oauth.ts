@@ -196,6 +196,7 @@ export function registerClickUpOAuthRoutes(app: Express) {
         email: clickupUser.email,
         loginMethod: "clickup",
         lastSignedIn: new Date(),
+        clickupUserId: String(clickupUser.id),
       });
 
       // Create session token
@@ -216,6 +217,7 @@ export function registerClickUpOAuthRoutes(app: Express) {
         email: clickupUser.email,
         loginMethod: "clickup",
         lastSignedIn: new Date().toISOString(),
+        clickupUserId: String(clickupUser.id),
       };
       const userBase64 = Buffer.from(JSON.stringify(userData)).toString("base64");
 
